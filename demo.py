@@ -3,6 +3,25 @@ import torch
 from torch.autograd import Variable
 
 
+class API(object):
+    def dtype(self, x):
+        assert isinstance(x, torch.FloatTensor)
+        return np.float32
+
+
+Z = API()
+
+
+class Form(object):
+    def __init__(self, shape, dtype):
+        self.shape = shape
+        self.dtype = dtype
+
+    def check(self, x):
+        assert tuple(x.size()[1:]) == self.shape
+        assert Z.dtype(x) == self.dtype
+
+
 class Layer(object):
     def params(self):
         return []
@@ -12,11 +31,11 @@ class Layer(object):
 
 
 class InputLayer(Layer):
-    def __init__(self, shape):
-        self.shape = shape
+    def __init__(self, form):
+        self.form = form
 
     def forward(self, x):
-        assert tuple(x.size()[1:]) == self.shape
+        self.form.check(x)
         return x
 
 
@@ -54,45 +73,46 @@ class SequenceLayer(Layer):
 
 
 class Spec(object):
-    def build(self, in_shape=None):
+    def build(self, form=None):
         raise NotImplementedError
 
 
 class InputSpec(Spec):
-    def __init__(self, shape):
-        self.shape = shape
+    def __init__(self, shape, dtype):
+        self.form = Form(shape, dtype)
 
-    def build(self, in_shape=None):
-        assert in_shape is None
-        return InputLayer(self.shape), self.shape
+    def build(self, form=None):
+        assert form is None
+        return InputLayer(self.form), self.form
 
 
 class DenseSpec(Spec):
     def __init__(self, out_dim):
         self.out_dim = out_dim
 
-    def build(self, in_shape=None):
-        in_dim, = in_shape
+    def build(self, form=None):
+        in_dim, = form.shape
         kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
         bias = np.random.normal(0, 1, (self.out_dim,))
-        return DenseLayer(kernel, bias), (self.out_dim,)
+        out_shape = self.out_dim,
+        return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
 
 class ReLUSpec(Spec):
-    def build(self, in_shape=None):
-        return ReLULayer(), in_shape
+    def build(self, form=None):
+        return ReLULayer(), form
 
 
 class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self, in_shape=None):
+    def build(self, form=None):
         layers = []
         for spec in self.specs:
-            layer, in_shape = spec.build(in_shape)
+            layer, form = spec.build(form)
             layers.append(layer)
-        return SequenceLayer(layers), in_shape
+        return SequenceLayer(layers), form
 
 
 def mean_squared_error(true, pred):
@@ -130,7 +150,7 @@ y = Variable(torch.randn(batch_size, num_classes).type(dtype),
              requires_grad=False)
 
 model = SequenceSpec([
-    InputSpec((in_dim,)),
+    InputSpec((in_dim,), np.float32),
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(num_classes),
