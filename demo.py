@@ -53,7 +53,7 @@ class SequenceLayer(Layer):
 
 
 class Spec(object):
-    def build(self):
+    def build(self, in_shape=None):
         raise NotImplementedError
 
 
@@ -61,35 +61,36 @@ class InputSpec(Spec):
     def __init__(self, shape):
         self.shape = shape
 
-    def build(self):
-        return InputLayer(self.shape)
+    def build(self, in_shape=None):
+        assert in_shape is None
+        return InputLayer(self.shape), self.shape
 
 
 class DenseSpec(Spec):
-    def __init__(self, in_dim, out_dim):
-        self.in_dim = in_dim
+    def __init__(self, out_dim):
         self.out_dim = out_dim
 
-    def build(self):
-        kernel = np.random.normal(0, 1, (self.in_dim, self.out_dim))
-        return DenseLayer(kernel)
+    def build(self, in_shape=None):
+        in_dim, = in_shape
+        kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
+        return DenseLayer(kernel), (self.out_dim,)
 
 
 class ReLUSpec(Spec):
-    def build(self):
-        return ReLULayer()
+    def build(self, in_shape=None):
+        return ReLULayer(), in_shape
 
 
 class SequenceSpec(Spec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self):
+    def build(self, in_shape=None):
         layers = []
         for spec in self.specs:
-            layer = spec.build()
+            layer, in_shape = spec.build(in_shape)
             layers.append(layer)
-        return SequenceLayer(layers)
+        return SequenceLayer(layers), in_shape
 
 
 def mean_squared_error(true, pred):
@@ -128,12 +129,12 @@ y = Variable(torch.randn(batch_size, num_classes).type(dtype),
 
 model = SequenceSpec([
     InputSpec((in_dim,)),
-    DenseSpec(in_dim, hidden_dim),
+    DenseSpec(hidden_dim),
     ReLUSpec(),
-    DenseSpec(hidden_dim, num_classes),
+    DenseSpec(num_classes),
 ])
 
-model = model.build()
+model, out_shape = model.build()
 
 opt = SGD(lr)
 opt.set_params(model.params())
