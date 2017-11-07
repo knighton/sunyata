@@ -4,7 +4,7 @@ from torch.autograd import Variable
 
 
 class API(object):
-    def dtype(self, x):
+    def dtype_of(self, x):
         assert isinstance(x, torch.FloatTensor) or \
             (isinstance(x, Variable) and isinstance(x.data, torch.FloatTensor))
         return np.float32
@@ -24,6 +24,29 @@ class API(object):
     def matmul(self, a, b):
         return a.mm(b)
 
+    def default_dtype(self):
+        return np.float32
+
+    def dtype(self, x):
+        return x or self.default_dtype()
+
+    def device(self, x):
+        assert x is None
+        return x
+
+    def cast_tensor_onto(self, x, dtype=None, device=None, copy=False):
+        dtype = self.dtype(dtype)
+        assert dtype == np.float32
+        if isinstance(x, np.ndarray):
+            print('!', x.dtype)
+            assert x.dtype == 'float32'
+        else:
+            print("!", x)
+            assert isinstance(x, torch.FloatTensor)
+        device = self.device(device)
+        assert copy is False
+        return torch.from_numpy(x)
+
 
 Z = API()
 
@@ -35,7 +58,7 @@ class Form(object):
 
     def check(self, x):
         assert tuple(Z.shape(x)[1:]) == self.shape
-        assert Z.dtype(x) == self.dtype
+        assert Z.dtype_of(x) == self.dtype
 
 
 class Layer(object):
@@ -57,8 +80,8 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
-        self.bias = Variable(torch.FloatTensor(bias), requires_grad=True)
+        self.kernel = Variable(Z.cast_tensor_onto(kernel), requires_grad=True)
+        self.bias = Variable(Z.cast_tensor_onto(bias), requires_grad=True)
 
     def params(self):
         return [self.kernel, self.bias]
@@ -108,8 +131,9 @@ class DenseSpec(Spec):
 
     def build(self, form=None):
         in_dim, = form.shape
-        kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
-        bias = np.random.normal(0, 1, (self.out_dim,))
+        kernel = np.random.normal(
+            0, 1, (in_dim, self.out_dim)).astype('float32')
+        bias = np.random.normal(0, 1, (self.out_dim,)).astype('float32')
         out_shape = self.out_dim,
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
@@ -156,14 +180,14 @@ class SGD(Optimizer):
         param.grad.data.zero_()
 
 
-dtype = torch.FloatTensor
-
 batch_size, in_dim, hidden_dim, num_classes = 64, 1000, 100, 10
 lr = 1e-6
 
-x = Variable(torch.randn(batch_size, in_dim).type(dtype), requires_grad=False)
-y = Variable(torch.randn(batch_size, num_classes).type(dtype),
-             requires_grad=False)
+x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
+x = Variable(Z.cast_tensor_onto(x), requires_grad=False)
+
+y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
+y = Variable(Z.cast_tensor_onto(y), requires_grad=False)
 
 model = SequenceSpec([
     InputSpec((in_dim,), np.float32),
