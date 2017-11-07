@@ -21,14 +21,15 @@ class InputLayer(Layer):
 
 
 class DenseLayer(Layer):
-    def __init__(self, kernel):
+    def __init__(self, kernel, bias):
         self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
+        self.bias = Variable(torch.FloatTensor(bias), requires_grad=True)
 
     def params(self):
-        return [self.kernel]
+        return [self.kernel, self.bias]
 
     def forward(self, x):
-        return x.mm(self.kernel)
+        return x.mm(self.kernel) + self.bias
 
 
 class ReLULayer(Layer):
@@ -73,7 +74,8 @@ class DenseSpec(Spec):
     def build(self, in_shape=None):
         in_dim, = in_shape
         kernel = np.random.normal(0, 1, (in_dim, self.out_dim))
-        return DenseLayer(kernel), (self.out_dim,)
+        bias = np.random.normal(0, 1, (self.out_dim,))
+        return DenseLayer(kernel, bias), (self.out_dim,)
 
 
 class ReLUSpec(Spec):
