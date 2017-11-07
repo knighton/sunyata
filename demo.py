@@ -11,6 +11,15 @@ class Layer(object):
         raise NotImplementedError
 
 
+class InputLayer(Layer):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def forward(self, x):
+        assert tuple(x.size()[1:]) == self.shape
+        return x
+
+
 class DenseLayer(Layer):
     def __init__(self, kernel):
         self.kernel = Variable(torch.FloatTensor(kernel), requires_grad=True)
@@ -46,6 +55,14 @@ class SequenceLayer(Layer):
 class Spec(object):
     def build(self):
         raise NotImplementedError
+
+
+class InputSpec(Spec):
+    def __init__(self, shape):
+        self.shape = shape
+
+    def build(self):
+        return InputLayer(self.shape)
 
 
 class DenseSpec(Spec):
@@ -110,6 +127,7 @@ y = Variable(torch.randn(batch_size, num_classes).type(dtype),
              requires_grad=False)
 
 model = SequenceSpec([
+    InputSpec((in_dim,)),
     DenseSpec(in_dim, hidden_dim),
     ReLUSpec(),
     DenseSpec(hidden_dim, num_classes),
