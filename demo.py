@@ -5,8 +5,24 @@ from torch.autograd import Variable
 
 class API(object):
     def dtype(self, x):
-        assert isinstance(x, torch.FloatTensor)
+        assert isinstance(x, torch.FloatTensor) or \
+            (isinstance(x, Variable) and isinstance(x.data, torch.FloatTensor))
         return np.float32
+
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return x.clamp(min=0)
+
+    def rank(self, x):
+        return len(x.size())
+
+    def shape(self, x):
+        return tuple(x.size())
+
+    def size(self, x):
+        return x.nelement()
+
+    def matmul(self, a, b):
+        return a.mm(b)
 
 
 Z = API()
@@ -18,7 +34,7 @@ class Form(object):
         self.dtype = dtype
 
     def check(self, x):
-        assert tuple(x.size()[1:]) == self.shape
+        assert tuple(Z.shape(x)[1:]) == self.shape
         assert Z.dtype(x) == self.dtype
 
 
@@ -48,12 +64,12 @@ class DenseLayer(Layer):
         return [self.kernel, self.bias]
 
     def forward(self, x):
-        return x.mm(self.kernel) + self.bias
+        return Z.matmul(x, self.kernel) + self.bias
 
 
 class ReLULayer(Layer):
     def forward(self, x):
-        return x.clamp(min=0)
+        return Z.clip(x, min=0)
 
 
 class SequenceLayer(Layer):
