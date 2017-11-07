@@ -46,9 +46,23 @@ def mean_squared_error(true, pred):
     return (true - pred).pow(2).sum()
 
 
+class Optimizer(object):
+    def __init__(self, lr):
+        self.lr = lr
+
+    def set_params(self, params):
+        self.params = params
+
+    def step(self):
+        for param in self.params:
+            param.data -= self.lr * param.grad.data
+            param.grad.data.zero_()
+
+
 dtype = torch.FloatTensor
 
 batch_size, in_dim, hidden_dim, num_classes = 64, 1000, 100, 10
+lr = 1e-6
 
 x = Variable(torch.randn(batch_size, in_dim).type(dtype), requires_grad=False)
 y = Variable(torch.randn(batch_size, num_classes).type(dtype),
@@ -64,9 +78,9 @@ model = Sequence([
     Dense(w2),
 ])
 
-params = model.params()
+opt = Optimizer(lr)
+opt.set_params(model.params())
 
-learning_rate = 1e-6
 for t in range(500):
     y_pred = model.forward(x)
 
@@ -75,6 +89,4 @@ for t in range(500):
 
     loss.backward()
 
-    for param in params:
-        param.data -= learning_rate * param.grad.data
-        param.grad.data.zero_()
+    opt.step()
