@@ -32,7 +32,7 @@ class BaseMapAPI(APIBase):
     def clip(self, x, min=-np.inf, max=np.inf):
         raise NotImplementedError
 
-    def pow(self, x, exp):
+    def pow(self, x, a):
         raise NotImplementedError
 
 
@@ -40,8 +40,16 @@ class PyTorchMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min, max)
 
-    def pow(self, x, exp):
-        return x ** exp
+    def pow(self, x, a):
+        return x ** a
+
+
+class TensorFlowMapAPI(BaseMapAPI):
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return tf.clip_by_value(x, min, max)
+
+    def pow(self, x, a):
+        return tf.pow(x, a)
 
 
 class MXNetMapAPI(BaseMapAPI):
@@ -105,6 +113,11 @@ class MXNetReduceAPI(BaseReduceAPI):
         return self._reduce('sum', x, axis, keepdims)
 
 
+class TensorFlowReduceAPI(BaseReduceAPI):
+    def sum(self, x, axis=None, keepdims=False):
+        return tf.reduce_sum(x, axis, keepdims)
+
+
 class BaseRelateAPI(APIBase):
     def matmul(self, a, b):
         raise NotImplementedError
@@ -118,6 +131,11 @@ class PyTorchRelateAPI(BaseRelateAPI):
 class MXNetRelateAPI(BaseRelateAPI):
     def matmul(self, a, b):
         return mx.nd.dot(a, b)
+
+
+class TensorFlowRelateAPI(BaseRelateAPI):
+    def matmul(self, a, b):
+        return tf.matmul(a, b)
 
 
 class BaseShapeAPI(APIBase):
@@ -151,6 +169,17 @@ class MXNetShapeAPI(BaseShapeAPI):
 
     def size(self, x):
         return x.size
+
+
+class TensorFlowShapeAPI(BaseShapeAPI):
+    def ndim(self, x):
+        return tf.rank(x)
+
+    def shape(self, x):
+        return x.shape
+
+    def size(self, x):
+        return tf.size(x)
 
 
 class BaseDeviceDTypeAPI(APIBase):
@@ -403,13 +432,90 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         return mx.nd.array(x, ctx, to_dtype)
 
 
+class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
+    def __init__(self):
+        num_gpus = tfe.num_gpus()
+        default_device_id = 1 if num_gpus else 0
+        supported_devices = sorted("""
+            bool
+            uint8 uint16 uint32 uint64
+            int8 int16 int32 int64
+            float16 float32 float64
+        """.split())
+        default_dtype = 'float32'
+        BaseDeviceDTypeAPI.__init__(
+            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+
+    def discover_gpus(self):
+        return tfe.num_gpus()
+
+    def dtype_of(self, x):
+        return x.dtype.name
+
+    def device_of(self, x):
+        if x.device == 'CPU:0':
+            device_id = 0
+        else:
+            x = x.device.rindex('/')
+            s = x.device[x + 1:]
+            ss = s.split(':')
+            assert ss[0] == 'device'
+            assert ss[1] == 'GPU'
+            device_id = int(ss[2]) + 1
+        return device_id
+
+    def _device_name(self, device):
+        if device.is_cpu():
+            name = 'cpu:0'
+        elif device.is_gpu():
+            name = 'gpu:%d' % device.gpu_id()
+        else:
+            assert False
+        return name
+
+    def _device_name(self, device):
+        if device.is_cpu():
+            name = 'cpu:0'
+        elif device.is_gpu():
+            name = 'gpu:%d' % device.gpu_id()
+        else:
+            assert False
+        return name
+
+    def cast_to(self, x, dtype=None, device=None, copy=True):
+        from_device = self.device_of(x)
+        to_device = from_device if device is None else self.device(device)
+        if from_device is not to_device:
+            if from_dtype != to_dtype or copy:
+                x = tf.cast(x, to_dtype)
+        else:
+            with tf.device(self._device_name(to_device)):
+                x = tf.convert_to_tensor(x, to_dtype)
+        return x
+
+    def cast_numpy_to(self, x, dtype=None, device=None):
+        to_device = self.device(device)
+        from_dtype = x.dtype.name if device is None else self.device(device)
+        with tf.device(self._device_name(to_device)):
+            return tf.convert_to_tensor(x, to_dtype)
+
+
 class BaseVariableAPI(APIBase):
     def constant(self, x):
         raise NotImplementedError
 
+    def _name(self, name=None):
+        if name is None:
+            name = str(1 << 30)
+        else:
+            assert isinstance(name, str)
+            assert name
+        return name
+
     def variable(self, x):
         raise NotImplementedError
 
+    """
     @contextmanager
     def autograd_record(self):
         raise NotImplementedError
@@ -417,10 +523,11 @@ class BaseVariableAPI(APIBase):
     def backward(self, losses, grads):
         raise NotImplementedError
 
-    def data(self, x):
-        raise NotImplementedError
-
     def grad(self, x):
+        raise NotImplementedError
+    """
+
+    def data(self, x):
         raise NotImplementedError
 
     def assign(self, x, new_value):
@@ -444,6 +551,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return Variable(x.clone(), requires_grad=True)
 
+    """
     @contextmanager
     def autograd_record(self):
         yield
@@ -451,18 +559,19 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def backward(self, losses, grads):
         torch.autograd.backward(losses, grads)
 
+    def grad(self, x):
+        if isinstance(x, Variable):
+            x = x.grad.data
+        else:
+            assert False
+        return x
+    """
+
     def data(self, x):
         if isinstance(x, torch._TensorBase):
             pass
         elif isinstance(x, Variable):
             x = x.data
-        else:
-            assert False
-        return x
-
-    def grad(self, x):
-        if isinstance(x, Variable):
-            x = x.grad.data
         else:
             assert False
         return x
@@ -490,6 +599,7 @@ class MXNetVariableAPI(BaseVariableAPI):
         x.attach_grad()
         return x
 
+    """
     @contextmanager
     def autograd_record(self):
         with mx.autograd.record():
@@ -498,11 +608,12 @@ class MXNetVariableAPI(BaseVariableAPI):
     def backward(self, losses, grads):
         mx.autograd.backward(losses, grads)
 
-    def data(self, x):
-        return x
-
     def grad(self, x):
         return x.grad
+    """
+
+    def data(self, x):
+        return x
 
     def assign(self, x, new_value):
         x[:] = new_value
@@ -510,6 +621,35 @@ class MXNetVariableAPI(BaseVariableAPI):
 
     def numpy(self, x):
         return x.asnumpy()
+
+
+class TensorFlowVariableAPI(BaseVariableAPI):
+    def constant(self, x):
+        return tf.constant(x)
+
+    def variable(self, x):
+        return tfe.Variable(x, name=self._name())
+
+    """
+    @contextmanager
+    def autograd_record(self):
+        raise NotImplementedError
+
+    def backward(self, losses, grads):
+        raise NotImplementedError
+
+    def grad(self, x):
+        raise NotImplementedError
+    """
+
+    def data(self, x):
+        return x.data
+
+    def assign(self, x, new_value):
+        x.assign(new_value)
+
+    def numpy(self, x):
+        return x.numpy()
 
 
 class BaseAPI(BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI, BaseRelateAPI,
@@ -543,6 +683,18 @@ class MXNetAPI(MXNetDeviceDTypeAPI, MXNetMapAPI, MXNetReduceAPI, MXNetRelateAPI,
         MXNetRelateAPI.__init__(self)
         MXNetShapeAPI.__init__(self)
         MXNetVariableAPI.__init__(self)
+
+
+class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
+                    TensorFlowReduceAPI, TensorFlowRelateAPI,
+                    TensorFlowShapeAPI, TensorFlowVariableAPI):
+    def __init__(self):
+        TensorFlowDeviceDTypeAPI.__init__(self)
+        TensorFlowMapAPI.__init__(self)
+        TensorFlowReduceAPI.__init__(self)
+        TensorFlowRelateAPI.__init__(self)
+        TensorFlowShapeAPI.__init__(self)
+        TensorFlowVariableAPI.__init__(self)
 
 
 # Z = PyTorchAPI()
