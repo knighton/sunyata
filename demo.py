@@ -20,8 +20,34 @@ class Device(object):
         return bool(self.id)
 
 
-class API(object):
-    def __init__(self):
+
+class APIBase(object):
+    pass
+
+
+class MapAPI(APIBase):
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return x.clamp(min=0)
+
+
+class RelateAPI(APIBase):
+    def matmul(self, a, b):
+        return a.mm(b)
+
+
+class ShapeAPI(APIBase):
+    def rank(self, x):
+        return len(x.size())
+
+    def shape(self, x):
+        return tuple(x.size())
+
+    def size(self, x):
+        return x.nelement()
+
+
+class TypeAPI(APIBase):
+    def __init__(self, num_gpus):
         data = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
             int8     torch.CharTensor    torch.cuda.CharTensor
@@ -44,34 +70,13 @@ class API(object):
             self._dtype2gpu[dtype] = gpu
 
         self._devices = []
-        for device_id in range(self.num_gpus() + 1):
+        for device_id in range(num_gpus + 1):
             device = Device(device_id)
             self._devices.append(device)
         self._default_device = self._devices[-1]
 
-    def constant(self, tensor):
-        return Variable(tensor, requires_grad=False)
-
-    def variable(self, tensor):
-        return Variable(tensor, requires_grad=True)
-
     def num_gpus(self):
         return torch.cuda.device_count()
-
-    def clip(self, x, min=-np.inf, max=np.inf):
-        return x.clamp(min=0)
-
-    def rank(self, x):
-        return len(x.size())
-
-    def shape(self, x):
-        return tuple(x.size())
-
-    def size(self, x):
-        return x.nelement()
-
-    def matmul(self, a, b):
-        return a.mm(b)
 
     def default_dtype(self):
         return 'float32'
@@ -108,6 +113,15 @@ class API(object):
         else:
             device_id = 0
         return self._devices[device_id]
+
+    def _get_tensor_class(self, dtype, device):
+        if device.is_cpu():
+            dtype2class = self._dtype2cpu[dtype]
+        elif device.is_gpu():
+            dtype2class = self._dtype2gpu[dtype]
+        else:
+            assert False
+        return dtype2class[dtype]
 
     def cast_onto(self, x, dtype=None, device=None, copy=False):
         dtype = self.dtype(dtype)
@@ -155,15 +169,6 @@ class API(object):
         assert device.is_gpu()
         return self.to_device(x, device, copy)
 
-    def _get_tensor_class(self, dtype, device):
-        if device.is_cpu():
-            dtype2class = self._dtype2cpu[dtype]
-        elif device.is_gpu():
-            dtype2class = self._dtype2gpu[dtype]
-        else:
-            assert False
-        return dtype2class[dtype]
-
     def cast_numpy_onto(self, x, dtype=None, device=None):
         if dtype is not None:
             x = x.astype(dtype)
@@ -177,9 +182,26 @@ class API(object):
             assert False
         return x
 
+
+class VariableAPI(APIBase):
+    def constant(self, tensor):
+        return Variable(tensor, requires_grad=False)
+
+    def variable(self, tensor):
+        return Variable(tensor, requires_grad=True)
+
     def assign(self, x, new_value):
         x.data = new_value
         x.grad.data.zero_()
+
+
+class API(MapAPI, RelateAPI, ShapeAPI, TypeAPI, VariableAPI):
+    def __init__(self):
+        MapAPI.__init__(self)
+        RelateAPI.__init__(self)
+        ShapeAPI.__init__(self)
+        TypeAPI.__init__(self, self.num_gpus())
+        VariableAPI.__init__(self)
 
 
 Z = API()
