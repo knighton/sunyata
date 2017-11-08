@@ -69,6 +69,9 @@ class TypeAPI(APIBase):
             self._tensor2dtype[gpu] = dtype
             self._dtype2gpu[dtype] = gpu
 
+        self._dtypes = sorted(self._dtype2cpu)
+        self._default_dtype = 'float32'
+
         self._devices = []
         for device_id in range(num_gpus + 1):
             device = Device(device_id)
@@ -78,8 +81,15 @@ class TypeAPI(APIBase):
     def num_gpus(self):
         return torch.cuda.device_count()
 
+    def supported_dtypes(self):
+        return self._dtypes
+
+    def set_default_dtype(self, dtype):
+        assert dtype in self._dtype
+        self._default_dtype = dtype
+
     def default_dtype(self):
-        return 'float32'
+        return self._default_dtype
 
     def dtype(self, x):
         return x or self.default_dtype()
