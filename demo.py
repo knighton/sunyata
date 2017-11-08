@@ -49,6 +49,12 @@ class API(object):
             self._devices.append(device)
         self._default_device = self._devices[-1]
 
+    def constant(self, tensor):
+        return Variable(tensor, requires_grad=False)
+
+    def variable(self, tensor):
+        return Variable(tensor, requires_grad=True)
+
     def num_gpus(self):
         return torch.cuda.device_count()
 
@@ -171,6 +177,10 @@ class API(object):
             assert False
         return x
 
+    def assign(self, x, new_value):
+        x.data = new_value
+        x.grad.data.zero_()
+
 
 Z = API()
 
@@ -204,8 +214,8 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Variable(Z.cast_numpy_onto(kernel), requires_grad=True)
-        self.bias = Variable(Z.cast_numpy_onto(bias), requires_grad=True)
+        self.kernel = Z.variable(Z.cast_numpy_onto(kernel))
+        self.bias = Z.variable(Z.cast_numpy_onto(bias))
 
     def params(self):
         return [self.kernel, self.bias]
@@ -300,18 +310,20 @@ class SGD(Optimizer):
         self.lr = lr
 
     def update_param(self, param):
-        param.data -= self.lr * param.grad.data
-        param.grad.data.zero_()
+        Z.assign(param, param.data - self.lr * param.grad.data)
 
 
-batch_size, in_dim, hidden_dim, num_classes = 64, 1000, 100, 10
+batch_size = 64
+in_dim = 1000
+hidden_dim = 100
+num_classes = 10
 lr = 1e-6
 
 x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
-x = Variable(Z.cast_numpy_onto(x), requires_grad=False)
+x = Z.constant(Z.cast_numpy_onto(x))
 
 y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
-y = Variable(Z.cast_numpy_onto(y), requires_grad=False)
+y = Z.constant(Z.cast_numpy_onto(y))
 
 model = SequenceSpec([
     InputSpec((in_dim,), 'float32'),
