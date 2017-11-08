@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+import importlib
 import mxnet as mx
 import numpy as np
 import subprocess
@@ -35,7 +36,7 @@ class BaseMapAPI(APIBase):
         raise NotImplementedError
 
 
-class MapAPI(BaseMapAPI):
+class PyTorchMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min, max)
 
@@ -43,7 +44,7 @@ class MapAPI(BaseMapAPI):
         return x ** exp
 
 
-class MapAPI(BaseMapAPI):
+class MXNetMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return mx.nd.clip(x, min, max)
 
@@ -56,14 +57,14 @@ class BaseReduceAPI(APIBase):
         raise NotImplementedError
 
 
-class ReduceAPI(BaseReduceAPI):
+class PyTorchReduceAPI(BaseReduceAPI):
     @classmethod
     def _normalize_axis(cls, axis, keepdims, ndim):
         if axis is None:
             if keepdims:
                 axes = list(range(ndim))
             else:
-                axes = None
+                return None
         elif isinstance(axis, int):
             axes = [axis]
         elif isinstance(axis, tuple):
@@ -93,7 +94,7 @@ class ReduceAPI(BaseReduceAPI):
         return self._reduce('sum', x, axis, keepdims)
 
 
-class ReduceAPI(BaseReduceAPI):
+class MXNetReduceAPI(BaseReduceAPI):
     @classmethod
     def _reduce(cls, name, x, axis=None, keepdims=False):
         axis = mx.base._Null if axis is None else axis
@@ -109,12 +110,12 @@ class BaseRelateAPI(APIBase):
         raise NotImplementedError
 
 
-class RelateAPI(BaseRelateAPI):
+class PyTorchRelateAPI(BaseRelateAPI):
     def matmul(self, a, b):
         return a.mm(b)
 
 
-class RelateAPI(BaseRelateAPI):
+class MXNetRelateAPI(BaseRelateAPI):
     def matmul(self, a, b):
         return mx.nd.dot(a, b)
 
@@ -130,7 +131,7 @@ class BaseShapeAPI(APIBase):
         raise NotImplementedError
 
 
-class ShapeAPI(BaseShapeAPI):
+class PyTorchShapeAPI(BaseShapeAPI):
     def ndim(self, x):
         return len(x.size())
 
@@ -141,7 +142,7 @@ class ShapeAPI(BaseShapeAPI):
         return x.nelement()
 
 
-class ShapeAPI(BaseShapeAPI):
+class MXNetShapeAPI(BaseShapeAPI):
     def ndim(self, x):
         return len(x.ndim)
 
@@ -152,7 +153,7 @@ class ShapeAPI(BaseShapeAPI):
         return x.size
 
 
-class BaseDeviceDataTypeAPI(APIBase):
+class BaseDeviceDTypeAPI(APIBase):
     def __init__(self, num_gpus, default_device_id, supported_dtypes,
                  default_dtype):
         self._devices = []
@@ -213,7 +214,7 @@ class BaseDeviceDataTypeAPI(APIBase):
         return device
 
     def cast(self, x, dtype=None, copy=False):
-        return self.cast_onto(x, dtype, None, copy)
+        return self.cast_to(x, dtype, None, copy)
 
     def dtype_of(self, x):
         raise NotImplementedError
@@ -221,14 +222,14 @@ class BaseDeviceDataTypeAPI(APIBase):
     def device_of(self, x):
         raise NotImplementedError
 
-    def cast_onto(self, x, dtype=None, device=None, copy=False):
+    def cast_to(self, x, dtype=None, device=None, copy=False):
         raise NotImplementedError
 
-    def cast_numpy_onto(self, x, dtype=None, device=None):
+    def cast_numpy_to(self, x, dtype=None, device=None):
         raise NotImplementedError
 
-    def to_device(self, x, device=None, copy=False):
-        return self.cast_onto(x, None, device, copy)
+    def to(self, x, device=None, copy=False):
+        return self.cast_to(x, None, device, copy)
 
     def to_cpu(self, x, copy=False):
         return self.to_device(x, 0, copy)
@@ -239,7 +240,7 @@ class BaseDeviceDataTypeAPI(APIBase):
         return self.to_device(x, device, copy)
 
 
-class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         data = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
@@ -251,7 +252,6 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             float32  torch.FloatTensor   torch.cuda.FloatTensor
             float64  torch.DoubleTensor  torch.cuda.DoubleTensor
         """
-
         self._tensor2dtype = {}
         self._dtype2cpu = {}
         self._dtype2gpu = {}
@@ -261,12 +261,11 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             self._dtype2cpu[dtype] = cpu
             self._tensor2dtype[gpu] = dtype
             self._dtype2gpu[dtype] = gpu
-
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
         supported_dtypes = sorted(self._dtype2cpu)
         default_dtype = 'float32'
-        BaseDeviceDataTypeAPI.__init__(
+        BaseDeviceDTypeAPI.__init__(
             self, num_gpus, default_device_id, supported_dtypes, default_dtype)
 
     def discover_gpus(self):
@@ -290,19 +289,24 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
 
     def _get_tensor_class(self, dtype, device):
         if device.is_cpu():
-            dtype2class = self._dtype2cpu[dtype]
+            dtype2class = self._dtype2cpu
         elif device.is_gpu():
-            dtype2class = self._dtype2gpu[dtype]
+            dtype2class = self._dtype2gpu
         else:
             assert False
-        return dtype2class[dtype]
+        path = dtype2class[dtype]
+        x = path.rindex('.')
+        module_name = path[:x]
+        class_name = path[x + 1:]
+        module = importlib.import_module(module_name)
+        return getattr(module, class_name)
 
-    def cast_onto(self, x, dtype=None, device=None, copy=True):
+    def cast_to(self, x, dtype=None, device=None, copy=True):
         from_dtype = self.dtype_of(x)
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
-        to_tensor_class = self._get_tensor_class(to_dtype, device)
+        to_tensor_class = self._get_tensor_class(to_dtype, to_device)
         if from_device is to_device:
             if from_dtype != to_dtype or copy:
                 x = x.type(to_tensor_class)
@@ -316,11 +320,11 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
                 assert False
         return x
 
-    def cast_numpy_onto(self, x, dtype=None, device=None):
-        from_dtype = x.dtype
+    def cast_numpy_to(self, x, dtype=None, device=None):
+        from_dtype = x.dtype.name
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         to_device = self.device(device)
-        to_tensor_class = self._get_tensor_class(to_dtype, device)
+        to_tensor_class = self._get_tensor_class(to_dtype, to_device)
         if to_device.is_cpu():
             x = to_tensor_class(x)
         elif to_device.is_gpu():
@@ -331,7 +335,7 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
         return x
 
 
-class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
@@ -341,7 +345,7 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             float16 float32 float64
         """.split())
         default_dtype = 'float32'
-        BaseDeviceDataTypeAPI.__init__(
+        BaseDeviceDTypeAPI.__init__(
             self, num_gpus, default_device_id, supported_dtypes, default_dtype)
 
     def discover_gpus(self):
@@ -365,7 +369,7 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             assert False
         return self._devices[device_id]
 
-    def cast_onto(self, x, dtype=None, device=None, copy=True):
+    def cast_to(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
         if from_device is not to_device:
@@ -386,9 +390,9 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             x = x.copy()
         return x
 
-    def cast_numpy_onto(self, x, dtype=None, device=None):
+    def cast_numpy_to(self, x, dtype=None, device=None):
         to_device = self.device(device)
-        from_dtype = x.dtype
+        from_dtype = x.dtype.name
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         if to_device.is_cpu():
             ctx = mx.cpu()
@@ -430,7 +434,7 @@ class BaseVariableAPI(APIBase):
         return self.numpy(x).flatten()[0]
 
 
-class VariableAPI(BaseVariableAPI):
+class PyTorchVariableAPI(BaseVariableAPI):
     def constant(self, x):
         return Variable(x.clone(), requires_grad=False)
 
@@ -467,7 +471,7 @@ class VariableAPI(BaseVariableAPI):
         return x.cpu().numpy()
 
 
-class VariableAPI(BaseVariableAPI):
+class MXNetVariableAPI(BaseVariableAPI):
     def constant(self, x):
         return x.copy()
 
@@ -495,27 +499,41 @@ class VariableAPI(BaseVariableAPI):
         return x.asnumpy()
 
 
-class API(MapAPI, ReduceAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI,
-          VariableAPI):
+class BaseAPI(BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI, BaseRelateAPI,
+              BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
-        MapAPI.__init__(self)
-        RelateAPI.__init__(self)
-        ShapeAPI.__init__(self)
-        DeviceDataTypeAPI.__init__(self)
-        VariableAPI.__init__(self)
+        BaseDeviceDTypeAPI.__init__(self)
+        BaseMapAPI.__init__(self)
+        BaseReduceAPI.__init__(self)
+        BaseRelateAPI.__init__(self)
+        BaseShapeAPI.__init__(self)
+        BaseVariableAPI.__init__(self)
 
 
-class API(MapAPI, ReduceAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI,
-          VariableAPI):
+class PyTorchAPI(PyTorchDeviceDTypeAPI, PyTorchMapAPI, PyTorchReduceAPI,
+                 PyTorchRelateAPI, PyTorchShapeAPI, PyTorchVariableAPI):
     def __init__(self):
-        MapAPI.__init__(self)
-        RelateAPI.__init__(self)
-        ShapeAPI.__init__(self)
-        DeviceDataTypeAPI.__init__(self)
-        VariableAPI.__init__(self)
+        PyTorchDeviceDTypeAPI.__init__(self)
+        PyTorchMapAPI.__init__(self)
+        PyTorchReduceAPI.__init__(self)
+        PyTorchRelateAPI.__init__(self)
+        PyTorchShapeAPI.__init__(self)
+        PyTorchVariableAPI.__init__(self)
 
 
-Z = API()
+class MXNetAPI(MXNetDeviceDTypeAPI, MXNetMapAPI, MXNetReduceAPI, MXNetRelateAPI,
+               MXNetShapeAPI, MXNetVariableAPI):
+    def __init__(self):
+        MXNetDeviceDTypeAPI.__init__(self)
+        MXNetMapAPI.__init__(self)
+        MXNetReduceAPI.__init__(self)
+        MXNetRelateAPI.__init__(self)
+        MXNetShapeAPI.__init__(self)
+        MXNetVariableAPI.__init__(self)
+
+
+# Z = PyTorchAPI()
+Z = MXNetAPI()
 
 
 class Form(object):
@@ -547,8 +565,8 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Z.variable(Z.cast_numpy_onto(kernel))
-        self.bias = Z.variable(Z.cast_numpy_onto(bias))
+        self.kernel = Z.variable(Z.cast_numpy_to(kernel))
+        self.bias = Z.variable(Z.cast_numpy_to(bias))
 
     def params(self):
         return [self.kernel, self.bias]
@@ -652,9 +670,9 @@ hidden_dim = 100
 num_classes = 10
 lr = 1e-6
 x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
-x = Z.constant(Z.cast_numpy_onto(x))
+x = Z.constant(Z.cast_numpy_to(x))
 y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
-y = Z.constant(Z.cast_numpy_onto(y))
+y = Z.constant(Z.cast_numpy_to(y))
 model = SequenceSpec([
     InputSpec((in_dim,), 'float32'),
     DenseSpec(hidden_dim),
