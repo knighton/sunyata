@@ -20,23 +20,43 @@ class Device(object):
         return bool(self.id)
 
 
-
 class APIBase(object):
     pass
 
 
-class MapAPI(APIBase):
+class BaseMapAPI(APIBase):
+    def clip(self, x, min=-np.inf, max=np.inf):
+        raise NotImplementedError
+
+
+class MapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min=0)
 
 
-class RelateAPI(APIBase):
+class BaseRelateAPI(APIBase):
+    def matmul(self, a, b):
+        raise NotImplementedError
+
+
+class RelateAPI(BaseRelateAPI):
     def matmul(self, a, b):
         return a.mm(b)
 
 
-class ShapeAPI(APIBase):
-    def rank(self, x):
+class BaseShapeAPI(APIBase):
+    def ndim(self, x):
+        raise NotImplementedError
+
+    def shape(self, x):
+        raise NotImplementedError
+
+    def size(self, x):
+        raise NotImplementedError
+
+
+class ShapeAPI(BaseShapeAPI):
+    def ndim(self, x):
         return len(x.size())
 
     def shape(self, x):
@@ -46,7 +66,74 @@ class ShapeAPI(APIBase):
         return x.nelement()
 
 
-class TypeAPI(APIBase):
+class BaseDeviceDataTypeAPI(APIBase):
+    def __init__(self, supported_dtypes, default_dtype):
+        self._supported_dtypes = supported_dtypes
+        assert default_dtype in supported_dtypes
+        self._default_dtype = default_dtype
+
+    def num_gpus(self):
+        raise NotImplementedError
+
+    def supported_dtypes(self):
+        return self._supported_dtypes
+
+    def set_default_dtype(self, dtype):
+        assert dtype in self._supported_dtypes
+        self._default_dtype = dtype
+
+    def default_dtype(self):
+        return self._default_dtype
+
+    def dtype(self, x):
+        if x is None:
+            dtype = self.default_dtype()
+        else:
+            assert dtype in self._supported_dtypes
+        return dtype
+
+    def default_device(self):
+        return self._default_device
+
+    def device(self, x):
+        if x is None:
+            return self.default_device()
+        elif isinstance(x, Device):
+            device = x
+        else:
+            assert isinstance(x, int)
+            assert 0 <= x < len(self._devices)
+            device = self._devices[x]
+        return device
+
+    def cast(self, x, dtype=None, copy=False):
+        return self.cast_onto(x, dtype, None, copy)
+
+    def dtype_of(self, x):
+        raise NotImplementedError
+
+    def device_of(self, x):
+        raise NotImplementedError
+
+    def cast_onto(self, x, dtype=None, device=None, copy=False):
+        raise NotImplementedError
+
+    def cast_numpy_onto(self, x, dtype=None, device=None):
+        raise NotImplementedError
+
+    def to_device(self, x, device=None, copy=False):
+        return self.cast_onto(x, None, device, copy)
+
+    def to_cpu(self, x, copy=False):
+        return self.to_device(x, 0, copy)
+
+    def to_gpu(self, x, device, copy=False):
+        device = self.to_device(device)
+        assert device.is_gpu()
+        return self.to_device(x, device, copy)
+
+
+class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def __init__(self, num_gpus):
         data = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
@@ -69,7 +156,7 @@ class TypeAPI(APIBase):
             self._tensor2dtype[gpu] = dtype
             self._dtype2gpu[dtype] = gpu
 
-        self._dtypes = sorted(self._dtype2cpu)
+        self._supported_dtypes = sorted(self._dtype2cpu)
         self._default_dtype = 'float32'
 
         self._devices = []
@@ -81,23 +168,6 @@ class TypeAPI(APIBase):
     def num_gpus(self):
         return torch.cuda.device_count()
 
-    def supported_dtypes(self):
-        return self._dtypes
-
-    def set_default_dtype(self, dtype):
-        assert dtype in self._dtype
-        self._default_dtype = dtype
-
-    def default_dtype(self):
-        return self._default_dtype
-
-    def dtype(self, x):
-        if x is None:
-            dtype = self.default_dtype()
-        else:
-            assert dtype in self._dtypes
-        return dtype
-
     def dtype_of(self, x):
         if isinstance(x, torch._TensorBase):
             tensor = x
@@ -106,20 +176,6 @@ class TypeAPI(APIBase):
         else:
             assert False
         return self._tensor2dtype[tensor.type()]
-
-    def default_device(self):
-        return self._default_device
-
-    def device(self, x):
-        if x is None:
-            return self._default_device
-        elif isinstance(x, Device):
-            device = x
-        else:
-            assert isinstance(x, int)
-            assert 0 <= x < len(self._devices)
-            device = self._devices[x]
-        return device
 
     def device_of(self, x):
         if x.is_cuda:
@@ -167,20 +223,6 @@ class TypeAPI(APIBase):
             assert False
         return x
 
-    def cast(self, x, dtype=None, copy=False):
-        return self.cast_onto(x, dtype, None, copy)
-
-    def to_device(self, x, device=None, copy=False):
-        return self.cast_onto(x, None, device, copy)
-
-    def to_cpu(self, x, copy=False):
-        return self.to_device(x, 0, copy)
-
-    def to_gpu(self, x, device, copy=False):
-        device = self.to_device(device)
-        assert device.is_gpu()
-        return self.to_device(x, device, copy)
-
     def cast_numpy_onto(self, x, dtype=None, device=None):
         if dtype is not None:
             x = x.astype(dtype)
@@ -195,7 +237,18 @@ class TypeAPI(APIBase):
         return x
 
 
-class VariableAPI(APIBase):
+class BaseVariableAPI(APIBase):
+    def constant(self, tensor):
+        raise NotImplementedError
+
+    def variable(self, tensor):
+        raise NotImplementedError
+
+    def assign(self, x, new_value):
+        raise NotImplementedError
+
+
+class VariableAPI(BaseVariableAPI):
     def constant(self, tensor):
         return Variable(tensor, requires_grad=False)
 
@@ -207,12 +260,12 @@ class VariableAPI(APIBase):
         x.grad.data.zero_()
 
 
-class API(MapAPI, RelateAPI, ShapeAPI, TypeAPI, VariableAPI):
+class API(MapAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI, VariableAPI):
     def __init__(self):
         MapAPI.__init__(self)
         RelateAPI.__init__(self)
         ShapeAPI.__init__(self)
-        TypeAPI.__init__(self, self.num_gpus())
+        DeviceDataTypeAPI.__init__(self, self.num_gpus())
         VariableAPI.__init__(self)
 
 
