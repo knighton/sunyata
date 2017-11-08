@@ -3,11 +3,54 @@ import torch
 from torch.autograd import Variable
 
 
+class Device(object):
+    def __init__(self, id):
+        assert isinstance(id, int)
+        assert 0 <= id
+        self.id = id
+
+    @property
+    def type(self):
+        return 'gpu' if self.id else 'cpu'
+
+    def is_cpu(self):
+        return not self.id
+
+    def is_gpu(self):
+        return bool(self.id)
+
+
 class API(object):
-    def dtype_of(self, x):
-        assert isinstance(x, torch.FloatTensor) or \
-            (isinstance(x, Variable) and isinstance(x.data, torch.FloatTensor))
-        return np.float32
+    def __init__(self):
+        data = """
+            uint8    torch.ByteTensor    torch.cuda.ByteTensor
+            int8     torch.CharTensor    torch.cuda.CharTensor
+            int16    torch.ShortTensor   torch.cuda.ShortTensor
+            int32    torch.IntTensor     torch.cuda.IntTensor
+            int64    torch.LongTensor    torch.cuda.LongTensor
+            float16  torch.HalfTensor    torch.cuda.HalfTensor
+            float32  torch.FloatTensor   torch.cuda.FloatTensor
+            float64  torch.DoubleTensor  torch.cuda.DoubleTensor
+        """
+
+        self._tensor2dtype = {}
+        self._dtype2cpu = {}
+        self._dtype2gpu = {}
+        for line in data.strip().split('\n'):
+            dtype, cpu, gpu = line.split()
+            self._tensor2dtype[cpu] = dtype
+            self._dtype2cpu[dtype] = cpu
+            self._tensor2dtype[gpu] = dtype
+            self._dtype2gpu[dtype] = gpu
+
+        self._devices = []
+        for device_id in range(self.num_gpus() + 1):
+            device = Device(device_id)
+            self._devices.append(device)
+        self._default_device = self._devices[-1]
+
+    def num_gpus(self):
+        return torch.cuda.device_count()
 
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min=0)
@@ -25,27 +68,108 @@ class API(object):
         return a.mm(b)
 
     def default_dtype(self):
-        return np.float32
+        return 'float32'
 
     def dtype(self, x):
         return x or self.default_dtype()
 
+    def dtype_of(self, x):
+        if isinstance(x, torch._TensorBase):
+            tensor = x
+        elif isinstance(x, Variable):
+            tensor = x.data
+        else:
+            assert False
+        return self._tensor2dtype[tensor.type()]
+
+    def default_device(self):
+        return self._default_device
+
     def device(self, x):
-        assert x is None
+        if x is None:
+            return self._default_device
+        elif isinstance(x, Device):
+            device = x
+        else:
+            assert isinstance(x, int)
+            assert 0 <= x < len(self._devices)
+            device = self._devices[x]
+        return device
+
+    def device_of(self, x):
+        if x.is_cuda:
+            device_id = x.get_device()
+        else:
+            device_id = 0
+        return self._devices[device_id]
+
+    def cast_onto(self, x, dtype=None, device=None, copy=False):
+        dtype = self.dtype(dtype)
+        tensor_class = self._get_tensor_class(dtype, device)
+        if self.dtype_of(x) != dtype:
+            x = x.type(tensor_class)
+        from_device = self.device_of(x)
+        to_device = self.device(device)
+        if from_device.is_cpu():
+            if to_device.is_cpu():
+                if copy:
+                    x = x.clone()
+            elif to_device.is_gpu():
+                with torch.cuda.device(to_device.gpu_id()):
+                    x = x.cuda()
+            else:
+                assert False
+        elif from_device.is_gpu():
+            if to_device.is_cpu():
+                x = x.cpu()
+            elif to_device.is_gpu():
+                if from_device is to_device:
+                    if copy:
+                        x = x.clone()
+                else:
+                    with torch.cuda.device(to_device.gpu_id()):
+                        x = x.cuda()
+            else:
+                assert False
+        else:
+            assert False
         return x
 
-    def cast_tensor_onto(self, x, dtype=None, device=None, copy=False):
-        dtype = self.dtype(dtype)
-        assert dtype == np.float32
-        if isinstance(x, np.ndarray):
-            print('!', x.dtype)
-            assert x.dtype == 'float32'
+    def cast(self, x, dtype=None, copy=False):
+        return self.cast_onto(x, dtype, None, copy)
+
+    def to_device(self, x, device=None, copy=False):
+        return self.cast_onto(x, None, device, copy)
+
+    def to_cpu(self, x, copy=False):
+        return self.to_device(x, 0, copy)
+
+    def to_gpu(self, x, device, copy=False):
+        device = self.to_device(device)
+        assert device.is_gpu()
+        return self.to_device(x, device, copy)
+
+    def _get_tensor_class(self, dtype, device):
+        if device.is_cpu():
+            dtype2class = self._dtype2cpu[dtype]
+        elif device.is_gpu():
+            dtype2class = self._dtype2gpu[dtype]
         else:
-            print("!", x)
-            assert isinstance(x, torch.FloatTensor)
+            assert False
+        return dtype2class[dtype]
+
+    def cast_numpy_onto(self, x, dtype=None, device=None):
+        if dtype is not None:
+            x = x.astype(dtype)
         device = self.device(device)
-        assert copy is False
-        return torch.from_numpy(x)
+        if device.is_cpu():
+            x = torch.from_numpy(x)
+        elif device.is_gpu():
+            with torch.cuda.device(device.gpu_id()):
+                x = self._get_tensor_class(dtype, device)(x)
+        else:
+            assert False
+        return x
 
 
 Z = API()
@@ -80,8 +204,8 @@ class InputLayer(Layer):
 
 class DenseLayer(Layer):
     def __init__(self, kernel, bias):
-        self.kernel = Variable(Z.cast_tensor_onto(kernel), requires_grad=True)
-        self.bias = Variable(Z.cast_tensor_onto(bias), requires_grad=True)
+        self.kernel = Variable(Z.cast_numpy_onto(kernel), requires_grad=True)
+        self.bias = Variable(Z.cast_numpy_onto(bias), requires_grad=True)
 
     def params(self):
         return [self.kernel, self.bias]
@@ -184,13 +308,13 @@ batch_size, in_dim, hidden_dim, num_classes = 64, 1000, 100, 10
 lr = 1e-6
 
 x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
-x = Variable(Z.cast_tensor_onto(x), requires_grad=False)
+x = Variable(Z.cast_numpy_onto(x), requires_grad=False)
 
 y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
-y = Variable(Z.cast_tensor_onto(y), requires_grad=False)
+y = Variable(Z.cast_numpy_onto(y), requires_grad=False)
 
 model = SequenceSpec([
-    InputSpec((in_dim,), np.float32),
+    InputSpec((in_dim,), 'float32'),
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(num_classes),
