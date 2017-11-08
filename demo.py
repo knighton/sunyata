@@ -31,7 +31,7 @@ class BaseMapAPI(APIBase):
 
 class MapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
-        return x.clamp(min=0)
+        return x.clamp(min, max)
 
 
 class BaseRelateAPI(APIBase):
@@ -193,45 +193,36 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             assert False
         return dtype2class[dtype]
 
-    def cast_onto(self, x, dtype=None, device=None, copy=False):
-        dtype = self.dtype(dtype)
-        tensor_class = self._get_tensor_class(dtype, device)
-        if self.dtype_of(x) != dtype:
-            x = x.type(tensor_class)
+    def cast_onto(self, x, dtype=None, device=None, copy=True):
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(to_dtype)
         from_device = self.device_of(x)
-        to_device = self.device(device)
-        if from_device.is_cpu():
-            if to_device.is_cpu():
-                if copy:
-                    x = x.clone()
-            elif to_device.is_gpu():
-                x = x.cuda(to_device.gpu_id())
-            else:
-                assert False
-        elif from_device.is_gpu():
-            if to_device.is_cpu():
-                x = x.cpu()
-            elif to_device.is_gpu():
-                if from_device is to_device:
-                    if copy:
-                        x = x.clone()
-                else:
-                    x = x.cuda(to_device.gpu_id())
-            else:
-                assert False
+        to_device = from_device if device is None else self.device(device)
+        to_tensor_class = self._get_tensor_class(to_dtype, device)
+        if from_device is to_device:
+            if from_dtype != to_dtype or copy:
+                x = x.type(to_tensor_class)
         else:
-            assert False
+            if to_device.is_cpu():
+                x = to_tensor_class(x)
+            elif to_device.is_gpu():
+                with torch.cuda.device(to_device.gpu_id()):
+                    x = x.type(to_tensor_class)
+            else:
+                assert False
         return x
 
     def cast_numpy_onto(self, x, dtype=None, device=None):
-        if dtype is not None:
-            x = x.astype(dtype)
-        device = self.device(device)
-        if device.is_cpu():
-            x = torch.from_numpy(x)
-        elif device.is_gpu():
-            with torch.cuda.device(device.gpu_id()):
-                x = self._get_tensor_class(dtype, device)(x)
+        from_dtype = x.dtype
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
+        from_device = self._devices[0]
+        to_device = from_device if device is None else self.device(to_device)
+        to_tensor_class = self._get_tensor_class(to_dtype, device)
+        if to_device.is_cpu():
+            x = tensor_class(x)
+        elif to_device.is_gpu():
+            with torch.cuda.device(to_device.gpu_id()):
+                x = tensor_class(x)
         else:
             assert False
         return x
