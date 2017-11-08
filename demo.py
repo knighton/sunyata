@@ -412,7 +412,10 @@ class BaseVariableAPI(APIBase):
 
     @contextmanager
     def autograd_record(self):
-        yield
+        raise NotImplementedError
+
+    def backward(self, losses, grads):
+        raise NotImplementedError
 
     def data(self, x):
         raise NotImplementedError
@@ -440,6 +443,13 @@ class PyTorchVariableAPI(BaseVariableAPI):
 
     def variable(self, x):
         return Variable(x.clone(), requires_grad=True)
+
+    @contextmanager
+    def autograd_record(self):
+        yield
+
+    def backward(self, losses, grads):
+        torch.autograd.backward(losses, grads)
 
     def data(self, x):
         if isinstance(x, torch._TensorBase):
@@ -484,6 +494,9 @@ class MXNetVariableAPI(BaseVariableAPI):
     def autograd_record(self):
         with mx.autograd.record():
             yield
+
+    def backward(self, losses, grads):
+        mx.autograd.backward(losses, grads)
 
     def data(self, x):
         return x
@@ -686,6 +699,8 @@ for t in range(500):
     with Z.autograd_record():
         y_pred = model.forward(x)
         loss = mean_squared_error(y, y_pred)
-    print(t, Z.scalar(loss))
-    loss.backward()
+    losses = [loss]
+    grads = [Z.cast_numpy_to(np.ones(1).astype('float32'))]
+    Z.backward(losses, grads)
+    print(t, Z.scalar(losses[0]))
     opt.update()
