@@ -135,8 +135,7 @@ class TypeAPI(APIBase):
                 if copy:
                     x = x.clone()
             elif to_device.is_gpu():
-                with torch.cuda.device(to_device.gpu_id()):
-                    x = x.cuda()
+                x = x.cuda(to_device.gpu_id())
             else:
                 assert False
         elif from_device.is_gpu():
@@ -147,8 +146,7 @@ class TypeAPI(APIBase):
                     if copy:
                         x = x.clone()
                 else:
-                    with torch.cuda.device(to_device.gpu_id()):
-                        x = x.cuda()
+                    x = x.cuda(to_device.gpu_id())
             else:
                 assert False
         else:
