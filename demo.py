@@ -1,4 +1,7 @@
+from contextlib import contextmanager
+import mxnet as mx
 import numpy as np
+import subprocess
 import torch
 from torch.autograd import Variable
 
@@ -28,10 +31,77 @@ class BaseMapAPI(APIBase):
     def clip(self, x, min=-np.inf, max=np.inf):
         raise NotImplementedError
 
+    def pow(self, x, exp):
+        raise NotImplementedError
+
 
 class MapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min, max)
+
+    def pow(self, x, exp):
+        return x ** exp
+
+
+class MapAPI(BaseMapAPI):
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return mx.nd.clip(x, min, max)
+
+    def pow(self, x, a):
+        return mx.nd.power(x, a)
+
+
+class BaseReduceAPI(APIBase):
+    def sum(self, x, axis=None, keepdims=False):
+        raise NotImplementedError
+
+
+class ReduceAPI(BaseReduceAPI):
+    @classmethod
+    def _normalize_axis(cls, axis, keepdims, ndim):
+        if axis is None:
+            if keepdims:
+                axes = list(range(ndim))
+            else:
+                axes = None
+        elif isinstance(axis, int):
+            axes = [axis]
+        elif isinstance(axis, tuple):
+            axes = list(axis)
+        elif isinstance(axis, list):
+            pass
+        else:
+            assert False
+        axes = list(map(lambda n: n % ndim, axes))
+        return sorted(axes)
+
+    @classmethod
+    def _reduce(cls, name, x, axis=None, keepdims=False):
+        axes = cls._normalize_axis(axis, keepdims, x.dim())
+        if axes is None:
+            return getattr(x, name)()
+        for axis in axes:
+            x = getattr(x, name)(axis, keepdims)
+            if isinstance(x, tuple):
+                x = x[0]
+        if not keepdims:
+            for axis in reversed(axes):
+                x = x.squeeze(axis)
+        return x
+
+    def sum(self, x, axis=None, keepdims=False):
+        return self._reduce('sum', x, axis, keepdims)
+
+
+class ReduceAPI(BaseReduceAPI):
+    @classmethod
+    def _reduce(cls, name, x, axis=None, keepdims=False):
+        axis = mx.base._Null if axis is None else axis
+        func = getattr(mx.nd, name)
+        return func(x, axis, keepdims)
+
+    def sum(self, x, axis=None, keepdims=False):
+        return self._reduce('sum', x, axis, keepdims)
 
 
 class BaseRelateAPI(APIBase):
@@ -42,6 +112,11 @@ class BaseRelateAPI(APIBase):
 class RelateAPI(BaseRelateAPI):
     def matmul(self, a, b):
         return a.mm(b)
+
+
+class RelateAPI(BaseRelateAPI):
+    def matmul(self, a, b):
+        return mx.nd.dot(a, b)
 
 
 class BaseShapeAPI(APIBase):
@@ -66,14 +141,30 @@ class ShapeAPI(BaseShapeAPI):
         return x.nelement()
 
 
+class ShapeAPI(BaseShapeAPI):
+    def ndim(self, x):
+        return len(x.ndim)
+
+    def shape(self, x):
+        return x.shape
+
+    def size(self, x):
+        return x.size
+
+
 class BaseDeviceDataTypeAPI(APIBase):
-    def __init__(self, supported_dtypes, default_dtype):
+    def __init__(self, num_gpus, default_device_id, supported_dtypes,
+                 default_dtype):
+        self._devices = []
+        for device_id in range(num_gpus + 1):
+            device = Device(device_id)
+            self._devices.append(device)
+        assert isinstance(default_device_id, int)
+        assert 0 <= default_device_id < len(self._devices)
+        self._default_device = self._devices[default_device_id]
         self._supported_dtypes = supported_dtypes
         assert default_dtype in supported_dtypes
         self._default_dtype = default_dtype
-
-    def num_gpus(self):
-        raise NotImplementedError
 
     def supported_dtypes(self):
         return self._supported_dtypes
@@ -91,6 +182,21 @@ class BaseDeviceDataTypeAPI(APIBase):
         else:
             assert dtype in self._supported_dtypes
         return dtype
+
+    def num_devices(self):
+        return len(self._devices)
+
+    def num_gpus(self):
+        return len(self._devices) - 1
+
+    def set_default_device(self, device):
+        if isinstance(device, Device):
+            assert device in self._devices
+        else:
+            assert isinstance(device, int)
+            assert 0 <= device < len(self._devices)
+            device = self._devices[device]
+        self._default_device = device
 
     def default_device(self):
         return self._default_device
@@ -134,7 +240,7 @@ class BaseDeviceDataTypeAPI(APIBase):
 
 
 class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
-    def __init__(self, num_gpus):
+    def __init__(self):
         data = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
             int8     torch.CharTensor    torch.cuda.CharTensor
@@ -156,16 +262,14 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
             self._tensor2dtype[gpu] = dtype
             self._dtype2gpu[dtype] = gpu
 
-        self._supported_dtypes = sorted(self._dtype2cpu)
-        self._default_dtype = 'float32'
+        num_gpus = self.discover_gpus()
+        default_device_id = 1 if num_gpus else 0
+        supported_dtypes = sorted(self._dtype2cpu)
+        default_dtype = 'float32'
+        BaseDeviceDataTypeAPI.__init__(
+            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
 
-        self._devices = []
-        for device_id in range(num_gpus + 1):
-            device = Device(device_id)
-            self._devices.append(device)
-        self._default_device = self._devices[-1]
-
-    def num_gpus(self):
+    def discover_gpus(self):
         return torch.cuda.device_count()
 
     def dtype_of(self, x):
@@ -195,7 +299,7 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
 
     def cast_onto(self, x, dtype=None, device=None, copy=True):
         from_dtype = self.dtype_of(x)
-        to_dtype = from_dtype if dtype is None else self.dtype(to_dtype)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
         to_tensor_class = self._get_tensor_class(to_dtype, device)
@@ -215,48 +319,199 @@ class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def cast_numpy_onto(self, x, dtype=None, device=None):
         from_dtype = x.dtype
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
-        from_device = self._devices[0]
-        to_device = from_device if device is None else self.device(to_device)
+        to_device = self.device(device)
         to_tensor_class = self._get_tensor_class(to_dtype, device)
         if to_device.is_cpu():
-            x = tensor_class(x)
+            x = to_tensor_class(x)
         elif to_device.is_gpu():
             with torch.cuda.device(to_device.gpu_id()):
-                x = tensor_class(x)
+                x = to_tensor_class(x)
         else:
             assert False
         return x
 
 
+class DeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+    def __init__(self):
+        num_gpus = self.discover_gpus()
+        default_device_id = 1 if num_gpus else 0
+        supported_dtypes = sorted("""
+            uint8
+            int8 int16 int32 int64
+            float16 float32 float64
+        """.split())
+        default_dtype = 'float32'
+        BaseDeviceDataTypeAPI.__init__(
+            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+
+    def discover_gpus(self):
+        cmd = 'nvidia-smi', '-L'
+        try:
+            result = subprocess.run(cmd, stdout=subprocess.PIPE)
+            lines = result.stdout.decode('unicode-escape')
+            return len(lines)
+        except:
+            return 0
+
+    def dtype_of(self, x):
+        return x.dtype.__name__
+
+    def device_of(self, x):
+        if x.context.device_type == 'cpu':
+            device_id = 0
+        elif x.context.device_type == 'gpu':
+            device_id = x.context.device_id + 1
+        else:
+            assert False
+        return self._devices[device_id]
+
+    def cast_onto(self, x, dtype=None, device=None, copy=True):
+        from_device = self.device_of(x)
+        to_device = from_device if device is None else self.device(device)
+        if from_device is not to_device:
+            if to_device.is_cpu():
+                ctx = mx.cpu()
+            elif to_device.is_gpu():
+                ctx = mx.gpu(to_device.gpu_id())
+            else:
+                assert False
+            x = x.as_in_context(ctx)
+            copy = False
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
+        if from_dtype != to_dtype:
+            x = x.astype(to_dtype)
+            copy = False
+        if copy:
+            x = x.copy()
+        return x
+
+    def cast_numpy_onto(self, x, dtype=None, device=None):
+        to_device = self.device(device)
+        from_dtype = x.dtype
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
+        if to_device.is_cpu():
+            ctx = mx.cpu()
+        elif to_device.is_gpu():
+            ctx = mx.gpu(to_device.gpu_id())
+        else:
+            assert False
+        return mx.nd.array(x, ctx, to_dtype)
+
+
 class BaseVariableAPI(APIBase):
-    def constant(self, tensor):
+    def constant(self, x):
         raise NotImplementedError
 
-    def variable(self, tensor):
+    def variable(self, x):
+        raise NotImplementedError
+
+    @contextmanager
+    def autograd_record(self):
+        yield
+
+    def data(self, x):
+        raise NotImplementedError
+
+    def grad(self, x):
         raise NotImplementedError
 
     def assign(self, x, new_value):
         raise NotImplementedError
 
+    def numpy(self, x):
+        raise NotImplementedError
+
+    def list(self, x):
+        return self.numpy(x).tolist()
+
+    def scalar(self, x):
+        assert self.size(x) == 1
+        return self.numpy(x).flatten()[0]
+
 
 class VariableAPI(BaseVariableAPI):
-    def constant(self, tensor):
-        return Variable(tensor, requires_grad=False)
+    def constant(self, x):
+        return Variable(x.clone(), requires_grad=False)
 
-    def variable(self, tensor):
-        return Variable(tensor, requires_grad=True)
+    def variable(self, x):
+        return Variable(x.clone(), requires_grad=True)
+
+    def data(self, x):
+        if isinstance(x, torch._TensorBase):
+            pass
+        elif isinstance(x, Variable):
+            x = x.data
+        else:
+            assert False
+        return x
+
+    def grad(self, x):
+        if isinstance(x, Variable):
+            x = x.grad.data
+        else:
+            assert False
+        return x
 
     def assign(self, x, new_value):
         x.data = new_value
         x.grad.data.zero_()
 
+    def numpy(self, x):
+        if isinstance(x, torch._TensorBase):
+            pass
+        elif isinstance(x, Variable):
+            x = x.data
+        else:
+            assert False
+        return x.cpu().numpy()
 
-class API(MapAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI, VariableAPI):
+
+class VariableAPI(BaseVariableAPI):
+    def constant(self, x):
+        return x.copy()
+
+    def variable(self, x):
+        x = x.copy()
+        x.attach_grad()
+        return x
+
+    @contextmanager
+    def autograd_record(self):
+        with mx.autograd.record():
+            yield
+
+    def data(self, x):
+        return x
+
+    def grad(self, x):
+        return x.grad
+
+    def assign(self, x, new_value):
+        x[:] = new_value
+        x.grad[:] = 0
+
+    def numpy(self, x):
+        return x.asnumpy()
+
+
+class API(MapAPI, ReduceAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI,
+          VariableAPI):
     def __init__(self):
         MapAPI.__init__(self)
         RelateAPI.__init__(self)
         ShapeAPI.__init__(self)
-        DeviceDataTypeAPI.__init__(self, self.num_gpus())
+        DeviceDataTypeAPI.__init__(self)
+        VariableAPI.__init__(self)
+
+
+class API(MapAPI, ReduceAPI, RelateAPI, ShapeAPI, DeviceDataTypeAPI,
+          VariableAPI):
+    def __init__(self):
+        MapAPI.__init__(self)
+        RelateAPI.__init__(self)
+        ShapeAPI.__init__(self)
+        DeviceDataTypeAPI.__init__(self)
         VariableAPI.__init__(self)
 
 
@@ -368,7 +623,7 @@ class SequenceSpec(Spec):
 
 
 def mean_squared_error(true, pred):
-    return (true - pred).pow(2).sum()
+    return Z.sum(Z.pow(true - pred, 2))
 
 
 class Optimizer(object):
@@ -388,7 +643,7 @@ class SGD(Optimizer):
         self.lr = lr
 
     def update_param(self, param):
-        Z.assign(param, param.data - self.lr * param.grad.data)
+        Z.assign(param, Z.data(param) - self.lr * Z.grad(param))
 
 
 batch_size = 64
@@ -396,31 +651,23 @@ in_dim = 1000
 hidden_dim = 100
 num_classes = 10
 lr = 1e-6
-
 x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
 x = Z.constant(Z.cast_numpy_onto(x))
-
 y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
 y = Z.constant(Z.cast_numpy_onto(y))
-
 model = SequenceSpec([
     InputSpec((in_dim,), 'float32'),
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(num_classes),
 ])
-
 model, out_shape = model.build()
-
 opt = SGD(lr)
 opt.set_params(model.params())
-
 for t in range(500):
-    y_pred = model.forward(x)
-
-    loss = mean_squared_error(y, y_pred)
-    print(t, loss.data[0])
-
+    with Z.autograd_record():
+        y_pred = model.forward(x)
+        loss = mean_squared_error(y, y_pred)
+    print(t, Z.scalar(loss))
     loss.backward()
-
     opt.update()
