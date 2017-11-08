@@ -92,7 +92,11 @@ class TypeAPI(APIBase):
         return self._default_dtype
 
     def dtype(self, x):
-        return x or self.default_dtype()
+        if x is None:
+            dtype = self.default_dtype()
+        else:
+            assert dtype in self._dtypes
+        return dtype
 
     def dtype_of(self, x):
         if isinstance(x, torch._TensorBase):
