@@ -858,7 +858,7 @@ class BaseVariableAPI(APIBase):
             y_aux_scores = []
             for judge in y_aux_judges:
                 result = self.mean(judge(y_true, y_pred))
-                y_aux_scores.append(Z.result_to_tensor(result))
+                y_aux_scores.append(self.result_to_tensor(result))
             aux_scores.append(y_aux_scores)
         return aux_scores
 
@@ -898,7 +898,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             score_vars.append(self.mean(judge(y_true, y_pred)))
-            arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
+            arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
             score_grads.append(self.cast_numpy_to(arr))
         torch.autograd.backward(score_vars, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
@@ -942,7 +942,7 @@ class MXNetVariableAPI(BaseVariableAPI):
             yy_pred = forward(xx)
             for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
                 scores.append(self.mean(judge(y_true, y_pred)))
-                arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
+                arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
                 score_grads.append(self.cast_numpy_to(arr))
         mx.autograd.backward(scores, score_grads)
         grads_and_params = list(map(lambda x: (x.grad, x), params))
@@ -1012,7 +1012,7 @@ class ChainerVariableAPI(BaseVariableAPI):
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             score_vars.append(self.mean(judge(y_true, y_pred)))
-            arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
+            arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
             score_grads.append(self.cast_numpy_to(arr))
         grad_vars = chainer.grad(score_vars, params, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
