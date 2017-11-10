@@ -3,8 +3,13 @@ import importlib
 import mxnet as mx
 import numpy as np
 import subprocess
+import tensorflow as tf
+import tensorflow.contrib.eager as tfe
 import torch
 from torch.autograd import Variable
+
+
+tfe.enable_eager_execution()
 
 
 class Device(object):
@@ -173,13 +178,13 @@ class MXNetShapeAPI(BaseShapeAPI):
 
 class TensorFlowShapeAPI(BaseShapeAPI):
     def ndim(self, x):
-        return tf.rank(x)
+        return int(tf.rank(x).numpy())
 
     def shape(self, x):
         return x.shape
 
     def size(self, x):
-        return tf.size(x)
+        return int(tf.size(x).numpy())
 
 
 class BaseDeviceDTypeAPI(APIBase):
@@ -432,7 +437,7 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         num_gpus = tfe.num_gpus()
         default_device_id = 1 if num_gpus else 0
-        supported_devices = sorted("""
+        supported_dtypes = sorted("""
             bool
             uint8 uint16 uint32 uint64
             int8 int16 int32 int64
@@ -481,6 +486,8 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def cast_to(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         if from_device is not to_device:
             if from_dtype != to_dtype or copy:
                 x = tf.cast(x, to_dtype)
@@ -492,6 +499,7 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def cast_numpy_to(self, x, dtype=None, device=None):
         to_device = self.device(device)
         from_dtype = x.dtype.name if device is None else self.device(device)
+        to_dtype = x.dtype if dtype is None else self.dtype(dtype)
         with tf.device(self._device_name(to_device)):
             return tf.convert_to_tensor(x, to_dtype)
 
@@ -511,17 +519,8 @@ class BaseVariableAPI(APIBase):
     def variable(self, x):
         raise NotImplementedError
 
-    """
-    @contextmanager
-    def autograd_record(self):
+    def gradients(self, forward, xx, yy, variables):
         raise NotImplementedError
-
-    def backward(self, losses, grads):
-        raise NotImplementedError
-
-    def grad(self, x):
-        raise NotImplementedError
-    """
 
     def data(self, x):
         raise NotImplementedError
@@ -547,21 +546,14 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return Variable(x.clone(), requires_grad=True)
 
-    """
-    @contextmanager
-    def autograd_record(self):
-        yield
-
-    def backward(self, losses, grads):
+    def gradients(self, forward, xx, yy, variables):
+        losses = forward(xx, yy)
+        grads = [self.cast_numpy_to(np.ones((1,)).astype('float32'))
+                 for _ in losses]
         torch.autograd.backward(losses, grads)
-
-    def grad(self, x):
-        if isinstance(x, Variable):
-            x = x.grad.data
-        else:
-            assert False
-        return x
-    """
+        losses = list(map(lambda v: v.data, losses))
+        grads_vars = list(map(lambda v: (v.grad.data, v), variables))
+        return losses, grads_vars
 
     def data(self, x):
         if isinstance(x, torch._TensorBase):
@@ -595,18 +587,14 @@ class MXNetVariableAPI(BaseVariableAPI):
         x.attach_grad()
         return x
 
-    """
-    @contextmanager
-    def autograd_record(self):
+    def gradients(self, forward, xx, yy, variables):
         with mx.autograd.record():
-            yield
-
-    def backward(self, losses, grads):
+            losses = forward(xx, yy)
+        grads = [self.cast_numpy_to(np.ones((1,)).astype('float32'))
+                 for _ in losses]
         mx.autograd.backward(losses, grads)
-
-    def grad(self, x):
-        return x.grad
-    """
+        grads_vars = list(map(lambda v: (v.grad, v), variables))
+        return losses, grads_vars
 
     def data(self, x):
         return x
@@ -626,20 +614,15 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return tfe.Variable(x, name=self._name())
 
-    """
-    @contextmanager
-    def autograd_record(self):
-        raise NotImplementedError
-
-    def backward(self, losses, grads):
-        raise NotImplementedError
-
-    def grad(self, x):
-        raise NotImplementedError
-    """
+    def gradients(self, forward, xx, yy, variables):
+        variables_set = set(variables)
+        assert len(variables_set) == len(variables)
+        func = tfe.implicit_value_and_gradients(forward)
+        losses, grads_vars = func(xx, yy)
+        return losses, grads_vars
 
     def data(self, x):
-        return x.data
+        return x
 
     def assign(self, x, new_value):
         x.assign(new_value)
@@ -693,8 +676,9 @@ class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
-# Z = PyTorchAPI()
-Z = MXNetAPI()
+#Z = PyTorchAPI()
+#Z = MXNetAPI()
+Z = TensorFlowAPI()
 
 
 class Form(object):
@@ -809,20 +793,20 @@ class Optimizer(object):
     def set_params(self, params):
         self.params = params
 
-    def update_param(self, param):
+    def update_param(self, gradient, variable):
         raise NotImplementedError
 
-    def update(self):
-        for param in self.params:
-            self.update_param(param)
+    def update(self, grads_vars):
+        for gradient, variable in grads_vars:
+            self.update_param(gradient, variable)
 
 
 class SGD(Optimizer):
     def __init__(self, lr):
         self.lr = lr
 
-    def update_param(self, param):
-        Z.assign(param, Z.data(param) - self.lr * Z.grad(param))
+    def update_param(self, gradient, variable):
+        Z.assign(variable, Z.data(variable) - self.lr * gradient)
 
 
 batch_size = 64
@@ -844,11 +828,10 @@ model, out_shape = model.build()
 opt = SGD(lr)
 opt.set_params(model.params())
 for t in range(500):
-    with Z.autograd_record():
+    def forward(xx, yy):
         y_pred = model.forward(x)
         loss = mean_squared_error(y, y_pred)
-    losses = [loss]
-    grads = [Z.cast_numpy_to(np.ones(1).astype('float32'))]
-    Z.backward(losses, grads)
+        return [loss]
+    losses, grads_vars = Z.gradients(forward, [x], [y], opt.params)
     print(t, Z.scalar(losses[0]))
-    opt.update()
+    opt.update(grads_vars)
