@@ -648,10 +648,26 @@ class BaseVariableAPI(APIBase):
     def variable(self, x):
         raise NotImplementedError
 
-    def gradients(self, params, forward, judges, xx, yy_true):
+    @classmethod
+    def _aux_scores(cls, aux_judges, yy_true, yy_pred):
+        if aux_judges is None:
+            return None
+        aux_scores = []
+        for y_aux_judges, y_true, y_pred in zip(aux_judges, yy_true, yy_pred):
+            y_aux_scores = []
+            for judge in y_aux_judges:
+                result = judge(y_true, y_pred)
+                y_aux_scores.append(Z.result_to_tensor(result))
+            aux_scores.append(y_aux_scores)
+        return aux_scores
+
+    def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
         raise NotImplementedError
 
-    def data(self, x):
+    def variable_to_tensor(self, x):
+        raise NotImplementedError
+
+    def result_to_tensor(self, x):
         raise NotImplementedError
 
     def assign(self, x, new_value):
@@ -675,27 +691,25 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return PTVariable(x.clone(), requires_grad=True)
 
-    def gradients(self, variables, forward, judges, xx, yy_true):
+    def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
         yy_pred = forward(xx)
-        loss_variables = []
-        loss_gradients = []
+        score_vars = []
+        score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-            loss_variables.append(judge(y_true, y_pred))
+            score_vars.append(judge(y_true, y_pred))
             arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
-            loss_gradients.append(self.cast_numpy_to(arr))
-        torch.autograd.backward(loss_variables, loss_gradients)
-        loss_tensors = list(map(lambda x: x.data, loss_variables))
-        grads_and_vars = list(map(lambda x: (x.grad.data, x), variables))
-        return loss_tensors, grads_and_vars
+            score_grads.append(self.cast_numpy_to(arr))
+        torch.autograd.backward(score_vars, score_grads)
+        scores = list(map(lambda x: x.data, score_vars))
+        grads_and_params = list(map(lambda x: (x.grad.data, x), params))
+        aux_scores = self._aux_scores(aux_judges, yy_true, yy_pred)
+        return grads_and_params, scores, aux_scores
 
-    def data(self, x):
-        if isinstance(x, torch._TensorBase):
-            pass
-        elif isinstance(x, PTVariable):
-            x = x.data
-        else:
-            assert False
-        return x
+    def variable_to_tensor(self, x):
+        return x.data
+
+    def result_to_tensor(self, x):
+        return x.data
 
     def assign(self, x, new_value):
         x.data = new_value
@@ -720,21 +734,24 @@ class MXNetVariableAPI(BaseVariableAPI):
         x.attach_grad()
         return x
 
-    def gradients(self, variables, forward, judges, xx, yy_true):
-        loss_variables = []
-        loss_gradients = []
+    def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
+        scores = []
+        score_grads = []
         with mx.autograd.record():
             yy_pred = forward(xx)
             for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-                loss_variables.append(judge(y_true, y_pred))
+                scores.append(judge(y_true, y_pred))
                 arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
-                loss_gradients.append(self.cast_numpy_to(arr))
-        mx.autograd.backward(loss_variables, loss_gradients)
-        loss_tensors = loss_variables
-        grads_and_vars = list(map(lambda x: (x.grad, x), variables))
-        return loss_tensors, grads_and_vars
+                score_grads.append(self.cast_numpy_to(arr))
+        mx.autograd.backward(scores, score_grads)
+        grads_and_params = list(map(lambda x: (x.grad, x), params))
+        aux_scores = self._aux_scores(aux_judges, yy_true, yy_pred)
+        return grads_and_params, scores, aux_scores
 
-    def data(self, x):
+    def variable_to_tensor(self, x):
+        return x
+
+    def result_to_tensor(self, x):
         return x
 
     def assign(self, x, new_value):
@@ -752,19 +769,29 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return tfe.Variable(x, name=self._name())
 
-    def gradients(self, variables, forward, judges, xx, yy_true):
-        params_set = set(variables)
-        assert len(params_set) == len(variables)
-        def get_losses():
-            yy_pred = forward(xx)
-            loss_tensors = []
-            for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-                loss_tensors.append(judge(y_true, y_pred) * judge.importance)
-            return loss_tensors
-        return tfe.implicit_value_and_gradients(get_losses)()
+    @classmethod
+    def _ivag_inner(cls, forward, judges, aux_judges, xx, yy_true, bridge):
+        yy_pred = forward(xx)
+        scores = []
+        for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
+            scores.append(judge(y_true, y_pred) * judge.importance)
+        bridge['aux_scores'] = cls._aux_scores(aux_judges, yy_true, yy_pred)
+        return scores
 
-    def data(self, x):
+    def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
+        ivag = tfe.implicit_value_and_gradients(self._ivag_inner)
+        bridge = {}
+        scores, grads_and_params = \
+            ivag(forward, judges, aux_judges, xx, yy_true, bridge)
+        aux_scores = bridge['aux_scores']
+        del bridge['aux_scores']
+        return grads_and_params, scores, aux_scores
+
+    def variable_to_tensor(self, x):
         return x[:]
+
+    def result_to_tensor(self, x):
+        return x
 
     def assign(self, x, new_value):
         x.assign(new_value)
@@ -780,24 +807,27 @@ class ChainerVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return chainer.Variable(x)
 
-    def gradients(self, variables, forward, judges, xx, yy_true):
+    def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
         yy_pred = forward(xx)
-        loss_variables = []
-        loss_gradients = []
+        score_vars = []
+        score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-            loss_variables.append(judge(y_true, y_pred))
+            score_vars.append(judge(y_true, y_pred))
             arr = np.ones(Z.shape(y_true), Z.dtype_of(y_true)) * \
                 judge.importance
-            loss_gradients.append(self.cast_numpy_to(arr))
-            loss_gradients.append(None)
-        gradients = chainer.grad(loss_variables, variables, loss_gradients)
-        loss_tensors = list(map(lambda x: x.data, loss_variables))
-        grads_and_vars = []
-        for var, grad in zip(variables, gradients):
-            grads_and_vars.append((grad.data, var))
-        return loss_tensors, grads_and_vars
+            score_grads.append(self.cast_numpy_to(arr))
+        grad_vars = chainer.grad(score_vars, params, score_grads)
+        scores = list(map(lambda x: x.data, score_vars))
+        grads_and_params = []
+        for param, grad_var in zip(params, grad_vars):
+            grads_and_params.append((grad_var.data, param))
+        aux_scores = self._aux_scores(aux_judges, yy_true, yy_pred)
+        return grads_and_params, scores, aux_scores
 
-    def data(self, x):
+    def variable_to_tensor(self, x):
+        return x.data
+
+    def result_to_tensor(self, x):
         return x.data
 
     def assign(self, x, new_value):
@@ -1071,12 +1101,12 @@ class Optimizer(object):
     def set_params(self, params):
         self.params = params
 
-    def update_param(self, gradient, variable):
+    def update_param(self, gradient, param):
         raise NotImplementedError
 
-    def update(self, grads_and_vars):
-        for gradient, variable in grads_and_vars:
-            self.update_param(gradient, variable)
+    def update(self, grads_and_params):
+        for grad, param in grads_and_params:
+            self.update_param(grad, param)
 
 
 class SGD(Optimizer):
@@ -1084,7 +1114,7 @@ class SGD(Optimizer):
         self.lr = lr
 
     def update_param(self, gradient, variable):
-        Z.assign(variable, Z.data(variable) - self.lr * gradient)
+        Z.assign(variable, Z.variable_to_tensor(variable) - self.lr * gradient)
 
 
 def one_hot(indices, num_classes, dtype):
@@ -1132,6 +1162,8 @@ opt = SGD(lr)
 opt.set_params(model.params())
 
 mse = MeanSquaredError()
+judges = [mse]
+aux_judges = None
 
 for epoch_id in range(num_epochs):
     for batch_id in range(batches_per_epoch):
@@ -1140,10 +1172,9 @@ for epoch_id in range(num_epochs):
         x = Z.constant(Z.cast_numpy_to(x))
         y = y_train[i:i + batch_size]
         y = Z.constant(Z.cast_numpy_to(y))
-        loss_tensors, grads_and_vars = Z.gradients(
-            opt.params, model.forward_multi, [mse], [x], [y])
-        loss_tensor, = loss_tensors
-        loss_scalar = Z.scalar(loss_tensor)
-        assert not np.isnan(loss_scalar)
-        print('epoch %4d batch %4d: %.6f' % (epoch_id, batch_id, loss_scalar))
-        opt.update(grads_and_vars)
+        grads_and_params, losses, aux_metrics = Z.gradients(
+            opt.params, model.forward_multi, judges, aux_judges, [x], [y])
+        loss = Z.scalar(losses[0])
+        assert not np.isnan(loss)
+        print('epoch %4d batch %4d: %.6f' % (epoch_id, batch_id, loss))
+        opt.update(grads_and_params)
