@@ -695,20 +695,34 @@ class Layer(object):
     def params(self):
         return []
 
-    def forward(self, x):
+    def forward_multi(self, xx):
         raise NotImplementedError
 
 
-class InputLayer(Layer):
+class MergeLayer(Layer):
+    pass
+
+
+class TransformLayer(Layer):
+    def forward_one(self, x):
+        raise NotImplementedError
+
+    def forward_multi(self, xx):
+        x, = xx
+        x = self.forward_one(x)
+        return [x]
+
+
+class InputLayer(TransformLayer):
     def __init__(self, form):
         self.form = form
 
-    def forward(self, x):
+    def forward_one(self, x):
         self.form.check(x)
         return x
 
 
-class DenseLayer(Layer):
+class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
         self.kernel = Z.variable(Z.cast_numpy_to(kernel))
         self.bias = Z.variable(Z.cast_numpy_to(bias))
@@ -716,17 +730,19 @@ class DenseLayer(Layer):
     def params(self):
         return [self.kernel, self.bias]
 
-    def forward(self, x):
+    def forward_one(self, x):
         return Z.matmul(x, self.kernel) + self.bias
 
 
-class ReLULayer(Layer):
-    def forward(self, x):
+class ReLULayer(TransformLayer):
+    def forward_one(self, x):
         return Z.clip(x, min=0)
 
 
-class SequenceLayer(Layer):
+class SequenceLayer(TransformLayer):
     def __init__(self, layers):
+        for layer in layers:
+            assert isinstance(layer, TransformLayer)
         self.layers = layers
 
     def params(self):
@@ -735,31 +751,45 @@ class SequenceLayer(Layer):
             params += layer.params()
         return params
 
-    def forward(self, x):
+    def forward_one(self, x):
         for layer in self.layers:
-            x = layer.forward(x)
+            x = layer.forward_one(x)
         return x
 
 
 class Spec(object):
-    def build(self, form=None):
+    def build_multi(self, forms):
         raise NotImplementedError
 
 
-class InputSpec(Spec):
+class MergeSpec(Spec):
+    pass
+
+
+class TransformSpec(Spec):
+    def build_one(self, form):
+        raise NotImplementedError
+
+    def build_multi(self, forms):
+        form, = forms
+        layer, form = self.build_one(form)
+        return layer, [form]
+
+
+class InputSpec(TransformSpec):
     def __init__(self, shape, dtype):
         self.form = Form(shape, dtype)
 
-    def build(self, form=None):
+    def build_one(self, form):
         assert form is None
         return InputLayer(self.form), self.form
 
 
-class DenseSpec(Spec):
+class DenseSpec(TransformSpec):
     def __init__(self, out_dim):
         self.out_dim = out_dim
 
-    def build(self, form=None):
+    def build_one(self, form):
         in_dim, = form.shape
         kernel = np.random.normal(
             0, 1, (in_dim, self.out_dim)).astype('float32')
@@ -768,19 +798,19 @@ class DenseSpec(Spec):
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
 
-class ReLUSpec(Spec):
-    def build(self, form=None):
+class ReLUSpec(TransformSpec):
+    def build_one(self, form):
         return ReLULayer(), form
 
 
-class SequenceSpec(Spec):
+class SequenceSpec(TransformSpec):
     def __init__(self, specs):
         self.specs = specs
 
-    def build(self, form=None):
+    def build_one(self, form):
         layers = []
         for spec in self.specs:
-            layer, form = spec.build(form)
+            layer, form = spec.build_one(form)
             layers.append(layer)
         return SequenceLayer(layers), form
 
@@ -824,14 +854,14 @@ model = SequenceSpec([
     ReLUSpec(),
     DenseSpec(num_classes),
 ])
-model, out_shape = model.build()
+model, out_shape = model.build_one(None)
 opt = SGD(lr)
 opt.set_params(model.params())
 for t in range(500):
-    def forward(xx, yy):
-        y_pred = model.forward(x)
+    def forward(x, y):
+        y_pred = model.forward_one(x)
         loss = mean_squared_error(y, y_pred)
         return [loss]
-    losses, grads_vars = Z.gradients(forward, [x], [y], opt.params)
+    losses, grads_vars = Z.gradients(forward, x, y, opt.params)
     print(t, Z.scalar(losses[0]))
     opt.update(grads_vars)
