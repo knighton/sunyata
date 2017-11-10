@@ -178,7 +178,7 @@ class BaseMetricAPI(APIBase):
         true_indices = self.argmax(true, -1)
         pred_indices = self.argmax(pred, -1)
         hits = self.equal(true_indices, pred_indices)
-        hits = self.cast(hits, self.dtype_of(true))
+        hits = tf.cast(hits, self.dtype_of(true))
         return self.mean(hits, -1, False)
 
 
@@ -1390,7 +1390,7 @@ def get_data(dtype):
 dtype = Z.default_dtype()
 image_shape = 1, 28, 28
 hidden_dim = 100
-lr = 1e-3
+lr = 0.05
 num_epochs = 10
 batch_size = 64
 
