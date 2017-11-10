@@ -1012,14 +1012,9 @@ class ChainerVariableAPI(BaseVariableAPI):
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             score_vars.append(self.mean(judge(y_true, y_pred)))
-            arr = np.ones(Z.shape(y_true), Z.dtype_of(y_true)) * \
-                judge.importance
+            arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
             score_grads.append(self.cast_numpy_to(arr))
-        broadcasted_score_vars = []
-        for score_var, score_grad in zip(score_vars, score_grads):
-            x = CHF.array.broadcast.broadcast_to(score_var, score_grad.shape)
-            broadcasted_score_vars.append(x)
-        grad_vars = chainer.grad(broadcasted_score_vars, params, score_grads)
+        grad_vars = chainer.grad(score_vars, params, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
         grads_and_params = []
         for param, grad_var in zip(params, grad_vars):
@@ -1034,7 +1029,7 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data
 
     def assign(self, x, new_value):
-        x.data = new_value
+        x.data = new_value.copy()
 
     def numpy(self, x):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
