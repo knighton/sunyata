@@ -486,6 +486,18 @@ class BaseDataTypeAPI(APIBase):
             assert dtype in self._supported_dtypes
         return dtype
 
+    def is_float_dtype(self, dtype):
+        return dtype.startswith('float')
+
+    def is_sint_dtype(self, dtype):
+        return dtype.startswith('int')
+
+    def is_uint_dtype(self, dtype):
+        return dtype.startswith('uint')
+
+    def is_xint_dtype(self, dtype):
+        return dtype.startswith('int') or dtype.startswith('uint')
+
 
 class BaseDeviceDataTypeAPI(APIBase):
     def discover_gpus(self):
@@ -795,16 +807,22 @@ class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def dtype_of(self, x):
         return x.dtype.name
 
+    def _do_cast(self, x, from_dtype, to_dtype):
+        if self.is_float_dtype(from_dtype):
+            x = CHF.cast(x, to_dtype)
+        else:
+            x = chainer.Variable(x.data.astype(to_dtype))
+        return x
+
     def cast_to(self, x, dtype=None, device=None, copy=True):
-        from_dtype = self.dtype_of(x)
-        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         from_device = self.device_of(x)
         assert from_device is self._devices[0]
         to_device = from_device if device is None else self.device(device)
         assert to_device is self._devices[0]
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         if from_dtype != to_dtype or copy:
-            print('??', from_dtype, to_dtype)
-            x = CHF.cast(x, to_dtype)
+            x = self._do_cast(x, from_dtype, to_dtype)
         return x
 
     def cast_numpy_to(self, x, dtype=None, device=None):
