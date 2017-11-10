@@ -418,33 +418,7 @@ class ChainerShapeAPI(BaseShapeAPI):
         return CHF.array.expand_dims.expand_dims(x, axis)
 
 
-class BaseDeviceDTypeAPI(APIBase):
-    def set_supported_dtypes(self, supported_dtypes, default_dtype):
-        assert supported_dtypes
-        assert sorted(supported_dtypes) == supported_dtypes
-        for dtype in supported_dtypes:
-            assert dtype
-            assert isinstance(dtype, str)
-        self._supported_dtypes = supported_dtypes
-        self.set_default_dtype(default_dtype)
-
-    def supported_dtypes(self):
-        return self._supported_dtypes
-
-    def set_default_dtype(self, dtype):
-        assert dtype in self._supported_dtypes
-        self._default_dtype = dtype
-
-    def default_dtype(self):
-        return self._default_dtype
-
-    def dtype(self, dtype):
-        if x is None:
-            dtype = self.default_dtype()
-        else:
-            assert dtype in self._supported_dtypes
-        return dtype
-
+class BaseDeviceAPI(APIBase):
     def num_devices(self):
         return len(self._devices)
 
@@ -484,13 +458,43 @@ class BaseDeviceDTypeAPI(APIBase):
             device = self._devices[x]
         return device
 
-    def cast(self, x, dtype=None, copy=False):
-        return self.cast_to(x, dtype, None, copy)
 
-    def dtype_of(self, x):
+class BaseDataTypeAPI(APIBase):
+    def set_supported_dtypes(self, supported_dtypes, default_dtype):
+        assert supported_dtypes
+        assert sorted(supported_dtypes) == supported_dtypes
+        for dtype in supported_dtypes:
+            assert dtype
+            assert isinstance(dtype, str)
+        self._supported_dtypes = supported_dtypes
+        self.set_default_dtype(default_dtype)
+
+    def supported_dtypes(self):
+        return self._supported_dtypes
+
+    def set_default_dtype(self, dtype):
+        assert dtype in self._supported_dtypes
+        self._default_dtype = dtype
+
+    def default_dtype(self):
+        return self._default_dtype
+
+    def dtype(self, dtype):
+        if x is None:
+            dtype = self.default_dtype()
+        else:
+            assert dtype in self._supported_dtypes
+        return dtype
+
+
+class BaseDeviceDataTypeAPI(APIBase):
+    def discover_gpus(self):
         raise NotImplementedError
 
     def device_of(self, x):
+        raise NotImplementedError
+
+    def dtype_of(self, x):
         raise NotImplementedError
 
     def cast_to(self, x, dtype=None, device=None, copy=False):
@@ -498,6 +502,9 @@ class BaseDeviceDTypeAPI(APIBase):
 
     def cast_numpy_to(self, x, dtype=None, device=None):
         raise NotImplementedError
+
+    def cast(self, x, dtype=None, copy=False):
+        return self.cast_to(x, dtype, None, copy)
 
     def to(self, x, device=None, copy=False):
         return self.cast_to(x, None, device, copy)
@@ -511,8 +518,19 @@ class BaseDeviceDTypeAPI(APIBase):
         return self.to_device(x, device, copy)
 
 
-class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
+class PyTorchDeviceAPI(BaseDeviceAPI):
+    pass
+
+
+class PyTorchDataTypeAPI(BaseDataTypeAPI):
+    pass
+
+
+class PyTorchDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def __init__(self):
+        num_gpus = self.discover_gpus()
+        default_device_id = 1 if num_gpus else 0
+        self.set_devices(num_gpus, default_device_id)
         data = """
             uint8    torch.ByteTensor    torch.cuda.ByteTensor
             int8     torch.CharTensor    torch.cuda.CharTensor
@@ -532,15 +550,19 @@ class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
             self._dtype2cpu[dtype] = cpu
             self._tensor2dtype[gpu] = dtype
             self._dtype2gpu[dtype] = gpu
-        num_gpus = self.discover_gpus()
-        default_device_id = 1 if num_gpus else 0
-        self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted(self._dtype2cpu)
         default_dtype = 'float32'
         self.set_supported_dtypes(supported_dtypes, default_dtype)
 
     def discover_gpus(self):
         return torch.cuda.device_count()
+
+    def device_of(self, x):
+        if x.is_cuda:
+            device_id = x.get_device()
+        else:
+            device_id = 0
+        return self._devices[device_id]
 
     def dtype_of(self, x):
         if isinstance(x, torch._TensorBase):
@@ -550,13 +572,6 @@ class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
         else:
             assert False
         return self._tensor2dtype[tensor.type()]
-
-    def device_of(self, x):
-        if x.is_cuda:
-            device_id = x.get_device()
-        else:
-            device_id = 0
-        return self._devices[device_id]
 
     def _get_tensor_class(self, dtype, device):
         if device.is_cpu():
@@ -606,7 +621,15 @@ class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
         return x
 
 
-class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
+class MXNetDeviceAPI(BaseDeviceAPI):
+    pass
+
+
+class MXNetDataTypeAPI(BaseDataTypeAPI):
+    pass
+
+
+class MXNetDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def __init__(self):
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
@@ -636,9 +659,6 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         except:
             return 0
 
-    def dtype_of(self, x):
-        return x.dtype.__name__
-
     def device_of(self, x):
         if x.context.device_type == 'cpu':
             device_id = 0
@@ -647,6 +667,9 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         else:
             assert False
         return self._devices[device_id]
+
+    def dtype_of(self, x):
+        return x.dtype.__name__
 
     def cast_to(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
@@ -670,9 +693,17 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         return mx.nd.array(x, to_device.mx_context, to_dtype)
 
 
-class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
+class TensorFlowDeviceAPI(BaseDeviceAPI):
+    pass
+
+
+class TensorFlowDataTypeAPI(BaseDataTypeAPI):
+    pass
+
+
+class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def __init__(self):
-        num_gpus = tfe.num_gpus()
+        num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
         self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted("""
@@ -687,9 +718,6 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def discover_gpus(self):
         return tfe.num_gpus()
 
-    def dtype_of(self, x):
-        return x.dtype.name
-
     def device_of(self, x):
         if x.device == 'CPU:0':
             device_id = 0
@@ -701,6 +729,9 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
             assert ss[1] == 'GPU'
             device_id = int(ss[2]) + 1
         return self._devices[device_id]
+
+    def dtype_of(self, x):
+        return x.dtype.name
 
     def _device_name(self, device):
         if device.is_cpu():
@@ -732,9 +763,18 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
             return tf.convert_to_tensor(x, to_dtype)
 
 
-class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
+class ChainerDeviceAPI(BaseDeviceAPI):
+    pass
+
+
+class ChainerDataTypeAPI(BaseDataTypeAPI):
+    pass
+
+
+class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
     def __init__(self):
-        num_gpus = 0
+        num_gpus = self.discover_gpus()
+        assert not num_gpus
         default_device_id = 0
         self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted("""
@@ -749,11 +789,11 @@ class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def discover_gpus(self):
         return 0
 
-    def dtype_of(self, x):
-        return x.dtype.name
-
     def device_of(self, x):
         return self._devices[0]
+
+    def dtype_of(self, x):
+        return x.dtype.name
 
     def cast_to(self, x, dtype=None, device=None, copy=True):
         from_dtype = self.dtype_of(x)
@@ -763,6 +803,7 @@ class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
         to_device = from_device if device is None else self.device(device)
         assert to_device is self._devices[0]
         if from_dtype != to_dtype or copy:
+            print('??', from_dtype, to_dtype)
             x = CHF.cast(x, to_dtype)
         return x
 
@@ -982,12 +1023,14 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI,
+class BaseAPI(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
               BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI,
               BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
-        BaseDeviceDTypeAPI.__init__(self)
+        BaseDataTypeAPI.__init__(self)
+        BaseDeviceAPI.__init__(self)
+        BaseDeviceDataTypeAPI.__init__(self)
         BaseEpsilonAPI.__init__(self)
         BaseLogicAPI.__init__(self)
         BaseMapAPI.__init__(self)
@@ -998,14 +1041,16 @@ class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI,
         BaseVariableAPI.__init__(self)
 
 
-class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDeviceDTypeAPI,
-                 PyTorchLogicAPI, PyTorchMapAPI, PyTorchMetricAPI,
-                 PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
-                 PyTorchVariableAPI):
+class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDataTypeAPI,
+                 PyTorchDeviceAPI, PyTorchDeviceDataTypeAPI, PyTorchLogicAPI,
+                 PyTorchMapAPI, PyTorchMetricAPI, PyTorchReduceAPI,
+                 PyTorchRelateAPI, PyTorchShapeAPI, PyTorchVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         PyTorchActivationAPI.__init__(self)
-        PyTorchDeviceDTypeAPI.__init__(self)
+        PyTorchDataTypeAPI.__init__(self)
+        PyTorchDeviceAPI.__init__(self)
+        PyTorchDeviceDataTypeAPI.__init__(self)
         PyTorchLogicAPI.__init__(self)
         PyTorchMapAPI.__init__(self)
         PyTorchMetricAPI.__init__(self)
@@ -1015,13 +1060,16 @@ class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDeviceDTypeAPI,
         PyTorchVariableAPI.__init__(self)
 
 
-class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetLogicAPI,
-               MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI,
-               MXNetShapeAPI, MXNetVariableAPI):
+class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDataTypeAPI, MXNetDeviceAPI,
+               MXNetDeviceDataTypeAPI, MXNetLogicAPI, MXNetMapAPI,
+               MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI, MXNetShapeAPI,
+               MXNetVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         MXNetActivationAPI.__init__(self)
-        MXNetDeviceDTypeAPI.__init__(self)
+        MXNetDataTypeAPI.__init__(self)
+        MXNetDeviceAPI.__init__(self)
+        MXNetDeviceDataTypeAPI.__init__(self)
         MXNetLogicAPI.__init__(self)
         MXNetMapAPI.__init__(self)
         MXNetMetricAPI.__init__(self)
@@ -1031,14 +1079,18 @@ class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetLogicAPI,
         MXNetVariableAPI.__init__(self)
 
 
-class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
-                    TensorFlowLogicAPI, TensorFlowMapAPI, TensorFlowMetricAPI,
+class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI,
+                    TensorFlowDataTypeAPI, TensorFlowDeviceAPI,
+                    TensorFlowDeviceDataTypeAPI, TensorFlowLogicAPI,
+                    TensorFlowMapAPI, TensorFlowMetricAPI,
                     TensorFlowReduceAPI, TensorFlowRelateAPI,
                     TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         TensorFlowActivationAPI.__init__(self)
-        TensorFlowDeviceDTypeAPI.__init__(self)
+        TensorFlowDataTypeAPI.__init__(self)
+        TensorFlowDeviceAPI.__init__(self)
+        TensorFlowDeviceDataTypeAPI.__init__(self)
         TensorFlowLogicAPI.__init__(self)
         TensorFlowMapAPI.__init__(self)
         TensorFlowMetricAPI.__init__(self)
@@ -1048,14 +1100,17 @@ class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
-class ChainerAPI(BaseAPI, ChainerActivationAPI, ChainerDeviceDTypeAPI,
+class ChainerAPI(BaseAPI, ChainerActivationAPI, ChainerDeviceAPI,
+                 ChainerDataTypeAPI, ChainerDeviceDataTypeAPI,
                  ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
                  ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
                  ChainerVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         ChainerActivationAPI.__init__(self)
-        ChainerDeviceDTypeAPI.__init__(self)
+        ChainerDataTypeAPI.__init__(self)
+        ChainerDeviceAPI.__init__(self)
+        ChainerDeviceDataTypeAPI.__init__(self)
         ChainerLogicAPI.__init__(self)
         ChainerMapAPI.__init__(self)
         ChainerReduceAPI.__init__(self)
