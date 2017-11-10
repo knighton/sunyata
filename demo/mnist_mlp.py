@@ -2,23 +2,10 @@ import keras
 import numpy as np
 import os
 
-from sunyata.backend.chainer import ChainerBackend
-from sunyata.backend.mxnet import MXNetBackend
-from sunyata.backend.pytorch import PyTorchBackend
-from sunyata.backend.tensorflow import TensorFlowBackend
+from sunyata.backend import Backend
 
 
-BACKEND = os.environ['b']
-if BACKEND == 'pytorch':
-    Z = PyTorchBackend()
-elif BACKEND == 'mxnet':
-    Z = MXNetBackend()
-elif BACKEND == 'tensorflow':
-    Z = TensorFlowBackend()
-elif BACKEND == 'chainer':
-    Z = ChainerBackend()
-else:
-    assert False
+Z = Backend()
 
 
 class Form(object):
@@ -70,7 +57,7 @@ class InputLayer(TransformLayer):
 
 class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
-        if BACKEND == 'chainer':
+        if Z.__class__.__name__.lower().replace('backend', '') == 'chainer':
             kernel = kernel.T
         self.kernel = Z.variable(Z.cast_numpy_to(kernel))
         self.bias = Z.variable(Z.cast_numpy_to(bias))
