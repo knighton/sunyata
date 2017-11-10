@@ -82,6 +82,31 @@ class BaseEpsilonAPI(APIBase):
         return self._epsilon
 
 
+class BaseLogicAPI(APIBase):
+    def equal(self, a, b):
+        raise NotImplementedError
+
+
+class PyTorchLogicAPI(BaseLogicAPI):
+    def equal(self, a, b):
+        return self.cast(a == b, self.dtype_of(a))
+
+
+class MXNetLogicAPI(BaseLogicAPI):
+    def equal(self, a, b):
+        return a == b
+
+
+class TensorFlowLogicAPI(BaseLogicAPI):
+    def equal(self, a, b):
+        return tf.cast(tf.equal(a, b), a.dtype)
+
+
+class ChainerLogicAPI(BaseLogicAPI):
+    def equal(self, a, b):
+        return chainer.Variable((a.data == b.data).astype(a.dtype))
+
+
 class BaseMapAPI(APIBase):
     def clip(self, x, min=-np.inf, max=np.inf):
         raise NotImplementedError
@@ -149,8 +174,34 @@ class BaseMetricAPI(APIBase):
     def mean_squared_error(self, true, pred):
         return self.mean(self.pow(true - pred, 2), -1)
 
+    def categorical_accuracy(self, true, pred):
+        true_indices = self.argmax(true, -1)
+        pred_indices = self.argmax(pred, -1)
+        hits = self.equal(true_indices, pred_indices)
+        hits = self.cast(hits, self.dtype_of(true))
+        return self.mean(hits, -1, False)
+
+
+class PyTorchMetricAPI(BaseMetricAPI):
+    pass
+
+
+class MXNetMetricAPI(BaseMetricAPI):
+    pass
+
+
+class TensorFlowMetricAPI(BaseMetricAPI):
+    pass
+
+
+class ChainerMetricAPI(BaseMetricAPI):
+    pass
+
 
 class BaseReduceAPI(APIBase):
+    def argmax(self, axis=-1):
+        raise NotImplementedError
+
     def mean(self, x, axis=None, keepdims=False):
         raise NotImplementedError
 
@@ -159,6 +210,9 @@ class BaseReduceAPI(APIBase):
 
 
 class PyTorchReduceAPI(BaseReduceAPI):
+    def argmax(self, x, axis=-1):
+        return x.max(axis)[1]
+
     def _normalize_axis(self, axis, keepdims, ndim):
         if axis is None:
             if keepdims:
@@ -189,6 +243,7 @@ class PyTorchReduceAPI(BaseReduceAPI):
         return x
 
     def mean(self, x, axis=None, keepdims=False):
+        i
         return self._reduce('mean', x, axis, keepdims)
 
     def sum(self, x, axis=None, keepdims=False):
@@ -196,6 +251,9 @@ class PyTorchReduceAPI(BaseReduceAPI):
 
 
 class MXNetReduceAPI(BaseReduceAPI):
+    def argmax(self, x, axis=-1):
+        return mx.nd.argmax(x, axis)
+
     def _reduce(self, name, x, axis=None, keepdims=False):
         axis = mx.base._Null if axis is None else axis
         func = getattr(mx.nd, name)
@@ -209,6 +267,9 @@ class MXNetReduceAPI(BaseReduceAPI):
 
 
 class TensorFlowReduceAPI(BaseReduceAPI):
+    def argmax(self, x, axis=-1):
+        return tf.argmax(x, axis)
+
     def mean(self, x, axis=None, keepdims=False):
         return tf.reduce_mean(x, axis, keepdims)
 
@@ -217,6 +278,9 @@ class TensorFlowReduceAPI(BaseReduceAPI):
 
 
 class ChainerReduceAPI(BaseReduceAPI):
+    def argmax(self, x, axis=-1):
+        return CHF.argmax(x, axis)
+
     def mean(self, x, axis=None, keepdims=False):
         if axis is None:
             denom = x.size
@@ -636,16 +700,7 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
             assert ss[0] == 'device'
             assert ss[1] == 'GPU'
             device_id = int(ss[2]) + 1
-        return device_id
-
-    def _device_name(self, device):
-        if device.is_cpu():
-            name = 'cpu:0'
-        elif device.is_gpu():
-            name = 'gpu:%d' % device.gpu_id()
-        else:
-            assert False
-        return name
+        return self._devices[device_id]
 
     def _device_name(self, device):
         if device.is_cpu():
@@ -927,13 +982,14 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI, BaseMapAPI,
-              BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI,
-              BaseVariableAPI):
+class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI,
+              BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI,
+              BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
         BaseDeviceDTypeAPI.__init__(self)
         BaseEpsilonAPI.__init__(self)
+        BaseLogicAPI.__init__(self)
         BaseMapAPI.__init__(self)
         BaseMetricAPI.__init__(self)
         BaseReduceAPI.__init__(self)
@@ -943,26 +999,32 @@ class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI, BaseMapAPI,
 
 
 class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDeviceDTypeAPI,
-                 PyTorchMapAPI, PyTorchReduceAPI, PyTorchRelateAPI,
-                 PyTorchShapeAPI, PyTorchVariableAPI):
+                 PyTorchLogicAPI, PyTorchMapAPI, PyTorchMetricAPI,
+                 PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
+                 PyTorchVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         PyTorchActivationAPI.__init__(self)
         PyTorchDeviceDTypeAPI.__init__(self)
+        PyTorchLogicAPI.__init__(self)
         PyTorchMapAPI.__init__(self)
+        PyTorchMetricAPI.__init__(self)
         PyTorchReduceAPI.__init__(self)
         PyTorchRelateAPI.__init__(self)
         PyTorchShapeAPI.__init__(self)
         PyTorchVariableAPI.__init__(self)
 
 
-class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
-               MXNetReduceAPI, MXNetRelateAPI, MXNetShapeAPI, MXNetVariableAPI):
+class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetLogicAPI,
+               MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI,
+               MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         MXNetActivationAPI.__init__(self)
         MXNetDeviceDTypeAPI.__init__(self)
+        MXNetLogicAPI.__init__(self)
         MXNetMapAPI.__init__(self)
+        MXNetMetricAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
         MXNetRelateAPI.__init__(self)
         MXNetShapeAPI.__init__(self)
@@ -970,13 +1032,16 @@ class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
 
 
 class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
-                    TensorFlowMapAPI, TensorFlowReduceAPI, TensorFlowRelateAPI,
+                    TensorFlowLogicAPI, TensorFlowMapAPI, TensorFlowMetricAPI,
+                    TensorFlowReduceAPI, TensorFlowRelateAPI,
                     TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         TensorFlowActivationAPI.__init__(self)
         TensorFlowDeviceDTypeAPI.__init__(self)
+        TensorFlowLogicAPI.__init__(self)
         TensorFlowMapAPI.__init__(self)
+        TensorFlowMetricAPI.__init__(self)
         TensorFlowReduceAPI.__init__(self)
         TensorFlowRelateAPI.__init__(self)
         TensorFlowShapeAPI.__init__(self)
@@ -984,12 +1049,14 @@ class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
 
 
 class ChainerAPI(BaseAPI, ChainerActivationAPI, ChainerDeviceDTypeAPI,
-                 ChainerMapAPI, ChainerReduceAPI, ChainerRelateAPI,
-                 ChainerShapeAPI, ChainerVariableAPI):
+                 ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
+                 ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
+                 ChainerVariableAPI):
     def __init__(self):
         BaseAPI.__init__(self)
         ChainerActivationAPI.__init__(self)
         ChainerDeviceDTypeAPI.__init__(self)
+        ChainerLogicAPI.__init__(self)
         ChainerMapAPI.__init__(self)
         ChainerReduceAPI.__init__(self)
         ChainerRelateAPI.__init__(self)
@@ -1177,7 +1244,7 @@ class SequenceSpec(TransformSpec):
         return SequenceLayer(layers), form
 
 
-class Loss(object):
+class Metric(object):
     def __init__(self, importance=1):
         self.importance = importance
 
@@ -1185,9 +1252,8 @@ class Loss(object):
         raise NotImplementedError
 
 
-class MeanSquaredError(Loss):
-    def __call__(self, true, pred):
-        return Z.mean_squared_error(true, pred)
+class Loss(Metric):
+    pass
 
 
 class BinaryCrossEntropy(Loss):
@@ -1198,6 +1264,16 @@ class BinaryCrossEntropy(Loss):
 class CategoricalCrossEntropy(Loss):
     def __call__(self, true, pred):
         return Z.categorical_cross_entropy(true, pred)
+
+
+class MeanSquaredError(Loss):
+    def __call__(self, true, pred):
+        return Z.mean_squared_error(true, pred)
+
+
+class CategoricalAccuracy(Metric):
+    def __call__(self, true, pred):
+        return Z.categorical_accuracy(true, pred)
 
 
 class Optimizer(object):
@@ -1265,8 +1341,9 @@ opt = SGD(lr)
 opt.set_params(model.params())
 
 cxe = CategoricalCrossEntropy()
+acc = CategoricalAccuracy()
 judges = [cxe]
-aux_judges = None
+aux_judges = [[acc]]
 
 for epoch_id in range(num_epochs):
     for batch_id in range(batches_per_epoch):
@@ -1278,6 +1355,9 @@ for epoch_id in range(num_epochs):
         grads_and_params, losses, aux_metrics = Z.gradients(
             opt.params, model.forward_multi, judges, aux_judges, [x], [y])
         loss = Z.scalar(losses[0])
+        acc = Z.scalar(aux_metrics[0][0])
         assert not np.isnan(loss)
-        print('epoch %4d batch %4d: %.6f' % (epoch_id, batch_id, loss))
+        assert not np.isnan(acc)
+        print('epoch %4d batch %4d loss %.4f acc %.4f' %
+            (epoch_id, batch_id, loss, acc))
         opt.update(grads_and_params)
