@@ -2,6 +2,7 @@ from contextlib import contextmanager
 import importlib
 import mxnet as mx
 import numpy as np
+import os
 import subprocess
 import tensorflow as tf
 import tensorflow.contrib.eager as tfe
@@ -211,7 +212,7 @@ class BaseDeviceDTypeAPI(APIBase):
     def default_dtype(self):
         return self._default_dtype
 
-    def dtype(self, x):
+    def dtype(self, dtype):
         if x is None:
             dtype = self.default_dtype()
         else:
@@ -519,7 +520,7 @@ class BaseVariableAPI(APIBase):
     def variable(self, x):
         raise NotImplementedError
 
-    def gradients(self, forward, xx, yy, variables):
+    def gradients(self, child, behave, santa, situation, good):
         raise NotImplementedError
 
     def data(self, x):
@@ -546,14 +547,18 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return Variable(x.clone(), requires_grad=True)
 
-    def gradients(self, forward, xx, yy, variables):
-        losses = forward(xx, yy)
-        grads = [self.cast_numpy_to(np.ones((1,)).astype('float32'))
-                 for _ in losses]
-        torch.autograd.backward(losses, grads)
-        losses = list(map(lambda v: v.data, losses))
-        grads_vars = list(map(lambda v: (v.grad.data, v), variables))
-        return losses, grads_vars
+    def gradients(self, child, behave, santa, situation, good):
+        bad = behave(situation)
+        coal = []
+        disappointed = []
+        for find_out, nice, naughty in zip(santa, good, bad):
+            coal.append(find_out(nice, naughty))
+            arr = np.ones((1,), Z.dtype_of(nice)) * find_out.importance
+            disappointed.append(self.cast_numpy_to(arr))
+        torch.autograd.backward(coal, disappointed)
+        coal = list(map(lambda x: x.data, coal))
+        advice = list(map(lambda x: (x.grad.data, x), child))
+        return coal, advice
 
     def data(self, x):
         if isinstance(x, torch._TensorBase):
@@ -587,14 +592,19 @@ class MXNetVariableAPI(BaseVariableAPI):
         x.attach_grad()
         return x
 
-    def gradients(self, forward, xx, yy, variables):
+    def gradients(self, child, behave, santa, situation, good):
+        coal = []
         with mx.autograd.record():
-            losses = forward(xx, yy)
-        grads = [self.cast_numpy_to(np.ones((1,)).astype('float32'))
-                 for _ in losses]
-        mx.autograd.backward(losses, grads)
-        grads_vars = list(map(lambda v: (v.grad, v), variables))
-        return losses, grads_vars
+            bad = behave(situation)
+            for find_out, nice, naughty in zip(santa, good, bad):
+                coal.append(find_out(nice, naughty))
+        disappointed = []
+        for find_out, nice, naughty in zip(santa, good, bad):
+            arr = np.ones((1,), Z.dtype_of(nice)) * find_out.importance
+            disappointed.append(self.cast_numpy_to(arr))
+        mx.autograd.backward(coal, disappointed)
+        advice = list(map(lambda x: (x.grad, x), child))
+        return coal, advice
 
     def data(self, x):
         return x
@@ -614,12 +624,16 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return tfe.Variable(x, name=self._name())
 
-    def gradients(self, forward, xx, yy, variables):
-        variables_set = set(variables)
-        assert len(variables_set) == len(variables)
-        func = tfe.implicit_value_and_gradients(forward)
-        losses, grads_vars = func(xx, yy)
-        return losses, grads_vars
+    def gradients(self, child, behave, santa, situation, good):
+        talents = set(child)
+        assert len(talents) == len(child)
+        def naughty_or_nice():
+            bad = behave(situation)
+            coal = []
+            for find_out, nice, naughty in zip(santa, good, bad):
+                coal.append(find_out(nice, naughty) * find_out.importance)
+            return coal
+        return tfe.implicit_value_and_gradients(naughty_or_nice)()
 
     def data(self, x):
         return x
@@ -676,9 +690,16 @@ class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
-#Z = PyTorchAPI()
-#Z = MXNetAPI()
-Z = TensorFlowAPI()
+
+backend = os.environ['b']
+if backend == 'pytorch':
+    Z = PyTorchAPI()
+elif backend == 'mxnet':
+    Z = PyTorchAPI()
+elif backend == 'tensorflow':
+    Z = TensorFlowAPI()
+else:
+    assert False
 
 
 class Form(object):
@@ -819,6 +840,19 @@ def mean_squared_error(true, pred):
     return Z.sum(Z.pow(true - pred, 2))
 
 
+class Loss(object):
+    def __init__(self, importance=1):
+        self.importance = importance
+
+    def __call__(self, true, pred):
+        raise NotImplementedError
+
+
+class MeanSquaredError(Loss):
+    def __call__(self, true, pred):
+        return mean_squared_error(true, pred)
+
+
 class Optimizer(object):
     def set_params(self, params):
         self.params = params
@@ -857,11 +891,9 @@ model = SequenceSpec([
 model, out_shape = model.build_one(None)
 opt = SGD(lr)
 opt.set_params(model.params())
+mse = MeanSquaredError()
 for t in range(500):
-    def forward(x, y):
-        y_pred = model.forward_one(x)
-        loss = mean_squared_error(y, y_pred)
-        return [loss]
-    losses, grads_vars = Z.gradients(forward, x, y, opt.params)
+    losses, grads_vars = Z.gradients(
+        opt.params, model.forward_multi, [mse], [x], [y])
     print(t, Z.scalar(losses[0]))
     opt.update(grads_vars)
