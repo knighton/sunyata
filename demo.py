@@ -1,3 +1,5 @@
+import chainer
+import chainer.functions as F
 from contextlib import contextmanager
 import importlib
 import mxnet as mx
@@ -66,6 +68,14 @@ class MXNetMapAPI(BaseMapAPI):
         return mx.nd.power(x, a)
 
 
+class ChainerMapAPI(BaseMapAPI):
+    def clip(self, x, min=-np.inf, max=np.inf):
+        return F.clip(x, float(min), float(max))
+
+    def pow(self, x, a):
+        return F.math.basic_math.pow(x, a)
+
+
 class BaseReduceAPI(APIBase):
     def sum(self, x, axis=None, keepdims=False):
         raise NotImplementedError
@@ -124,24 +134,39 @@ class TensorFlowReduceAPI(BaseReduceAPI):
         return tf.reduce_sum(x, axis, keepdims)
 
 
+class ChainerReduceAPI(BaseReduceAPI):
+    @classmethod
+    def _reduce(cls, func, x, axis=None, keepdims=False):
+        axis = tuple(axis) if isinstance(axis, list) else axis
+        return func(x, axis, keepdims)
+
+    def sum(self, x, axis=None, keepdims=False):
+        return self._reduce(F.math.sum.sum, x, axis, keepdims)
+
+
 class BaseRelateAPI(APIBase):
-    def matmul(self, a, b):
+    def dense(self, x, kernel, bias):
         raise NotImplementedError
 
 
 class PyTorchRelateAPI(BaseRelateAPI):
-    def matmul(self, a, b):
-        return a.mm(b)
+    def dense(self, x, kernel, bias):
+        return x.mm(kernel) + bias
 
 
 class MXNetRelateAPI(BaseRelateAPI):
-    def matmul(self, a, b):
-        return mx.nd.dot(a, b)
+    def dense(self, x, kernel, bias):
+        return mx.nd.dot(x, kernel) + bias
 
 
 class TensorFlowRelateAPI(BaseRelateAPI):
-    def matmul(self, a, b):
-        return tf.matmul(a, b)
+    def dense(self, x, kernel, bias):
+        return tf.matmul(x, kernel) + bias
+
+
+class ChainerRelateAPI(BaseRelateAPI):
+    def dense(self, x, kernel, bias):
+        return F.connection.linear.linear(x, kernel, bias)
 
 
 class BaseShapeAPI(APIBase):
@@ -186,6 +211,17 @@ class TensorFlowShapeAPI(BaseShapeAPI):
 
     def size(self, x):
         return int(tf.size(x).numpy())
+
+
+class ChainerShapeAPI(BaseShapeAPI):
+    def ndim(self, x):
+        return x.ndim
+
+    def shape(self, x):
+        return x.shape
+
+    def size(self, x):
+        return x.size
 
 
 class BaseDeviceDTypeAPI(APIBase):
@@ -505,6 +541,50 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
             return tf.convert_to_tensor(x, to_dtype)
 
 
+class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
+    def __init__(self):
+        num_gpus = 0
+        default_device_id = 0
+        supported_dtypes = sorted("""
+            bool
+            uint8 uint16 uint32 uint64
+            int8 int16 int32 int64
+            float16 float32 float64
+        """.split())
+        default_dtype = 'float32'
+        BaseDeviceDTypeAPI.__init__(
+            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+
+    def discover_gpus(self):
+        return 0
+
+    def dtype_of(self, x):
+        return x.dtype.name
+
+    def device_of(self, x):
+        return self._devices[0]
+
+    def cast_to(self, x, dtype=None, device=None, copy=True):
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
+        from_device = self.device_of(x)
+        assert from_device is self._devices[0]
+        to_device = from_device if device is None else self.device(device)
+        assert to_device is self._devices[0]
+        if from_dtype != to_dtype or copy:
+            x = F.cast(x, to_dtype)
+        return x
+
+    def cast_numpy_to(self, x, dtype=None, device=None):
+        from_dtype = self.dtype_of(x)
+        to_dtype = from_dtype if dtype is None else self.dtype(dtype)
+        if from_dtype != to_dtype:
+            x = x.astype(to_dtype)
+        else:
+            x = x.copy()
+        return x
+
+
 class BaseVariableAPI(APIBase):
     def constant(self, x):
         raise NotImplementedError
@@ -556,9 +636,9 @@ class PyTorchVariableAPI(BaseVariableAPI):
             arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
             loss_gradients.append(self.cast_numpy_to(arr))
         torch.autograd.backward(loss_variables, loss_gradients)
-        losses = list(map(lambda x: x.data, loss_variables))
-        grads_vars = list(map(lambda x: (x.grad.data, x), variables))
-        return losses, grads_vars
+        loss_tensors = list(map(lambda x: x.data, loss_variables))
+        grads_and_vars = list(map(lambda x: (x.grad.data, x), variables))
+        return loss_tensors, grads_and_vars
 
     def data(self, x):
         if isinstance(x, torch._TensorBase):
@@ -602,8 +682,9 @@ class MXNetVariableAPI(BaseVariableAPI):
                 arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
                 loss_gradients.append(self.cast_numpy_to(arr))
         mx.autograd.backward(loss_variables, loss_gradients)
-        grads_vars = list(map(lambda x: (x.grad, x), variables))
-        return loss_variables, grads_vars
+        loss_tensors = loss_variables
+        grads_and_vars = list(map(lambda x: (x.grad, x), variables))
+        return loss_tensors, grads_and_vars
 
     def data(self, x):
         return x
@@ -635,13 +716,47 @@ class TensorFlowVariableAPI(BaseVariableAPI):
         return tfe.implicit_value_and_gradients(get_losses)()
 
     def data(self, x):
-        return x
+        return x[:]
 
     def assign(self, x, new_value):
         x.assign(new_value)
 
     def numpy(self, x):
         return x.numpy()
+
+
+class ChainerVariableAPI(BaseVariableAPI):
+    def constant(self, x):
+        return x
+
+    def variable(self, x):
+        return chainer.Variable(x)
+
+    def gradients(self, variables, forward, judges, xx, yy_true):
+        yy_pred = forward(xx)
+        loss_variables = []
+        loss_gradients = []
+        for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
+            loss_variables.append(judge(y_true, y_pred))
+            arr = np.ones(Z.shape(y_true), Z.dtype_of(y_true)) * \
+                judge.importance
+            loss_gradients.append(self.cast_numpy_to(arr))
+            loss_gradients.append(None)
+        gradients = chainer.grad(loss_variables, variables, loss_gradients)
+        loss_tensors = list(map(lambda x: x.data, loss_variables))
+        grads_and_vars = []
+        for var, grad in zip(variables, gradients):
+            grads_and_vars.append((grad.data, var))
+        return loss_tensors, grads_and_vars
+
+    def data(self, x):
+        return x.data
+
+    def assign(self, x, new_value):
+        x.data = new_value
+
+    def numpy(self, x):
+        return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
 class BaseAPI(BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI, BaseRelateAPI,
@@ -689,14 +804,27 @@ class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
+class ChainerAPI(ChainerDeviceDTypeAPI, ChainerMapAPI, ChainerReduceAPI,
+                 ChainerRelateAPI, ChainerShapeAPI, ChainerVariableAPI):
+    def __init__(self):
+        ChainerDeviceDTypeAPI.__init__(self)
+        ChainerMapAPI.__init__(self)
+        ChainerReduceAPI.__init__(self)
+        ChainerRelateAPI.__init__(self)
+        ChainerShapeAPI.__init__(self)
+        ChainerVariableAPI.__init__(self)
 
-backend = os.environ['b']
-if backend == 'pytorch':
+
+
+BACKEND = os.environ['b']
+if BACKEND == 'pytorch':
     Z = PyTorchAPI()
-elif backend == 'mxnet':
+elif BACKEND == 'mxnet':
     Z = PyTorchAPI()
-elif backend == 'tensorflow':
+elif BACKEND == 'tensorflow':
     Z = TensorFlowAPI()
+elif BACKEND == 'chainer':
+    Z = ChainerAPI()
 else:
     assert False
 
@@ -744,6 +872,8 @@ class InputLayer(TransformLayer):
 
 class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
+        if BACKEND == 'chainer':
+            kernel = kernel.T
         self.kernel = Z.variable(Z.cast_numpy_to(kernel))
         self.bias = Z.variable(Z.cast_numpy_to(bias))
 
@@ -751,7 +881,7 @@ class DenseLayer(TransformLayer):
         return [self.kernel, self.bias]
 
     def forward_one(self, x):
-        return Z.matmul(x, self.kernel) + self.bias
+        return Z.dense(x, self.kernel, self.bias)
 
 
 class ReLULayer(TransformLayer):
@@ -859,8 +989,8 @@ class Optimizer(object):
     def update_param(self, gradient, variable):
         raise NotImplementedError
 
-    def update(self, grads_vars):
-        for gradient, variable in grads_vars:
+    def update(self, grads_and_vars):
+        for gradient, variable in grads_and_vars:
             self.update_param(gradient, variable)
 
 
@@ -892,7 +1022,7 @@ opt = SGD(lr)
 opt.set_params(model.params())
 mse = MeanSquaredError()
 for t in range(500):
-    losses, grads_vars = Z.gradients(
+    losses, grads_and_vars = Z.gradients(
         opt.params, model.forward_multi, [mse], [x], [y])
     print(t, Z.scalar(losses[0]))
-    opt.update(grads_vars)
+    opt.update(grads_and_vars)
