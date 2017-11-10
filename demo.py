@@ -1,5 +1,5 @@
 import chainer
-import chainer.functions as F
+import chainer.functions as CHF
 from contextlib import contextmanager
 import importlib
 import keras
@@ -11,6 +11,7 @@ import tensorflow as tf
 import tensorflow.contrib.eager as tfe
 import torch
 from torch.autograd import Variable as PTVariable
+import torch.nn.functional as PTF
 
 
 tfe.enable_eager_execution()
@@ -35,6 +36,37 @@ class Device(object):
 
 class APIBase(object):
     pass
+
+
+class BaseActivationAPI(APIBase):
+    def softmax(self, x):
+        raise NotImplementedError
+
+
+class PyTorchActivationAPI(BaseActivationAPI):
+    def softmax(self, x):
+        x_shape = x.size()
+        tran = x.transpose(1, len(x_shape) - 1)
+        tran_shape = tran.size()
+        tran_2d = tran.contiguous().view(-1, tran_shape[-1])
+        tran_2d = PTF.softmax(tran_2d)
+        tran = tran_2d.view(*tran_shape)
+        return tran.transpose(1, len(x_shape) - 1)
+
+
+class TensorFlowActivationAPI(BaseActivationAPI):
+    def softmax(self, x):
+        return tf.nn.softmax(x)
+
+
+class MXNetActivationAPI(BaseActivationAPI):
+    def softmax(self, x):
+        return mx.nd.softmax(x)
+
+
+class ChainerActivationAPI(BaseActivationAPI):
+    def softmax(self, x):
+        return CHF.softmax(x)
 
 
 class BaseMapAPI(APIBase):
@@ -71,10 +103,10 @@ class MXNetMapAPI(BaseMapAPI):
 
 class ChainerMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
-        return F.clip(x, float(min), float(max))
+        return CHF.clip(x, float(min), float(max))
 
     def pow(self, x, a):
-        return F.math.basic_math.pow(x, a)
+        return CHF.math.basic_math.pow(x, a)
 
 
 class BaseReduceAPI(APIBase):
@@ -142,7 +174,7 @@ class ChainerReduceAPI(BaseReduceAPI):
         return func(x, axis, keepdims)
 
     def sum(self, x, axis=None, keepdims=False):
-        return self._reduce(F.math.sum.sum, x, axis, keepdims)
+        return self._reduce(CHF.math.sum.sum, x, axis, keepdims)
 
 
 class BaseRelateAPI(APIBase):
@@ -167,7 +199,7 @@ class TensorFlowRelateAPI(BaseRelateAPI):
 
 class ChainerRelateAPI(BaseRelateAPI):
     def dense(self, x, kernel, bias):
-        return F.connection.linear.linear(x, kernel, bias)
+        return CHF.connection.linear.linear(x, kernel, bias)
 
 
 class BaseShapeAPI(APIBase):
@@ -588,7 +620,7 @@ class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
         to_device = from_device if device is None else self.device(device)
         assert to_device is self._devices[0]
         if from_dtype != to_dtype or copy:
-            x = F.cast(x, to_dtype)
+            x = CHF.cast(x, to_dtype)
         return x
 
     def cast_numpy_to(self, x, dtype=None, device=None):
@@ -775,9 +807,10 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class BaseAPI(BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI, BaseRelateAPI,
-              BaseShapeAPI, BaseVariableAPI):
+class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI,
+              BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
+        BaseActivationAPI.__init__(self)
         BaseDeviceDTypeAPI.__init__(self)
         BaseMapAPI.__init__(self)
         BaseReduceAPI.__init__(self)
@@ -786,9 +819,11 @@ class BaseAPI(BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI, BaseRelateAPI,
         BaseVariableAPI.__init__(self)
 
 
-class PyTorchAPI(PyTorchDeviceDTypeAPI, PyTorchMapAPI, PyTorchReduceAPI,
-                 PyTorchRelateAPI, PyTorchShapeAPI, PyTorchVariableAPI):
+class PyTorchAPI(PyTorchActivationAPI, PyTorchDeviceDTypeAPI, PyTorchMapAPI,
+                 PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
+                 PyTorchVariableAPI):
     def __init__(self):
+        BaseActivationAPI.__init__(self)
         PyTorchDeviceDTypeAPI.__init__(self)
         PyTorchMapAPI.__init__(self)
         PyTorchReduceAPI.__init__(self)
@@ -797,9 +832,10 @@ class PyTorchAPI(PyTorchDeviceDTypeAPI, PyTorchMapAPI, PyTorchReduceAPI,
         PyTorchVariableAPI.__init__(self)
 
 
-class MXNetAPI(MXNetDeviceDTypeAPI, MXNetMapAPI, MXNetReduceAPI, MXNetRelateAPI,
-               MXNetShapeAPI, MXNetVariableAPI):
+class MXNetAPI(MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
+               MXNetReduceAPI, MXNetRelateAPI, MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
+        MXNetActivationAPI.__init__(self)
         MXNetDeviceDTypeAPI.__init__(self)
         MXNetMapAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
@@ -808,10 +844,11 @@ class MXNetAPI(MXNetDeviceDTypeAPI, MXNetMapAPI, MXNetReduceAPI, MXNetRelateAPI,
         MXNetVariableAPI.__init__(self)
 
 
-class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
-                    TensorFlowReduceAPI, TensorFlowRelateAPI,
+class TensorFlowAPI(TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
+                    TensorFlowMapAPI, TensorFlowReduceAPI, TensorFlowRelateAPI,
                     TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
+        TensorFlowActivationAPI.__init__(self)
         TensorFlowDeviceDTypeAPI.__init__(self)
         TensorFlowMapAPI.__init__(self)
         TensorFlowReduceAPI.__init__(self)
@@ -820,9 +857,11 @@ class TensorFlowAPI(TensorFlowDeviceDTypeAPI, TensorFlowMapAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
-class ChainerAPI(ChainerDeviceDTypeAPI, ChainerMapAPI, ChainerReduceAPI,
-                 ChainerRelateAPI, ChainerShapeAPI, ChainerVariableAPI):
+class ChainerAPI(ChainerActivationAPI, ChainerDeviceDTypeAPI, ChainerMapAPI,
+                 ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
+                 ChainerVariableAPI):
     def __init__(self):
+        ChainerActivationAPI.__init__(self)
         ChainerDeviceDTypeAPI.__init__(self)
         ChainerMapAPI.__init__(self)
         ChainerReduceAPI.__init__(self)
@@ -916,6 +955,11 @@ class ReLULayer(TransformLayer):
         return Z.clip(x, min=0)
 
 
+class SoftmaxLayer(TransformLayer):
+    def forward_one(self, x):
+        return Z.softmax(x)
+
+
 class SequenceLayer(TransformLayer):
     def __init__(self, layers):
         for layer in layers:
@@ -971,8 +1015,8 @@ class DenseSpec(TransformSpec):
         assert len(form.shape) == 1
         in_dim, = form.shape
         kernel = np.random.normal(
-            0, 0.1, (in_dim, self.out_dim)).astype('float32')
-        bias = np.random.normal(0, 0.1, (self.out_dim,)).astype('float32')
+            0, 0.01, (in_dim, self.out_dim)).astype('float32')
+        bias = np.random.normal(0, 0.01, (self.out_dim,)).astype('float32')
         out_shape = self.out_dim,
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
@@ -987,6 +1031,11 @@ class FlattenSpec(TransformSpec):
 class ReLUSpec(TransformSpec):
     def build_one(self, form):
         return ReLULayer(), form
+
+
+class SoftmaxSpec(TransformSpec):
+    def build_one(self, form):
+        return SoftmaxLayer(), form
 
 
 class SequenceSpec(TransformSpec):
@@ -1075,6 +1124,7 @@ model = SequenceSpec([
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(num_classes),
+    SoftmaxSpec(),
 ])
 model, out_shape = model.build_one(None)
 
