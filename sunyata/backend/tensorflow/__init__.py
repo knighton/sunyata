@@ -6,7 +6,7 @@ from sunyata.backend.base import \
     Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
     BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
     BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseAPI
+    BaseVariableAPI, BaseBackend
 
 
 tfe.enable_eager_execution()
@@ -177,14 +177,14 @@ class TensorFlowVariableAPI(BaseVariableAPI):
         return x.numpy()
 
 
-class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI,
-                    TensorFlowDataTypeAPI, TensorFlowDeviceAPI,
-                    TensorFlowDeviceDataTypeAPI, TensorFlowLogicAPI,
-                    TensorFlowMapAPI, TensorFlowMetricAPI,
-                    TensorFlowReduceAPI, TensorFlowRelateAPI,
-                    TensorFlowShapeAPI, TensorFlowVariableAPI):
+class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
+                        TensorFlowDataTypeAPI, TensorFlowDeviceAPI,
+                        TensorFlowDeviceDataTypeAPI, TensorFlowLogicAPI,
+                        TensorFlowMapAPI, TensorFlowMetricAPI,
+                        TensorFlowReduceAPI, TensorFlowRelateAPI,
+                        TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
-        BaseAPI.__init__(self)
+        BaseBackend.__init__(self)
         TensorFlowActivationAPI.__init__(self)
         TensorFlowDataTypeAPI.__init__(self)
         TensorFlowDeviceAPI.__init__(self)

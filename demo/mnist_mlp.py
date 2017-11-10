@@ -1,29 +1,22 @@
-import chainer
-import chainer.functions as CHF
 import keras
 import numpy as np
 import os
 
-from sunyata.backend.base import \
-    Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
-    BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
-    BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseAPI
-from sunyata.backend.chainer import ChainerAPI
-from sunyata.backend.mxnet import MXNetAPI
-from sunyata.backend.pytorch import PyTorchAPI
-from sunyata.backend.tensorflow import TensorFlowAPI
+from sunyata.backend.chainer import ChainerBackend
+from sunyata.backend.mxnet import MXNetBackend
+from sunyata.backend.pytorch import PyTorchBackend
+from sunyata.backend.tensorflow import TensorFlowBackend
 
 
 BACKEND = os.environ['b']
 if BACKEND == 'pytorch':
-    Z = PyTorchAPI()
+    Z = PyTorchBackend()
 elif BACKEND == 'mxnet':
-    Z = MXNetAPI()
+    Z = MXNetBackend()
 elif BACKEND == 'tensorflow':
-    Z = TensorFlowAPI()
+    Z = TensorFlowBackend()
 elif BACKEND == 'chainer':
-    Z = ChainerAPI()
+    Z = ChainerBackend()
 else:
     assert False
 

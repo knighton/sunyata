@@ -6,7 +6,7 @@ from ..base import \
     Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
     BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
     BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseAPI
+    BaseVariableAPI, BaseBackend
 
 
 class MXNetActivationAPI(BaseActivationAPI):
@@ -181,12 +181,12 @@ class MXNetVariableAPI(BaseVariableAPI):
         return x.asnumpy()
 
 
-class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDataTypeAPI, MXNetDeviceAPI,
-               MXNetDeviceDataTypeAPI, MXNetLogicAPI, MXNetMapAPI,
-               MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI, MXNetShapeAPI,
-               MXNetVariableAPI):
+class MXNetBackend(BaseBackend, MXNetActivationAPI, MXNetDataTypeAPI,
+                   MXNetDeviceAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
+                   MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI,
+                   MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
-        BaseAPI.__init__(self)
+        BaseBackend.__init__(self)
         MXNetActivationAPI.__init__(self)
         MXNetDataTypeAPI.__init__(self)
         MXNetDeviceAPI.__init__(self)

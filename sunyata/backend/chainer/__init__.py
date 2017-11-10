@@ -6,7 +6,7 @@ from ..base import \
     Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
     BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
     BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseAPI
+    BaseVariableAPI, BaseBackend
 
 
 class ChainerActivationAPI(BaseActivationAPI):
@@ -183,13 +183,13 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class ChainerAPI(BaseAPI, ChainerActivationAPI, ChainerDeviceAPI,
-                 ChainerDataTypeAPI, ChainerDeviceDataTypeAPI,
-                 ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
-                 ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
-                 ChainerVariableAPI):
+class ChainerBackend(BaseBackend, ChainerActivationAPI, ChainerDeviceAPI,
+                     ChainerDataTypeAPI, ChainerDeviceDataTypeAPI,
+                     ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
+                     ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
+                     ChainerVariableAPI):
     def __init__(self):
-        BaseAPI.__init__(self)
+        BaseBackend.__init__(self)
         ChainerActivationAPI.__init__(self)
         ChainerDataTypeAPI.__init__(self)
         ChainerDeviceAPI.__init__(self)

@@ -271,9 +271,9 @@ class BaseVariableAPI(APIBase):
         return self.numpy(x).flatten()[0]
 
 
-class BaseAPI(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
-              BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI,
-              BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
+class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
+                  BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI,
+                  BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
         BaseDataTypeAPI.__init__(self)

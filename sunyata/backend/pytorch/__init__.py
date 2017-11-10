@@ -8,7 +8,7 @@ from ..base import \
     Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
     BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
     BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseAPI
+    BaseVariableAPI, BaseBackend 
 
 
 class PyTorchActivationAPI(BaseActivationAPI):
@@ -248,12 +248,13 @@ class PyTorchVariableAPI(BaseVariableAPI):
         return x.cpu().numpy()
 
 
-class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDataTypeAPI,
-                 PyTorchDeviceAPI, PyTorchDeviceDataTypeAPI, PyTorchLogicAPI,
-                 PyTorchMapAPI, PyTorchMetricAPI, PyTorchReduceAPI,
-                 PyTorchRelateAPI, PyTorchShapeAPI, PyTorchVariableAPI):
+class PyTorchBackend(BaseBackend, PyTorchActivationAPI, PyTorchDataTypeAPI,
+                     PyTorchDeviceAPI, PyTorchDeviceDataTypeAPI,
+                     PyTorchLogicAPI, PyTorchMapAPI, PyTorchMetricAPI,
+                     PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
+                     PyTorchVariableAPI):
     def __init__(self):
-        BaseAPI.__init__(self)
+        BaseBackend.__init__(self)
         PyTorchActivationAPI.__init__(self)
         PyTorchDataTypeAPI.__init__(self)
         PyTorchDeviceAPI.__init__(self)
