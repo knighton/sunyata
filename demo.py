@@ -975,16 +975,15 @@ class TensorFlowVariableAPI(BaseVariableAPI):
         scores = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             scores.append(self.mean(judge(y_true, y_pred)) * judge.importance)
-        bridge['aux_scores'] = self._aux_scores(aux_judges, yy_true, yy_pred)
+        bridge.append(self._aux_scores(aux_judges, yy_true, yy_pred))
         return scores
 
     def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
         ivag = tfe.implicit_value_and_gradients(self._ivag_inner)
-        bridge = {}
+        bridge = []
         scores, grads_and_params = \
             ivag(forward, judges, aux_judges, xx, yy_true, bridge)
-        aux_scores = bridge['aux_scores']
-        del bridge['aux_scores']
+        aux_scores = bridge.pop()
         return grads_and_params, scores, aux_scores
 
     def variable_to_tensor(self, x):
@@ -1282,8 +1281,8 @@ class DenseSpec(TransformSpec):
         assert len(form.shape) == 1
         in_dim, = form.shape
         kernel = np.random.normal(
-            0, 0.01, (in_dim, self.out_dim)).astype('float32')
-        bias = np.random.normal(0, 0.01, (self.out_dim,)).astype('float32')
+            0, 0.1, (in_dim, self.out_dim)).astype('float32')
+        bias = np.random.normal(0, 0.1, (self.out_dim,)).astype('float32')
         out_shape = self.out_dim,
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
 
@@ -1391,7 +1390,7 @@ def get_data(dtype):
 dtype = Z.default_dtype()
 image_shape = 1, 28, 28
 hidden_dim = 100
-lr = 1e-6
+lr = 1e-3
 num_epochs = 10
 batch_size = 64
 
