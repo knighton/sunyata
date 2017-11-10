@@ -520,7 +520,7 @@ class BaseVariableAPI(APIBase):
     def variable(self, x):
         raise NotImplementedError
 
-    def gradients(self, child, behave, santa, situation, good):
+    def gradients(self, params, forward, judges, xx, yy_true):
         raise NotImplementedError
 
     def data(self, x):
@@ -547,18 +547,18 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return PTVariable(x.clone(), requires_grad=True)
 
-    def gradients(self, child, behave, santa, situation, good):
-        bad = behave(situation)
-        coal = []
-        disappointed = []
-        for find_out, nice, naughty in zip(santa, good, bad):
-            coal.append(find_out(nice, naughty))
-            arr = np.ones((1,), Z.dtype_of(nice)) * find_out.importance
-            disappointed.append(self.cast_numpy_to(arr))
-        torch.autograd.backward(coal, disappointed)
-        coal = list(map(lambda x: x.data, coal))
-        advice = list(map(lambda x: (x.grad.data, x), child))
-        return coal, advice
+    def gradients(self, variables, forward, judges, xx, yy_true):
+        yy_pred = forward(xx)
+        loss_variables = []
+        loss_gradients = []
+        for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
+            loss_variables.append(judge(y_true, y_pred))
+            arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
+            loss_gradients.append(self.cast_numpy_to(arr))
+        torch.autograd.backward(loss_variables, loss_gradients)
+        losses = list(map(lambda x: x.data, loss_variables))
+        grads_vars = list(map(lambda x: (x.grad.data, x), variables))
+        return losses, grads_vars
 
     def data(self, x):
         if isinstance(x, torch._TensorBase):
@@ -592,19 +592,18 @@ class MXNetVariableAPI(BaseVariableAPI):
         x.attach_grad()
         return x
 
-    def gradients(self, child, behave, santa, situation, good):
-        coal = []
+    def gradients(self, variables, forward, judges, xx, yy_true):
+        loss_variables = []
+        loss_gradients = []
         with mx.autograd.record():
-            bad = behave(situation)
-            for find_out, nice, naughty in zip(santa, good, bad):
-                coal.append(find_out(nice, naughty))
-        disappointed = []
-        for find_out, nice, naughty in zip(santa, good, bad):
-            arr = np.ones((1,), Z.dtype_of(nice)) * find_out.importance
-            disappointed.append(self.cast_numpy_to(arr))
-        mx.autograd.backward(coal, disappointed)
-        advice = list(map(lambda x: (x.grad, x), child))
-        return coal, advice
+            yy_pred = forward(xx)
+            for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
+                loss_variables.append(judge(y_true, y_pred))
+                arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
+                loss_gradients.append(self.cast_numpy_to(arr))
+        mx.autograd.backward(loss_variables, loss_gradients)
+        grads_vars = list(map(lambda x: (x.grad, x), variables))
+        return loss_variables, grads_vars
 
     def data(self, x):
         return x
@@ -624,16 +623,16 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return tfe.Variable(x, name=self._name())
 
-    def gradients(self, child, behave, santa, situation, good):
-        talents = set(child)
-        assert len(talents) == len(child)
-        def naughty_or_nice():
-            bad = behave(situation)
-            coal = []
-            for find_out, nice, naughty in zip(santa, good, bad):
-                coal.append(find_out(nice, naughty) * find_out.importance)
-            return coal
-        return tfe.implicit_value_and_gradients(naughty_or_nice)()
+    def gradients(self, variables, forward, judges, xx, yy_true):
+        params_set = set(variables)
+        assert len(params_set) == len(variables)
+        def get_losses():
+            yy_pred = forward(xx)
+            loss_tensors = []
+            for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
+                loss_tensors.append(judge(y_true, y_pred) * judge.importance)
+            return loss_tensors
+        return tfe.implicit_value_and_gradients(get_losses)()
 
     def data(self, x):
         return x
