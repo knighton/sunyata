@@ -2,10 +2,7 @@ import keras
 import numpy as np
 import os
 
-from sunyata.backend import Backend
-
-
-Z = Backend()
+from sunyata import backend as Z
 
 
 class Form(object):
