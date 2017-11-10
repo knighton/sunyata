@@ -376,6 +376,14 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         default_dtype = 'float32'
         BaseDeviceDTypeAPI.__init__(
             self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+        for i, device in enumerate(self._devices):
+            if device.is_cpu():
+                ctx = mx.cpu()
+            elif device.is_gpu():
+                ctx = mx.gpu(device.gpu_id())
+            else:
+                assert False
+            device.mx_context = ctx
 
     def discover_gpus(self):
         cmd = 'nvidia-smi', '-L'
@@ -402,13 +410,7 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
         if from_device is not to_device:
-            if to_device.is_cpu():
-                ctx = mx.cpu()
-            elif to_device.is_gpu():
-                ctx = mx.gpu(to_device.gpu_id())
-            else:
-                assert False
-            x = x.as_in_context(ctx)
+            x = x.as_in_context(to_device.mx_context)
             copy = False
         from_dtype = self.dtype_of(x)
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
@@ -423,13 +425,7 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
         to_device = self.device(device)
         from_dtype = x.dtype.name
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
-        if to_device.is_cpu():
-            ctx = mx.cpu()
-        elif to_device.is_gpu():
-            ctx = mx.gpu(to_device.gpu_id())
-        else:
-            assert False
-        return mx.nd.array(x, ctx, to_dtype)
+        return mx.nd.array(x, to_device.mx_context, to_dtype)
 
 
 class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
