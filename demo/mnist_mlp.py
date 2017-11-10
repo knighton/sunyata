@@ -54,7 +54,7 @@ class InputLayer(TransformLayer):
 
 class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
-        if Z.__class__.__name__.lower().replace('backend', '') == 'chainer':
+        if Z.name == 'chainer':
             kernel = kernel.T
         self.kernel = Z.variable(Z.cast_numpy_to(kernel))
         self.bias = Z.variable(Z.cast_numpy_to(bias))

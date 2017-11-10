@@ -198,3 +198,4 @@ class MXNetBackend(BaseBackend, MXNetActivationAPI, MXNetDataTypeAPI,
         MXNetRelateAPI.__init__(self)
         MXNetShapeAPI.__init__(self)
         MXNetVariableAPI.__init__(self)
+        self.name = 'mxnet'

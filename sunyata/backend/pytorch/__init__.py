@@ -266,3 +266,4 @@ class PyTorchBackend(BaseBackend, PyTorchActivationAPI, PyTorchDataTypeAPI,
         PyTorchRelateAPI.__init__(self)
         PyTorchShapeAPI.__init__(self)
         PyTorchVariableAPI.__init__(self)
+        self.name = 'pytorch'

@@ -146,7 +146,7 @@ class TensorFlowVariableAPI(BaseVariableAPI):
         return tf.constant(x)
 
     def variable(self, x):
-        return tfe.Variable(x, name=self._name())
+        return tfe.Variable(x, name=self._variable_name())
 
     def _ivag_inner(self, forward, judges, aux_judges, xx, yy_true, bridge):
         yy_pred = forward(xx)
@@ -196,3 +196,4 @@ class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
         TensorFlowRelateAPI.__init__(self)
         TensorFlowShapeAPI.__init__(self)
         TensorFlowVariableAPI.__init__(self)
+        self.name = 'tensorflow'

@@ -200,3 +200,4 @@ class ChainerBackend(BaseBackend, ChainerActivationAPI, ChainerDeviceAPI,
         ChainerRelateAPI.__init__(self)
         ChainerShapeAPI.__init__(self)
         ChainerVariableAPI.__init__(self)
+        self.name = 'chainer'

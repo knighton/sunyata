@@ -225,7 +225,7 @@ class BaseVariableAPI(APIBase):
     def constant(self, x):
         raise NotImplementedError
 
-    def _name(self, name=None):
+    def _variable_name(self, name=None):
         if name is None:
             name = str(1 << 30)
         else:
