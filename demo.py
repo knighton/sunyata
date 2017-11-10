@@ -2,6 +2,7 @@ import chainer
 import chainer.functions as F
 from contextlib import contextmanager
 import importlib
+import keras
 import mxnet as mx
 import numpy as np
 import os
@@ -179,6 +180,9 @@ class BaseShapeAPI(APIBase):
     def size(self, x):
         raise NotImplementedError
 
+    def reshape(self, x, shape):
+        raise NotImplementedError
+
 
 class PyTorchShapeAPI(BaseShapeAPI):
     def ndim(self, x):
@@ -189,6 +193,9 @@ class PyTorchShapeAPI(BaseShapeAPI):
 
     def size(self, x):
         return x.nelement()
+
+    def reshape(self, x, shape):
+        return x.view(shape)
 
 
 class MXNetShapeAPI(BaseShapeAPI):
@@ -201,6 +208,9 @@ class MXNetShapeAPI(BaseShapeAPI):
     def size(self, x):
         return x.size
 
+    def reshape(self, x, shape):
+        return mx.nd.reshape(x, shape)
+
 
 class TensorFlowShapeAPI(BaseShapeAPI):
     def ndim(self, x):
@@ -212,6 +222,9 @@ class TensorFlowShapeAPI(BaseShapeAPI):
     def size(self, x):
         return int(tf.size(x).numpy())
 
+    def reshape(self, x, shape):
+        return tf.reshape(x, shape)
+
 
 class ChainerShapeAPI(BaseShapeAPI):
     def ndim(self, x):
@@ -222,6 +235,9 @@ class ChainerShapeAPI(BaseShapeAPI):
 
     def size(self, x):
         return x.size
+
+    def reshape(self, x, shape):
+        return x.reshape(shape)
 
 
 class BaseDeviceDTypeAPI(APIBase):
@@ -831,11 +847,16 @@ else:
 
 class Form(object):
     def __init__(self, shape, dtype):
+        assert isinstance(shape, tuple)
+        for dim in shape:
+            assert isinstance(dim, int)
+            assert 1 <= dim
+        assert dtype in Z.supported_dtypes()
         self.shape = shape
         self.dtype = dtype
 
     def check(self, x):
-        assert tuple(Z.shape(x)[1:]) == self.shape
+        assert Z.shape(x)[1:] == self.shape
         assert Z.dtype_of(x) == self.dtype
 
 
@@ -856,6 +877,7 @@ class TransformLayer(Layer):
         raise NotImplementedError
 
     def forward_multi(self, xx):
+        assert len(xx) == 1
         x, = xx
         x = self.forward_one(x)
         return [x]
@@ -882,6 +904,11 @@ class DenseLayer(TransformLayer):
 
     def forward_one(self, x):
         return Z.dense(x, self.kernel, self.bias)
+
+
+class FlattenLayer(TransformLayer):
+    def forward_one(self, x):
+        return Z.reshape(x, (Z.shape(x)[0], -1))
 
 
 class ReLULayer(TransformLayer):
@@ -921,6 +948,7 @@ class TransformSpec(Spec):
         raise NotImplementedError
 
     def build_multi(self, forms):
+        assert len(forms) == 1
         form, = forms
         layer, form = self.build_one(form)
         return layer, [form]
@@ -940,12 +968,20 @@ class DenseSpec(TransformSpec):
         self.out_dim = out_dim
 
     def build_one(self, form):
+        assert len(form.shape) == 1
         in_dim, = form.shape
         kernel = np.random.normal(
-            0, 1, (in_dim, self.out_dim)).astype('float32')
-        bias = np.random.normal(0, 1, (self.out_dim,)).astype('float32')
+            0, 0.1, (in_dim, self.out_dim)).astype('float32')
+        bias = np.random.normal(0, 0.1, (self.out_dim,)).astype('float32')
         out_shape = self.out_dim,
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
+
+
+class FlattenSpec(TransformSpec):
+    def build_one(self, form):
+        out_shape = (int(np.prod(form.shape)),)
+        form = Form(out_shape, form.dtype)
+        return FlattenLayer(), form
 
 
 class ReLUSpec(TransformSpec):
@@ -1002,27 +1038,62 @@ class SGD(Optimizer):
         Z.assign(variable, Z.data(variable) - self.lr * gradient)
 
 
-batch_size = 64
-in_dim = 1000
+def one_hot(indices, num_classes, dtype):
+    assert indices.ndim == 1
+    assert isinstance(num_classes, int)
+    assert 0 < num_classes
+    assert dtype in Z.supported_dtypes()
+    x = np.zeros((len(indices), num_classes), dtype)
+    x[np.arange(len(indices)), indices] = 1
+    return x
+
+
+def get_data(dtype):
+    (x_train, y_train), (x_val, y_val) = keras.datasets.mnist.load_data()
+    x_train = np.expand_dims(x_train, 1).astype(dtype)
+    y_train = one_hot(y_train, 10, dtype)
+    x_val = np.expand_dims(x_val, 1).astype(dtype)
+    y_val = one_hot(y_val, 10, dtype)
+    return (x_train, y_train), (x_val, y_val)
+
+
+dtype = Z.default_dtype()
+image_shape = 1, 28, 28
 hidden_dim = 100
-num_classes = 10
 lr = 1e-6
-x = np.random.normal(0, 1, (batch_size, in_dim)).astype('float32')
-x = Z.constant(Z.cast_numpy_to(x))
-y = np.random.normal(0, 1, (batch_size, num_classes)).astype('float32')
-y = Z.constant(Z.cast_numpy_to(y))
+num_epochs = 10
+batch_size = 64
+
+(x_train, y_train), (x_val, y_val) = get_data(dtype)
+
+num_classes = y_train.shape[1]
+batches_per_epoch = len(x_train) // batch_size
+
 model = SequenceSpec([
-    InputSpec((in_dim,), 'float32'),
+    InputSpec(image_shape, dtype),
+    FlattenSpec(),
     DenseSpec(hidden_dim),
     ReLUSpec(),
     DenseSpec(num_classes),
 ])
 model, out_shape = model.build_one(None)
+
 opt = SGD(lr)
 opt.set_params(model.params())
+
 mse = MeanSquaredError()
-for t in range(500):
-    losses, grads_and_vars = Z.gradients(
-        opt.params, model.forward_multi, [mse], [x], [y])
-    print(t, Z.scalar(losses[0]))
-    opt.update(grads_and_vars)
+
+for epoch_id in range(num_epochs):
+    for batch_id in range(batches_per_epoch):
+        i = batch_id * batch_size
+        x = x_train[i:i + batch_size]
+        x = Z.constant(Z.cast_numpy_to(x))
+        y = y_train[i:i + batch_size]
+        y = Z.constant(Z.cast_numpy_to(y))
+        loss_tensors, grads_and_vars = Z.gradients(
+            opt.params, model.forward_multi, [mse], [x], [y])
+        loss_tensor, = loss_tensors
+        loss_scalar = Z.scalar(loss_tensor)
+        assert not np.isnan(loss_scalar)
+        print('epoch %4d batch %4d: %.6f' % (epoch_id, batch_id, loss_scalar))
+        opt.update(grads_and_vars)
