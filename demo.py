@@ -7,7 +7,7 @@ import subprocess
 import tensorflow as tf
 import tensorflow.contrib.eager as tfe
 import torch
-from torch.autograd import Variable
+from torch.autograd import Variable as PTVariable
 
 
 tfe.enable_eager_execution()
@@ -309,7 +309,7 @@ class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def dtype_of(self, x):
         if isinstance(x, torch._TensorBase):
             tensor = x
-        elif isinstance(x, Variable):
+        elif isinstance(x, PTVariable):
             tensor = x.data
         else:
             assert False
@@ -542,10 +542,10 @@ class BaseVariableAPI(APIBase):
 
 class PyTorchVariableAPI(BaseVariableAPI):
     def constant(self, x):
-        return Variable(x.clone(), requires_grad=False)
+        return PTVariable(x.clone(), requires_grad=False)
 
     def variable(self, x):
-        return Variable(x.clone(), requires_grad=True)
+        return PTVariable(x.clone(), requires_grad=True)
 
     def gradients(self, child, behave, santa, situation, good):
         bad = behave(situation)
@@ -563,7 +563,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def data(self, x):
         if isinstance(x, torch._TensorBase):
             pass
-        elif isinstance(x, Variable):
+        elif isinstance(x, PTVariable):
             x = x.data
         else:
             assert False
@@ -576,7 +576,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def numpy(self, x):
         if isinstance(x, torch._TensorBase):
             pass
-        elif isinstance(x, Variable):
+        elif isinstance(x, PTVariable):
             x = x.data
         else:
             assert False
