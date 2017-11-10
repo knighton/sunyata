@@ -69,8 +69,24 @@ class ChainerActivationAPI(BaseActivationAPI):
         return CHF.softmax(x)
 
 
+class BaseEpsilonAPI(APIBase):
+    def __init__(self):
+        self.set_epsilon(1e-5)
+
+    def set_epsilon(self, epsilon):
+        assert isinstance(epsilon, float)
+        assert 0 < epsilon < 1e-2
+        self._epsilon = epsilon
+
+    def epsilon(self):
+        return self._epsilon
+
+
 class BaseMapAPI(APIBase):
     def clip(self, x, min=-np.inf, max=np.inf):
+        raise NotImplementedError
+
+    def log(self, x):
         raise NotImplementedError
 
     def pow(self, x, a):
@@ -81,6 +97,9 @@ class PyTorchMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return x.clamp(min, max)
 
+    def log(self, x):
+        return x.log()
+
     def pow(self, x, a):
         return x ** a
 
@@ -88,6 +107,9 @@ class PyTorchMapAPI(BaseMapAPI):
 class TensorFlowMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return tf.clip_by_value(x, min, max)
+
+    def log(self, x):
+        return tf.log(x)
 
     def pow(self, x, a):
         return tf.pow(x, a)
@@ -97,6 +119,9 @@ class MXNetMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return mx.nd.clip(x, min, max)
 
+    def log(self, x):
+        return mx.nd.log(x)
+
     def pow(self, x, a):
         return mx.nd.power(x, a)
 
@@ -105,18 +130,36 @@ class ChainerMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
         return CHF.clip(x, float(min), float(max))
 
+    def log(self, x):
+        return CHF.math.exponential.log(x)
+
     def pow(self, x, a):
         return CHF.math.basic_math.pow(x, a)
 
 
+class BaseMetricAPI(APIBase):
+    def binary_cross_entropy(self, true, pred):
+        pred = self.clip(pred, self.epsilon(), 1 - self.epsilon())
+        return -true * self.log(pred) - (1 - true) * self.log(1 - pred)
+
+    def categorical_cross_entropy(self, true, pred):
+        pred = self.clip(pred, self.epsilon(), 1 - self.epsilon())
+        return self.mean(-true * self.log(pred), -1)
+
+    def mean_squared_error(self, true, pred):
+        return self.mean(self.pow(true - pred, 2), -1)
+
+
 class BaseReduceAPI(APIBase):
+    def mean(self, x, axis=None, keepdims=False):
+        raise NotImplementedError
+
     def sum(self, x, axis=None, keepdims=False):
         raise NotImplementedError
 
 
 class PyTorchReduceAPI(BaseReduceAPI):
-    @classmethod
-    def _normalize_axis(cls, axis, keepdims, ndim):
+    def _normalize_axis(self, axis, keepdims, ndim):
         if axis is None:
             if keepdims:
                 axes = list(range(ndim))
@@ -133,48 +176,72 @@ class PyTorchReduceAPI(BaseReduceAPI):
         axes = list(map(lambda n: n % ndim, axes))
         return sorted(axes)
 
-    @classmethod
-    def _reduce(cls, name, x, axis=None, keepdims=False):
-        axes = cls._normalize_axis(axis, keepdims, x.dim())
+    def _reduce(self, name, x, axis=None, keepdims=False):
+        axes = self._normalize_axis(axis, keepdims, x.dim())
         if axes is None:
-            return getattr(x, name)()
-        for axis in axes:
+            return getattr(x, name)(None, True)
+        for axis in reversed(axes):
+            if x.dim() == 1:
+                keepdims = True
             x = getattr(x, name)(axis, keepdims)
             if isinstance(x, tuple):
                 x = x[0]
-        if not keepdims:
-            for axis in reversed(axes):
-                x = x.squeeze(axis)
         return x
+
+    def mean(self, x, axis=None, keepdims=False):
+        return self._reduce('mean', x, axis, keepdims)
 
     def sum(self, x, axis=None, keepdims=False):
         return self._reduce('sum', x, axis, keepdims)
 
 
 class MXNetReduceAPI(BaseReduceAPI):
-    @classmethod
-    def _reduce(cls, name, x, axis=None, keepdims=False):
+    def _reduce(self, name, x, axis=None, keepdims=False):
         axis = mx.base._Null if axis is None else axis
         func = getattr(mx.nd, name)
         return func(x, axis, keepdims)
+
+    def mean(self, x, axis=None, keepdims=False):
+        return self._reduce('mean', x, axis, keepdims)
 
     def sum(self, x, axis=None, keepdims=False):
         return self._reduce('sum', x, axis, keepdims)
 
 
 class TensorFlowReduceAPI(BaseReduceAPI):
+    def mean(self, x, axis=None, keepdims=False):
+        return tf.reduce_mean(x, axis, keepdims)
+
     def sum(self, x, axis=None, keepdims=False):
         return tf.reduce_sum(x, axis, keepdims)
 
 
 class ChainerReduceAPI(BaseReduceAPI):
-    @classmethod
-    def _reduce(cls, func, x, axis=None, keepdims=False):
-        axis = tuple(axis) if isinstance(axis, list) else axis
-        return func(x, axis, keepdims)
+    def mean(self, x, axis=None, keepdims=False):
+        if axis is None:
+            denom = x.size
+            x = CHF.math.sum.sum(x, axis, keepdims)
+            if not keepdims:
+                x = self.expand_dims(x, 0)
+            x /= denom
+        else:
+            if isinstance(axis, int):
+                axes = [axis]
+            else:
+                axes = axes
+            axes = tuple(map(lambda axis: axis % x.ndim, axes))
+            denom = 1
+            for axis in axes:
+                denom *= x.shape[axis]
+            x = CHF.math.sum.sum(x, axes, keepdims) / denom
+        return x
 
     def sum(self, x, axis=None, keepdims=False):
-        return self._reduce(CHF.math.sum.sum, x, axis, keepdims)
+        axis = tuple(axis) if isinstance(axis, list) else axis
+        x = CHF.math.sum.sum(x, axis, keepdims)
+        if not x.ndim:
+            x = self.expand_dims(x, 0)
+        return x
 
 
 class BaseRelateAPI(APIBase):
@@ -215,10 +282,13 @@ class BaseShapeAPI(APIBase):
     def reshape(self, x, shape):
         raise NotImplementedError
 
+    def expand_dims(self, x, axis):
+        raise NotImplementedError
+
 
 class PyTorchShapeAPI(BaseShapeAPI):
     def ndim(self, x):
-        return len(x.size())
+        return x.dim()
 
     def shape(self, x):
         return tuple(x.size())
@@ -228,6 +298,9 @@ class PyTorchShapeAPI(BaseShapeAPI):
 
     def reshape(self, x, shape):
         return x.view(shape)
+
+    def expand_dims(self, x, axis):
+        return x.unsqueeze(axis)
 
 
 class MXNetShapeAPI(BaseShapeAPI):
@@ -243,19 +316,25 @@ class MXNetShapeAPI(BaseShapeAPI):
     def reshape(self, x, shape):
         return mx.nd.reshape(x, shape)
 
+    def expand_dims(self, x, axis):
+        return mx.nd.expand_dims(x, axis)
+
 
 class TensorFlowShapeAPI(BaseShapeAPI):
     def ndim(self, x):
         return int(tf.rank(x).numpy())
 
     def shape(self, x):
-        return x.shape
+        return tuple(map(int, x.shape))
 
     def size(self, x):
         return int(tf.size(x).numpy())
 
     def reshape(self, x, shape):
         return tf.reshape(x, shape)
+
+    def expand_dims(self, x, axis):
+        return tf.expand_dims(x, axis)
 
 
 class ChainerShapeAPI(BaseShapeAPI):
@@ -271,20 +350,19 @@ class ChainerShapeAPI(BaseShapeAPI):
     def reshape(self, x, shape):
         return x.reshape(shape)
 
+    def expand_dims(self, x, axis):
+        return CHF.array.expand_dims.expand_dims(x, axis)
+
 
 class BaseDeviceDTypeAPI(APIBase):
-    def __init__(self, num_gpus, default_device_id, supported_dtypes,
-                 default_dtype):
-        self._devices = []
-        for device_id in range(num_gpus + 1):
-            device = Device(device_id)
-            self._devices.append(device)
-        assert isinstance(default_device_id, int)
-        assert 0 <= default_device_id < len(self._devices)
-        self._default_device = self._devices[default_device_id]
+    def set_supported_dtypes(self, supported_dtypes, default_dtype):
+        assert supported_dtypes
+        assert sorted(supported_dtypes) == supported_dtypes
+        for dtype in supported_dtypes:
+            assert dtype
+            assert isinstance(dtype, str)
         self._supported_dtypes = supported_dtypes
-        assert default_dtype in supported_dtypes
-        self._default_dtype = default_dtype
+        self.set_default_dtype(default_dtype)
 
     def supported_dtypes(self):
         return self._supported_dtypes
@@ -308,6 +386,16 @@ class BaseDeviceDTypeAPI(APIBase):
 
     def num_gpus(self):
         return len(self._devices) - 1
+
+    def set_devices(self, num_gpus, default_device_id):
+        self._devices = []
+        for device_id in range(num_gpus + 1):
+            device = Device(device_id)
+            self._devices.append(device)
+        self.set_default_device(default_device_id)
+
+    def devices(self):
+        return self._devices
 
     def set_default_device(self, device):
         if isinstance(device, Device):
@@ -382,10 +470,10 @@ class PyTorchDeviceDTypeAPI(BaseDeviceDTypeAPI):
             self._dtype2gpu[dtype] = gpu
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
+        self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted(self._dtype2cpu)
         default_dtype = 'float32'
-        BaseDeviceDTypeAPI.__init__(
-            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+        self.set_supported_dtypes(supported_dtypes, default_dtype)
 
     def discover_gpus(self):
         return torch.cuda.device_count()
@@ -458,14 +546,14 @@ class MXNetDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
+        self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted("""
             uint8
             int8 int16 int32 int64
             float16 float32 float64
         """.split())
         default_dtype = 'float32'
-        BaseDeviceDTypeAPI.__init__(
-            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+        self.set_supported_dtypes(supported_dtypes, default_dtype)
         for i, device in enumerate(self._devices):
             if device.is_cpu():
                 ctx = mx.cpu()
@@ -522,6 +610,7 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         num_gpus = tfe.num_gpus()
         default_device_id = 1 if num_gpus else 0
+        self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted("""
             bool
             uint8 uint16 uint32 uint64
@@ -529,8 +618,7 @@ class TensorFlowDeviceDTypeAPI(BaseDeviceDTypeAPI):
             float16 float32 float64
         """.split())
         default_dtype = 'float32'
-        BaseDeviceDTypeAPI.__init__(
-            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+        self.set_supported_dtypes(supported_dtypes, default_dtype)
 
     def discover_gpus(self):
         return tfe.num_gpus()
@@ -593,6 +681,7 @@ class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
     def __init__(self):
         num_gpus = 0
         default_device_id = 0
+        self.set_devices(num_gpus, default_device_id)
         supported_dtypes = sorted("""
             bool
             uint8 uint16 uint32 uint64
@@ -600,8 +689,7 @@ class ChainerDeviceDTypeAPI(BaseDeviceDTypeAPI):
             float16 float32 float64
         """.split())
         default_dtype = 'float32'
-        BaseDeviceDTypeAPI.__init__(
-            self, num_gpus, default_device_id, supported_dtypes, default_dtype)
+        self.set_supported_dtypes(supported_dtypes, default_dtype)
 
     def discover_gpus(self):
         return 0
@@ -648,15 +736,14 @@ class BaseVariableAPI(APIBase):
     def variable(self, x):
         raise NotImplementedError
 
-    @classmethod
-    def _aux_scores(cls, aux_judges, yy_true, yy_pred):
+    def _aux_scores(self, aux_judges, yy_true, yy_pred):
         if aux_judges is None:
             return None
         aux_scores = []
         for y_aux_judges, y_true, y_pred in zip(aux_judges, yy_true, yy_pred):
             y_aux_scores = []
             for judge in y_aux_judges:
-                result = judge(y_true, y_pred)
+                result = self.mean(judge(y_true, y_pred))
                 y_aux_scores.append(Z.result_to_tensor(result))
             aux_scores.append(y_aux_scores)
         return aux_scores
@@ -696,7 +783,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
         score_vars = []
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-            score_vars.append(judge(y_true, y_pred))
+            score_vars.append(self.mean(judge(y_true, y_pred)))
             arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
             score_grads.append(self.cast_numpy_to(arr))
         torch.autograd.backward(score_vars, score_grads)
@@ -740,7 +827,7 @@ class MXNetVariableAPI(BaseVariableAPI):
         with mx.autograd.record():
             yy_pred = forward(xx)
             for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-                scores.append(judge(y_true, y_pred))
+                scores.append(self.mean(judge(y_true, y_pred)))
                 arr = np.ones((1,), Z.dtype_of(y_true)) * judge.importance
                 score_grads.append(self.cast_numpy_to(arr))
         mx.autograd.backward(scores, score_grads)
@@ -769,13 +856,12 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def variable(self, x):
         return tfe.Variable(x, name=self._name())
 
-    @classmethod
-    def _ivag_inner(cls, forward, judges, aux_judges, xx, yy_true, bridge):
+    def _ivag_inner(self, forward, judges, aux_judges, xx, yy_true, bridge):
         yy_pred = forward(xx)
         scores = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-            scores.append(judge(y_true, y_pred) * judge.importance)
-        bridge['aux_scores'] = cls._aux_scores(aux_judges, yy_true, yy_pred)
+            scores.append(self.mean(judge(y_true, y_pred)) * judge.importance)
+        bridge['aux_scores'] = self._aux_scores(aux_judges, yy_true, yy_pred)
         return scores
 
     def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
@@ -812,11 +898,15 @@ class ChainerVariableAPI(BaseVariableAPI):
         score_vars = []
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
-            score_vars.append(judge(y_true, y_pred))
+            score_vars.append(self.mean(judge(y_true, y_pred)))
             arr = np.ones(Z.shape(y_true), Z.dtype_of(y_true)) * \
                 judge.importance
             score_grads.append(self.cast_numpy_to(arr))
-        grad_vars = chainer.grad(score_vars, params, score_grads)
+        broadcasted_score_vars = []
+        for score_var, score_grad in zip(score_vars, score_grads):
+            x = CHF.array.broadcast.broadcast_to(score_var, score_grad.shape)
+            broadcasted_score_vars.append(x)
+        grad_vars = chainer.grad(broadcasted_score_vars, params, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
         grads_and_params = []
         for param, grad_var in zip(params, grad_vars):
@@ -837,23 +927,27 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseMapAPI, BaseReduceAPI,
-              BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
+class BaseAPI(BaseActivationAPI, BaseDeviceDTypeAPI, BaseEpsilonAPI, BaseMapAPI,
+              BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI,
+              BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
         BaseDeviceDTypeAPI.__init__(self)
+        BaseEpsilonAPI.__init__(self)
         BaseMapAPI.__init__(self)
+        BaseMetricAPI.__init__(self)
         BaseReduceAPI.__init__(self)
         BaseRelateAPI.__init__(self)
         BaseShapeAPI.__init__(self)
         BaseVariableAPI.__init__(self)
 
 
-class PyTorchAPI(PyTorchActivationAPI, PyTorchDeviceDTypeAPI, PyTorchMapAPI,
-                 PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
-                 PyTorchVariableAPI):
+class PyTorchAPI(BaseAPI, PyTorchActivationAPI, PyTorchDeviceDTypeAPI,
+                 PyTorchMapAPI, PyTorchReduceAPI, PyTorchRelateAPI,
+                 PyTorchShapeAPI, PyTorchVariableAPI):
     def __init__(self):
-        BaseActivationAPI.__init__(self)
+        BaseAPI.__init__(self)
+        PyTorchActivationAPI.__init__(self)
         PyTorchDeviceDTypeAPI.__init__(self)
         PyTorchMapAPI.__init__(self)
         PyTorchReduceAPI.__init__(self)
@@ -862,9 +956,10 @@ class PyTorchAPI(PyTorchActivationAPI, PyTorchDeviceDTypeAPI, PyTorchMapAPI,
         PyTorchVariableAPI.__init__(self)
 
 
-class MXNetAPI(MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
+class MXNetAPI(BaseAPI, MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
                MXNetReduceAPI, MXNetRelateAPI, MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
+        BaseAPI.__init__(self)
         MXNetActivationAPI.__init__(self)
         MXNetDeviceDTypeAPI.__init__(self)
         MXNetMapAPI.__init__(self)
@@ -874,10 +969,11 @@ class MXNetAPI(MXNetActivationAPI, MXNetDeviceDTypeAPI, MXNetMapAPI,
         MXNetVariableAPI.__init__(self)
 
 
-class TensorFlowAPI(TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
+class TensorFlowAPI(BaseAPI, TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
                     TensorFlowMapAPI, TensorFlowReduceAPI, TensorFlowRelateAPI,
                     TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
+        BaseAPI.__init__(self)
         TensorFlowActivationAPI.__init__(self)
         TensorFlowDeviceDTypeAPI.__init__(self)
         TensorFlowMapAPI.__init__(self)
@@ -887,10 +983,11 @@ class TensorFlowAPI(TensorFlowActivationAPI, TensorFlowDeviceDTypeAPI,
         TensorFlowVariableAPI.__init__(self)
 
 
-class ChainerAPI(ChainerActivationAPI, ChainerDeviceDTypeAPI, ChainerMapAPI,
-                 ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
-                 ChainerVariableAPI):
+class ChainerAPI(BaseAPI, ChainerActivationAPI, ChainerDeviceDTypeAPI,
+                 ChainerMapAPI, ChainerReduceAPI, ChainerRelateAPI,
+                 ChainerShapeAPI, ChainerVariableAPI):
     def __init__(self):
+        BaseAPI.__init__(self)
         ChainerActivationAPI.__init__(self)
         ChainerDeviceDTypeAPI.__init__(self)
         ChainerMapAPI.__init__(self)
@@ -905,7 +1002,7 @@ BACKEND = os.environ['b']
 if BACKEND == 'pytorch':
     Z = PyTorchAPI()
 elif BACKEND == 'mxnet':
-    Z = PyTorchAPI()
+    Z = MXNetAPI()
 elif BACKEND == 'tensorflow':
     Z = TensorFlowAPI()
 elif BACKEND == 'chainer':
@@ -1080,10 +1177,6 @@ class SequenceSpec(TransformSpec):
         return SequenceLayer(layers), form
 
 
-def mean_squared_error(true, pred):
-    return Z.sum(Z.pow(true - pred, 2))
-
-
 class Loss(object):
     def __init__(self, importance=1):
         self.importance = importance
@@ -1094,7 +1187,17 @@ class Loss(object):
 
 class MeanSquaredError(Loss):
     def __call__(self, true, pred):
-        return mean_squared_error(true, pred)
+        return Z.mean_squared_error(true, pred)
+
+
+class BinaryCrossEntropy(Loss):
+    def __call__(self, true, pred):
+        return Z.binary_cross_entropy(true, pred)
+
+
+class CategoricalCrossEntropy(Loss):
+    def __call__(self, true, pred):
+        return Z.categorical_cross_entropy(true, pred)
 
 
 class Optimizer(object):
@@ -1161,8 +1264,8 @@ model, out_shape = model.build_one(None)
 opt = SGD(lr)
 opt.set_params(model.params())
 
-mse = MeanSquaredError()
-judges = [mse]
+cxe = CategoricalCrossEntropy()
+judges = [cxe]
 aux_judges = None
 
 for epoch_id in range(num_epochs):
