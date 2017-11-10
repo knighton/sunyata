@@ -2,7 +2,7 @@ import mxnet as mx
 import numpy as np
 import subprocess
 
-from sunyata.backend.base import \
+from ..base import \
     Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
     BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
     BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
