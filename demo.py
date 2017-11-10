@@ -178,7 +178,7 @@ class BaseMetricAPI(APIBase):
         true_indices = self.argmax(true, -1)
         pred_indices = self.argmax(pred, -1)
         hits = self.equal(true_indices, pred_indices)
-        hits = tf.cast(hits, self.dtype_of(true))
+        hits = self.cast(hits, self.dtype_of(true))
         return self.mean(hits, -1, False)
 
 
@@ -759,7 +759,7 @@ class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
         to_device = from_device if device is None else self.device(device)
         from_dtype = self.dtype_of(x)
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
-        if from_device is not to_device:
+        if from_device is to_device:
             if from_dtype != to_dtype or copy:
                 x = tf.cast(x, to_dtype)
         else:
