@@ -5,10 +5,9 @@ from torch.autograd import Variable as PTVariable
 import torch.nn.functional as PTF
 
 from ..base import \
-    Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
-    BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
-    BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseBackend 
+    BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
 class PyTorchActivationAPI(BaseActivationAPI):

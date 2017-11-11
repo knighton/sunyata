@@ -3,14 +3,12 @@ import tensorflow as tf
 import tensorflow.contrib.eager as tfe
 
 from sunyata.backend.base import \
-    Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
-    BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
-    BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseBackend
+    BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
 tfe.enable_eager_execution()
-
 
 
 class TensorFlowActivationAPI(BaseActivationAPI):
@@ -135,8 +133,7 @@ class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
 
     def cast_numpy_to(self, x, dtype=None, device=None):
         to_device = self.device(device)
-        from_dtype = x.dtype.name if device is None else self.device(device)
-        to_dtype = x.dtype if dtype is None else self.dtype(dtype)
+        to_dtype = x.dtype.name if dtype is None else self.dtype(dtype)
         with tf.device(self._device_name(to_device)):
             return tf.convert_to_tensor(x, to_dtype)
 

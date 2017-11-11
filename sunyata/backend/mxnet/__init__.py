@@ -3,10 +3,9 @@ import numpy as np
 import subprocess
 
 from ..base import \
-    Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
-    BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
-    BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseBackend
+    BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
 class MXNetActivationAPI(BaseActivationAPI):

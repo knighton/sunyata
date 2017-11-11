@@ -1,6 +1,5 @@
 import keras
 import numpy as np
-import os
 
 from sunyata import backend as Z
 
@@ -292,5 +291,5 @@ for epoch_id in range(num_epochs):
         assert not np.isnan(loss)
         assert not np.isnan(acc)
         print('epoch %4d batch %4d loss %.4f acc %.4f' %
-            (epoch_id, batch_id, loss, acc))
+              (epoch_id, batch_id, loss, acc))
         opt.update(grads_and_params)

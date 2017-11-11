@@ -3,10 +3,9 @@ import chainer.functions as CHF
 import numpy as np
 
 from ..base import \
-    Device, BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, \
-    BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI, BaseMapAPI, \
-    BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, BaseShapeAPI, \
-    BaseVariableAPI, BaseBackend
+    BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
 class ChainerActivationAPI(BaseActivationAPI):
