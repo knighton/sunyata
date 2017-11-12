@@ -266,8 +266,11 @@ class BaseVariableAPI(APIBase):
     def assign(self, x, new_value):
         raise NotImplementedError
 
-    def move(self, x, incr):
+    def incr(self, x, incr):
         self.assign(x, self.variable_to_tensor(x) + incr)
+
+    def decr(self, x, decr):
+        self.assign(x, self.variable_to_tensor(x) - decr)
 
     def numpy(self, x):
         raise NotImplementedError

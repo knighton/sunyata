@@ -21,5 +21,5 @@ class SGDM(Optimizer):
         }
 
     def update_variable(self, var, grad, ctx):
-        ctx.velocity = -ctx.lr * grad + ctx.momentum * ctx.velocity
-        Z.move(var, ctx.velocity)
+        ctx.velocity = ctx.lr * grad + ctx.momentum * ctx.velocity
+        Z.decr(var, ctx.velocity)
