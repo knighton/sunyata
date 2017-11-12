@@ -13,11 +13,10 @@ class SGDM(Optimizer):
         self.momentum = momentum
 
     def make_context(self, variable):
-        arr = np.zeros(Z.shape(variable), Z.dtype_of(variable))
         return {
             'lr': self.lr,
             'momentum': self.momentum,
-            'velocity': Z.cast_numpy_to(arr),
+            'velocity': Z.zeros_like(variable),
         }
 
     def update_variable(self, var, grad, ctx):
