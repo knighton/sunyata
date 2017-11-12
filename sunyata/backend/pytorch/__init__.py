@@ -1,8 +1,8 @@
 import importlib
 import numpy as np
 import torch
-from torch.autograd import Variable as PTVariable
-import torch.nn.functional as PTF
+from torch.autograd import Variable
+import torch.nn.functional as F
 
 from ..base import \
     BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
@@ -16,7 +16,7 @@ class PyTorchActivationAPI(BaseActivationAPI):
         tran = x.transpose(1, len(x_shape) - 1)
         tran_shape = tran.size()
         tran_2d = tran.contiguous().view(-1, tran_shape[-1])
-        tran_2d = PTF.softmax(tran_2d)
+        tran_2d = F.softmax(tran_2d)
         tran = tran_2d.view(*tran_shape)
         return tran.transpose(1, len(x_shape) - 1)
 
@@ -195,7 +195,7 @@ class PyTorchDeviceDataTypeAPI(
     def dtype_of(self, x):
         if isinstance(x, torch._TensorBase):
             tensor = x
-        elif isinstance(x, PTVariable):
+        elif isinstance(x, Variable):
             tensor = x.data
         else:
             assert False
@@ -251,10 +251,10 @@ class PyTorchDeviceDataTypeAPI(
 
 class PyTorchVariableAPI(BaseVariableAPI):
     def constant(self, x):
-        return PTVariable(x.clone(), requires_grad=False)
+        return Variable(x.clone(), requires_grad=False)
 
     def variable(self, x):
-        return PTVariable(x.clone(), requires_grad=True)
+        return Variable(x.clone(), requires_grad=True)
 
     def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
         yy_pred = forward(xx)
@@ -283,7 +283,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def numpy(self, x):
         if isinstance(x, torch._TensorBase):
             pass
-        elif isinstance(x, PTVariable):
+        elif isinstance(x, Variable):
             x = x.data
         else:
             assert False
