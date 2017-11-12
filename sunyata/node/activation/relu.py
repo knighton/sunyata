@@ -4,7 +4,7 @@ from ..base import TransformLayer, TransformSpec
 
 class ReLULayer(TransformLayer):
     def forward_one(self, x):
-        return Z.clip(x, min=0)
+        return Z.relu(x)
 
 
 class ReLUSpec(TransformSpec):
