@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base import APIBase
+from ..base import APIBase
 
 
 class BaseMapAPI(APIBase):

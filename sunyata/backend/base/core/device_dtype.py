@@ -1,4 +1,4 @@
-from .base import APIBase
+from ..base import APIBase
 
 
 class Device(object):
