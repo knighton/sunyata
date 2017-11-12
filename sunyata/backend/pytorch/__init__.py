@@ -153,7 +153,8 @@ class PyTorchDataTypeAPI(BaseDataTypeAPI):
     pass
 
 
-class PyTorchDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class PyTorchDeviceDataTypeAPI(
+        BaseDeviceDataTypeAPI, PyTorchDeviceAPI, PyTorchDataTypeAPI):
     def __init__(self):
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
@@ -289,16 +290,14 @@ class PyTorchVariableAPI(BaseVariableAPI):
         return x.cpu().numpy()
 
 
-class PyTorchBackend(BaseBackend, PyTorchActivationAPI, PyTorchDataTypeAPI,
-                     PyTorchDeviceAPI, PyTorchDeviceDataTypeAPI,
+class PyTorchBackend(BaseBackend, PyTorchActivationAPI,
+                     PyTorchDeviceDataTypeAPI,
                      PyTorchLogicAPI, PyTorchMapAPI, PyTorchMetricAPI,
                      PyTorchReduceAPI, PyTorchDenseAPI, PyTorchShapeAPI,
                      PyTorchVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
         PyTorchActivationAPI.__init__(self)
-        PyTorchDataTypeAPI.__init__(self)
-        PyTorchDeviceAPI.__init__(self)
         PyTorchDeviceDataTypeAPI.__init__(self)
         PyTorchLogicAPI.__init__(self)
         PyTorchMapAPI.__init__(self)

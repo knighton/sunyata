@@ -127,7 +127,8 @@ class MXNetDataTypeAPI(BaseDataTypeAPI):
     pass
 
 
-class MXNetDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class MXNetDeviceDataTypeAPI(
+        BaseDeviceDataTypeAPI, MXNetDeviceAPI, MXNetDataTypeAPI):
     def __init__(self):
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
@@ -228,15 +229,13 @@ class MXNetVariableAPI(BaseVariableAPI):
         return x.asnumpy()
 
 
-class MXNetBackend(BaseBackend, MXNetActivationAPI, MXNetDataTypeAPI,
-                   MXNetDeviceAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
+class MXNetBackend(BaseBackend, MXNetActivationAPI,
+                   MXNetDeviceDataTypeAPI, MXNetLogicAPI,
                    MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetDenseAPI,
                    MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
         MXNetActivationAPI.__init__(self)
-        MXNetDataTypeAPI.__init__(self)
-        MXNetDeviceAPI.__init__(self)
         MXNetDeviceDataTypeAPI.__init__(self)
         MXNetLogicAPI.__init__(self)
         MXNetMapAPI.__init__(self)

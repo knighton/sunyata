@@ -131,8 +131,11 @@ class TensorFlowDataTypeAPI(BaseDataTypeAPI):
     pass
 
 
-class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class TensorFlowDeviceDataTypeAPI(
+        BaseDeviceDataTypeAPI, TensorFlowDeviceAPI, TensorFlowDataTypeAPI):
     def __init__(self):
+        TensorFlowDeviceAPI.__init__(self)
+        TensorFlowDataTypeAPI.__init__(self)
         num_gpus = self.discover_gpus()
         default_device_id = 1 if num_gpus else 0
         self.set_devices(num_gpus, default_device_id)
@@ -229,7 +232,6 @@ class TensorFlowVariableAPI(BaseVariableAPI):
 
 
 class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
-                        TensorFlowDataTypeAPI, TensorFlowDeviceAPI,
                         TensorFlowDeviceDataTypeAPI, TensorFlowLogicAPI,
                         TensorFlowMapAPI, TensorFlowMetricAPI,
                         TensorFlowReduceAPI, TensorFlowDenseAPI,
@@ -237,8 +239,6 @@ class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
     def __init__(self):
         BaseBackend.__init__(self)
         TensorFlowActivationAPI.__init__(self)
-        TensorFlowDataTypeAPI.__init__(self)
-        TensorFlowDeviceAPI.__init__(self)
         TensorFlowDeviceDataTypeAPI.__init__(self)
         TensorFlowLogicAPI.__init__(self)
         TensorFlowMapAPI.__init__(self)

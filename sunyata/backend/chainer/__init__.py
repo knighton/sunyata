@@ -142,8 +142,11 @@ class ChainerDataTypeAPI(BaseDataTypeAPI):
     pass
 
 
-class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
+class ChainerDeviceDataTypeAPI(
+        BaseDeviceDataTypeAPI, ChainerDeviceAPI, ChainerDataTypeAPI):
     def __init__(self):
+        ChainerDataTypeAPI.__init__(self)
+        ChainerDeviceAPI.__init__(self)
         num_gpus = self.discover_gpus()
         assert not num_gpus
         default_device_id = 0
@@ -230,16 +233,14 @@ class ChainerVariableAPI(BaseVariableAPI):
         return x.data.copy() if isinstance(x, chainer.Variable) else x.copy()
 
 
-class ChainerBackend(BaseBackend, ChainerActivationAPI, ChainerDeviceAPI,
-                     ChainerDataTypeAPI, ChainerDeviceDataTypeAPI,
+class ChainerBackend(BaseBackend, ChainerActivationAPI,
+                     ChainerDeviceDataTypeAPI,
                      ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
                      ChainerReduceAPI, ChainerDenseAPI, ChainerShapeAPI,
                      ChainerVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
         ChainerActivationAPI.__init__(self)
-        ChainerDataTypeAPI.__init__(self)
-        ChainerDeviceAPI.__init__(self)
         ChainerDeviceDataTypeAPI.__init__(self)
         ChainerLogicAPI.__init__(self)
         ChainerMapAPI.__init__(self)
