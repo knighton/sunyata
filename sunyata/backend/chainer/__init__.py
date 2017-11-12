@@ -1,5 +1,5 @@
 import chainer
-import chainer.functions as CHF
+import chainer.functions as F
 import numpy as np
 
 from ..base import \
@@ -10,7 +10,7 @@ from ..base import \
 
 class ChainerActivationAPI(BaseActivationAPI):
     def softmax(self, x):
-        return CHF.softmax(x)
+        return F.softmax(x)
 
 
 class ChainerLogicAPI(BaseLogicAPI):
@@ -20,13 +20,13 @@ class ChainerLogicAPI(BaseLogicAPI):
 
 class ChainerMapAPI(BaseMapAPI):
     def clip(self, x, min=-np.inf, max=np.inf):
-        return CHF.clip(x, float(min), float(max))
+        return F.clip(x, float(min), float(max))
 
     def log(self, x):
-        return CHF.math.exponential.log(x)
+        return F.math.exponential.log(x)
 
     def pow(self, x, a):
-        return CHF.math.basic_math.pow(x, a)
+        return F.math.basic_math.pow(x, a)
 
 
 class ChainerMetricAPI(BaseMetricAPI):
@@ -35,12 +35,12 @@ class ChainerMetricAPI(BaseMetricAPI):
 
 class ChainerReduceAPI(BaseReduceAPI):
     def argmax(self, x, axis=-1):
-        return CHF.argmax(x, axis)
+        return F.argmax(x, axis)
 
     def mean(self, x, axis=None, keepdims=False):
         if axis is None:
             denom = x.size
-            x = CHF.math.sum.sum(x, axis, keepdims)
+            x = F.math.sum.sum(x, axis, keepdims)
             if not keepdims:
                 x = self.expand_dims(x, 0)
             x /= denom
@@ -53,12 +53,12 @@ class ChainerReduceAPI(BaseReduceAPI):
             denom = 1
             for axis in axes:
                 denom *= x.shape[axis]
-            x = CHF.math.sum.sum(x, axes, keepdims) / denom
+            x = F.math.sum.sum(x, axes, keepdims) / denom
         return x
 
     def sum(self, x, axis=None, keepdims=False):
         axis = tuple(axis) if isinstance(axis, list) else axis
-        x = CHF.math.sum.sum(x, axis, keepdims)
+        x = F.math.sum.sum(x, axis, keepdims)
         if not x.ndim:
             x = self.expand_dims(x, 0)
         return x
@@ -66,7 +66,7 @@ class ChainerReduceAPI(BaseReduceAPI):
 
 class ChainerRelateAPI(BaseRelateAPI):
     def dense(self, x, kernel, bias):
-        return CHF.connection.linear.linear(x, kernel, bias)
+        return F.connection.linear.linear(x, kernel, bias)
 
 
 class ChainerShapeAPI(BaseShapeAPI):
@@ -83,7 +83,7 @@ class ChainerShapeAPI(BaseShapeAPI):
         return x.reshape(shape)
 
     def expand_dims(self, x, axis):
-        return CHF.array.expand_dims.expand_dims(x, axis)
+        return F.array.expand_dims.expand_dims(x, axis)
 
 
 class ChainerDeviceAPI(BaseDeviceAPI):
@@ -120,7 +120,7 @@ class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI):
 
     def _do_cast(self, x, from_dtype, to_dtype):
         if self.is_float_dtype(from_dtype):
-            x = CHF.cast(x, to_dtype)
+            x = F.cast(x, to_dtype)
         else:
             x = chainer.Variable(x.data.astype(to_dtype))
         return x
