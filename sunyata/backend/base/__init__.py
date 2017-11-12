@@ -55,6 +55,12 @@ class BaseMapAPI(APIBase):
     def pow(self, x, a):
         raise NotImplementedError
 
+    def square(self, x):
+        return self.pow(x, 2)
+
+    def sqrt(self, x):
+        return self.pow(x, 0.5)
+
 
 class BaseMetricAPI(APIBase):
     def binary_cross_entropy(self, true, pred):
@@ -260,6 +266,9 @@ class BaseVariableAPI(APIBase):
     def assign(self, x, new_value):
         raise NotImplementedError
 
+    def move(self, x, incr):
+        self.assign(x, self.variable_to_tensor(x) + incr)
+
     def numpy(self, x):
         raise NotImplementedError
 
@@ -287,3 +296,6 @@ class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
         BaseRelateAPI.__init__(self)
         BaseShapeAPI.__init__(self)
         BaseVariableAPI.__init__(self)
+
+    def zeros_like(self, x):
+        return self.cast_numpy_to(np.zeros(self.shape(x), self.dtype_of(x)))

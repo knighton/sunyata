@@ -3,7 +3,7 @@ from .base import Optimizer
 
 
 class SGD(Optimizer):
-    def __init__(self, lr=0.01):
+    def __init__(self, lr=0.05):
         super().__init__()
         assert 0 < lr
         self.lr = lr
@@ -11,5 +11,5 @@ class SGD(Optimizer):
     def make_context(self, variable):
         return {'lr': self.lr}
 
-    def learn(self, var, grad, ctx):
-        Z.assign(var, Z.variable_to_tensor(var) - ctx.lr * grad)
+    def update_variable(self, var, grad, ctx):
+        Z.move(var, -ctx.lr * grad)

@@ -5,7 +5,7 @@ from .base import Optimizer
 
 
 class SGDM(Optimizer):
-    def __init__(self, lr=0.01, momentum=0.9):
+    def __init__(self, lr=0.05, momentum=0.9):
         super().__init__()
         assert 0 < lr
         assert 0 <= momentum <= 1
@@ -20,8 +20,6 @@ class SGDM(Optimizer):
             'velocity': Z.cast_numpy_to(arr),
         }
 
-    def learn(self, var, grad, ctx):
-        cur_v = ctx.velocity
-        new_v = -ctx.lr * grad
-        ctx.velocity = cur_v * ctx.momentum + new_v * (1 - ctx.momentum)
-        Z.assign(var, Z.variable_to_tensor(var) + ctx.velocity)
+    def update_variable(self, var, grad, ctx):
+        ctx.velocity = -ctx.lr * grad + ctx.momentum * ctx.velocity
+        Z.move(var, ctx.velocity)

@@ -10,7 +10,7 @@ class Optimizer(object):
     def make_context(self, variable):
         raise NotImplementedError
 
-    def learn(self, context, gradients, variable):
+    def update_variable(self, var, grad, ctx):
         raise NotImplementedError
 
     def step(self, grads_and_vars):
@@ -20,4 +20,4 @@ class Optimizer(object):
             if context is None:
                 context = OptimizerContext(**self.make_context(variable))
                 self.vid2context[variable_id] = context
-            self.learn(variable, gradient, context)
+            self.update_variable(variable, gradient, context)
