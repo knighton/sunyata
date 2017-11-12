@@ -2,7 +2,7 @@ from .. import backend as Z
 from .base import Optimizer
 
 
-class SGDM(Optimizer):
+class NAG(Optimizer):
     def __init__(self, lr=0.05, momentum=0.9):
         super().__init__()
         assert 0 < lr
@@ -18,5 +18,7 @@ class SGDM(Optimizer):
         }
 
     def update_variable(self, var, grad, ctx):
-        ctx.velocity = ctx.lr * grad + ctx.momentum * ctx.velocity
-        Z.decr(var, ctx.velocity)
+        prev_velocity = ctx.velocity
+        ctx.velocity = ctx.momentum * ctx.velocity - ctx.lr * grad
+        Z.incr(var, (1 + ctx.momentum) * ctx.velocity -
+               ctx.momentum * prev_velocity)
