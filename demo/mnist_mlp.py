@@ -4,26 +4,7 @@ import numpy as np
 from sunyata import backend as Z
 from sunyata.metric import *  # noqa
 from sunyata.node import *  # noqa
-
-
-class Optimizer(object):
-    def set_params(self, params):
-        self.params = params
-
-    def update_param(self, gradient, param):
-        raise NotImplementedError
-
-    def update(self, grads_and_params):
-        for grad, param in grads_and_params:
-            self.update_param(grad, param)
-
-
-class SGD(Optimizer):
-    def __init__(self, lr):
-        self.lr = lr
-
-    def update_param(self, gradient, variable):
-        Z.assign(variable, Z.variable_to_tensor(variable) - self.lr * gradient)
+from sunyata.optim import *  # noqa
 
 
 def one_hot(indices, num_classes, dtype):
