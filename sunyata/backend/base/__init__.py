@@ -2,6 +2,7 @@ import numpy as np
 
 from .activation import BaseActivationAPI
 from .base import APIBase
+from .epsilon import BaseEpsilonAPI
 from .logic import BaseLogicAPI
 from .map import BaseMapAPI
 from .reduce import BaseReduceAPI
@@ -22,19 +23,6 @@ class Device(object):
 
     def is_gpu(self):
         return bool(self.id)
-
-
-class BaseEpsilonAPI(APIBase):
-    def __init__(self):
-        self.set_epsilon(1e-5)
-
-    def set_epsilon(self, epsilon):
-        assert isinstance(epsilon, float)
-        assert 0 < epsilon < 1e-2
-        self._epsilon = epsilon
-
-    def epsilon(self):
-        return self._epsilon
 
 
 class BaseMetricAPI(APIBase):
