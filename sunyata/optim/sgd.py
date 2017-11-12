@@ -1,10 +1,15 @@
 from .. import backend as Z
-from .base import Optimizer
+from .base import Optimizer, OptimizerContext
 
 
 class SGD(Optimizer):
-    def __init__(self, lr):
+    def __init__(self, lr=0.05):
+        super().__init__()
+        assert 0 < lr
         self.lr = lr
 
-    def update_param(self, gradient, variable):
-        Z.assign(variable, Z.variable_to_tensor(variable) - self.lr * gradient)
+    def make_context(self, variable):
+        return OptimizerContext(lr=self.lr)
+
+    def learn(self, var, grad, ctx):
+        Z.assign(var, Z.variable_to_tensor(var) - ctx.lr * grad)

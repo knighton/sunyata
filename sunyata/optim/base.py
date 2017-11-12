@@ -1,10 +1,23 @@
-class Optimizer(object):
-    def set_params(self, params):
-        self.params = params
+class OptimizerContext(object):
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
-    def update_param(self, gradient, param):
+
+class Optimizer(object):
+    def __init__(self):
+        self.vid2context = {}
+
+    def make_context(self, variable):
         raise NotImplementedError
 
-    def update(self, grads_and_params):
-        for grad, param in grads_and_params:
-            self.update_param(grad, param)
+    def learn(self, context, gradients, variable):
+        raise NotImplementedError
+
+    def step(self, grads_and_vars):
+        for gradient, variable in grads_and_vars:
+            variable_id = id(variable)
+            context = self.vid2context.get(variable_id)
+            if context is None:
+                context = self.make_context(variable)
+                self.vid2context[variable_id] = context
+            self.learn(variable, gradient, context)

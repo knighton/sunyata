@@ -10,6 +10,7 @@ class Model(object):
 
     def build(self):
         self.layer, out_shape = self.spec.build_one(None)
+        self.params = self.layer.params()
 
     def _ensure_built(self):
         if self.layer is None:
@@ -17,13 +18,13 @@ class Model(object):
 
     def fit_on_batch(self, x, y, opt, losses, aux_metrics):
         grads_and_params, loss_values, aux_metric_values = Z.gradients(
-            opt.params, self.layer.forward_multi, losses, aux_metrics,
+            self.params, self.layer.forward_multi, losses, aux_metrics,
             [x], [y])
         loss = Z.scalar(loss_values[0])
         acc = Z.scalar(aux_metric_values[0][0])
         assert not np.isnan(loss)
         assert not np.isnan(acc)
-        opt.update(grads_and_params)
+        opt.step(grads_and_params)
         return {
             'loss': loss,
             'acc': acc,
@@ -58,7 +59,6 @@ class Model(object):
 
     def fit(self, data, opt, losses, aux_metrics, num_epochs, batch_size):
         self._ensure_built()
-        opt.set_params(self.layer.params())
         history = []
         for epoch_id in range(num_epochs):
             print('Epoch %d:' % epoch_id)
