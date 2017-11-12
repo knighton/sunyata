@@ -2,7 +2,7 @@ from .. import backend as Z
 from .base import Optimizer
 
 
-class Adagrad(Optimizer):
+class RMSprop(Optimizer):
     def __init__(self, lr=0.01, decay_rate=0.99, epsilon=1e-6):
         super().__init__()
         assert 0 < lr
@@ -21,5 +21,6 @@ class Adagrad(Optimizer):
         }
 
     def update_variable(self, var, grad, ctx):
-        ctx.cache += Z.square(grad)
+        ctx.cache = ctx.decay_rate * ctx.cache + \
+            (1 - ctx.decay_rate) * Z.square(grad)
         Z.decr(var, ctx.lr * grad / Z.sqrt(ctx.cache + ctx.epsilon))
