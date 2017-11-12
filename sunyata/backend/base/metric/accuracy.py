@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseAccuracyAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def categorical_accuracy(self, true, pred):
         true_indices = self.argmax(true, -1)
         pred_indices = self.argmax(pred, -1)

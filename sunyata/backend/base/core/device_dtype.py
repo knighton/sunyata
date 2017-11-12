@@ -19,6 +19,9 @@ class Device(object):
 
 
 class BaseDeviceAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def num_devices(self):
         return len(self._devices)
 
@@ -60,6 +63,9 @@ class BaseDeviceAPI(APIBase):
 
 
 class BaseDataTypeAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def set_supported_dtypes(self, supported_dtypes, default_dtype):
         assert supported_dtypes
         assert sorted(supported_dtypes) == supported_dtypes

@@ -4,6 +4,9 @@ from ..base import APIBase
 
 
 class BaseMapAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def abs(self, x):
         return self.maximum(x, -1 * x)
 

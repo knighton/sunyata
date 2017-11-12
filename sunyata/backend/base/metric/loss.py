@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseLossAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def binary_cross_entropy(self, true, pred):
         pred = self.clip(pred, self.epsilon(), 1 - self.epsilon())
         return -true * self.log(pred) - (1 - true) * self.log(1 - pred)

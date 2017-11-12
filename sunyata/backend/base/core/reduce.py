@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseReduceAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def argmin(self, axis=-1):
         raise NotImplementedError
 

@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseLogicAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def minimum(self, a, b):
         raise NotImplementedError
 

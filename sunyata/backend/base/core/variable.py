@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseVariableAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def constant(self, x):
         raise NotImplementedError
 

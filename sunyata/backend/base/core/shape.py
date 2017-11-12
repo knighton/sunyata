@@ -2,6 +2,9 @@ from ..base import APIBase
 
 
 class BaseShapeAPI(APIBase):
+    def __init__(self):
+        APIBase.__init__(self)
+
     def ndim(self, x):
         raise NotImplementedError
 

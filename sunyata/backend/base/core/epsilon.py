@@ -3,6 +3,7 @@ from ..base import APIBase
 
 class BaseEpsilonAPI(APIBase):
     def __init__(self):
+        APIBase.__init__(self)
         self.set_epsilon(1e-5)
 
     def set_epsilon(self, epsilon):
