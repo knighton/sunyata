@@ -1,6 +1,3 @@
-import keras
-import numpy as np
-
 from sunyata import backend as Z
 from sunyata.dataset.mnist import load_mnist
 from sunyata.metric import *  # noqa
