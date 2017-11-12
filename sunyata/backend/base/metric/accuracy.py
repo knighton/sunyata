@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseAccuracyAPI(APIBase):
+class BaseAccuracyAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def categorical_accuracy(self, true, pred):
         true_indices = self.argmax(true, -1)

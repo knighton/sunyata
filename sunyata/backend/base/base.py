@@ -1,2 +1,2 @@
-class APIBase(object):
+class APIMixin(object):
     pass

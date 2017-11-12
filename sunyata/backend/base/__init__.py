@@ -1,4 +1,3 @@
-from .base import APIBase
 from .core import BaseCoreAPI
 from .core.device_dtype import \
     BaseDeviceAPI, BaseDataTypeAPI, BaseDeviceDataTypeAPI

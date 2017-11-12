@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseLossAPI(APIBase):
+class BaseLossAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def binary_cross_entropy(self, true, pred):
         pred = self.clip(pred, self.epsilon(), 1 - self.epsilon())

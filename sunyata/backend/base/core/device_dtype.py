@@ -1,4 +1,4 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
 class Device(object):
@@ -18,9 +18,9 @@ class Device(object):
         return bool(self.id)
 
 
-class BaseDeviceAPI(APIBase):
+class BaseDeviceAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def num_devices(self):
         return len(self._devices)
@@ -62,9 +62,9 @@ class BaseDeviceAPI(APIBase):
         return device
 
 
-class BaseDataTypeAPI(APIBase):
+class BaseDataTypeAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def set_supported_dtypes(self, supported_dtypes, default_dtype):
         assert supported_dtypes

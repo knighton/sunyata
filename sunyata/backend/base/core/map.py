@@ -1,11 +1,11 @@
 import numpy as np
 
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseMapAPI(APIBase):
+class BaseMapAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def abs(self, x):
         return self.maximum(x, -1 * x)

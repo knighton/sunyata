@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseShapeAPI(APIBase):
+class BaseShapeAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def ndim(self, x):
         raise NotImplementedError

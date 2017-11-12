@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseVariableAPI(APIBase):
+class BaseVariableAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def constant(self, x):
         raise NotImplementedError

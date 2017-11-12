@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseEpsilonAPI(APIBase):
+class BaseEpsilonAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
         self.set_epsilon(1e-5)
 
     def set_epsilon(self, epsilon):

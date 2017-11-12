@@ -1,9 +1,9 @@
-from ..base import APIBase
+from ..base import APIMixin
 
 
-class BaseReduceAPI(APIBase):
+class BaseReduceAPI(APIMixin):
     def __init__(self):
-        APIBase.__init__(self)
+        APIMixin.__init__(self)
 
     def argmin(self, axis=-1):
         raise NotImplementedError
