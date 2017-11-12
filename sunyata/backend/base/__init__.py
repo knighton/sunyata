@@ -1,5 +1,6 @@
 import numpy as np
 
+from .activation import BaseActivationAPI
 from .base import APIBase
 from .logic import BaseLogicAPI
 from .map import BaseMapAPI
@@ -21,14 +22,6 @@ class Device(object):
 
     def is_gpu(self):
         return bool(self.id)
-
-
-class BaseActivationAPI(APIBase):
-    def relu(self, x):
-        return self.clip(x, min=0)
-
-    def softmax(self, x):
-        raise NotImplementedError
 
 
 class BaseEpsilonAPI(APIBase):
