@@ -41,7 +41,37 @@ class BaseEpsilonAPI(APIBase):
 
 
 class BaseLogicAPI(APIBase):
-    def equal(self, a, b):
+    def minimum(self, a, b):
+        raise NotImplementedError
+
+    def maximum(self, a, b):
+        raise NotImplementedError
+
+    def _cast_logic_output(self, input_arg, x, override_dtype):
+        if override_dtype is None:
+            to_dtype = self.dtype_of(input_arg)
+        else:
+            to_dtype = self.dtype(override_dtype)
+        if self.dtype_of(x) != to_dtype:
+            x = self.cast(x, to_dtype)
+        return x
+
+    def equal(self, a, b, dtype=None):
+        raise NotImplementedError
+
+    def not_equal(self, a, b, dtype=None):
+        raise NotImplementedError
+
+    def less(self, a, b, dtype=None):
+        raise NotImplementedError
+
+    def less_equal(self, a, b, dtype=None):
+        raise NotImplementedError
+
+    def greater_equal(self, a, b, dtype=None):
+        raise NotImplementedError
+
+    def greater(self, a, b, dtype=None):
         raise NotImplementedError
 
 

@@ -17,8 +17,35 @@ class TensorFlowActivationAPI(BaseActivationAPI):
 
 
 class TensorFlowLogicAPI(BaseLogicAPI):
-    def equal(self, a, b):
-        return tf.cast(tf.equal(a, b), a.dtype)
+    def minimum(self, a, b):
+        return tf.minimum(a, b)
+
+    def maximum(self, a, b):
+        return tf.maximum(a, b)
+
+    def equal(self, a, b, dtype=None):
+        x = tf.equal(a, b)
+        return self._cast_logic_output(a, x, dtype)
+
+    def not_equal(self, a, b, dtype=None):
+        x = tf.not_equal(a, b)
+        return self._cast_logic_output(a, x, dtype)
+
+    def less(self, a, b, dtype=None):
+        x = tf.less(a, b)
+        return self._cast_logic_output(a, x, dtype)
+
+    def less_equal(self, a, b, dtype=None):
+        x = tf.less_equal(a, b)
+        return self._cast_logic_output(a, x, dtype)
+
+    def greater_equal(self, a, b, dtype=None):
+        x = tf.greater_equal(a, b)
+        return self._cast_logic_output(a, x, dtype)
+
+    def greater(self, a, b, dtype=None):
+        x = tf.greater(a, b)
+        return self._cast_logic_output(a, x, dtype)
 
 
 class TensorFlowMapAPI(BaseMapAPI):
