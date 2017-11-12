@@ -67,6 +67,15 @@ class BaseLogicAPI(APIBase):
 
 
 class BaseMapAPI(APIBase):
+    def abs(self, x):
+        return self.maximum(x, -1 * x)
+
+    def neg(self, x):
+        return -1 * x
+
+    def sign(self, x):
+        return self.less(0, x) * 2 - 1
+
     def clip(self, x, min=-np.inf, max=np.inf):
         raise NotImplementedError
 

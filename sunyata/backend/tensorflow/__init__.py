@@ -49,6 +49,15 @@ class TensorFlowLogicAPI(BaseLogicAPI):
 
 
 class TensorFlowMapAPI(BaseMapAPI):
+    def abs(self, x):
+        return tf.abs(x)
+
+    def neg(self, x):
+        return tf.negative(x)
+
+    def sign(self, x):
+        return tf.sign(x)
+
     def clip(self, x, min=-np.inf, max=np.inf):
         return tf.clip_by_value(x, min, max)
 

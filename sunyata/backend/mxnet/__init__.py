@@ -46,6 +46,15 @@ class MXNetLogicAPI(BaseLogicAPI):
 
 
 class MXNetMapAPI(BaseMapAPI):
+    def abs(self, x):
+        return mx.nd.abs(x)
+
+    def neg(self, x):
+        return mx.nd.neg(x)
+
+    def sign(self, x):
+        return mx.nd.sign(x)
+
     def clip(self, x, min=-np.inf, max=np.inf):
         return mx.nd.clip(x, min, max)
 

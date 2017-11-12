@@ -62,6 +62,9 @@ class ChainerLogicAPI(BaseLogicAPI):
 
 
 class ChainerMapAPI(BaseMapAPI):
+    def abs(self, x):
+        return F.absolute(x)
+
     def clip(self, x, min=-np.inf, max=np.inf):
         return F.clip(x, float(min), float(max))
 
