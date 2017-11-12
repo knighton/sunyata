@@ -10,15 +10,16 @@ from sunyata.optim import *  # noqa
 
 
 dtype = Z.default_dtype()
-image_shape = 1, 28, 28
 hidden_dim = 100
 lr = 0.05
 num_epochs = 10
 batch_size = 64
 
 data = load_mnist(dtype)
-
-num_classes = data[0][1].shape[1]
+x = data[0][0][0]
+image_shape = x.shape
+y = data[0][1][0]
+num_classes = len(y)
 
 spec = SequenceSpec([
     InputSpec(image_shape, dtype),
