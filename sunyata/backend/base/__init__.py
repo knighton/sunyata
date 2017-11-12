@@ -2,35 +2,15 @@ import numpy as np
 
 from .activation import BaseActivationAPI
 from .base import APIBase
+from .dense import BaseDenseAPI
 from .device_dtype import BaseDeviceAPI, BaseDataTypeAPI, BaseDeviceDataTypeAPI
 from .epsilon import BaseEpsilonAPI
 from .logic import BaseLogicAPI
 from .map import BaseMapAPI
 from .metric import BaseMetricAPI
+from .shape import BaseShapeAPI
 from .reduce import BaseReduceAPI
 from .variable import BaseVariableAPI
-
-
-class BaseDenseAPI(APIBase):
-    def dense(self, x, kernel, bias):
-        raise NotImplementedError
-
-
-class BaseShapeAPI(APIBase):
-    def ndim(self, x):
-        raise NotImplementedError
-
-    def shape(self, x):
-        raise NotImplementedError
-
-    def size(self, x):
-        raise NotImplementedError
-
-    def reshape(self, x, shape):
-        raise NotImplementedError
-
-    def expand_dims(self, x, axis):
-        raise NotImplementedError
 
 
 class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
