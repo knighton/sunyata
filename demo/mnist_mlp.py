@@ -8,7 +8,6 @@ from sunyata.optim import *  # noqa
 
 dtype = Z.default_dtype()
 hidden_dim = 100
-lr = 0.05
 num_epochs = 10
 batch_size = 64
 
@@ -27,7 +26,7 @@ spec = SequenceSpec([
     SoftmaxSpec(),
 ])
 
-opt = SGD(lr)
+opt = SGDM()
 
 losses = [CategoricalCrossEntropy()]
 aux_metrics = [[CategoricalAccuracy()]]
