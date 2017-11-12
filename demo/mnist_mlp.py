@@ -2,34 +2,10 @@ import keras
 import numpy as np
 
 from sunyata import backend as Z
+from sunyata.dataset.mnist import load_mnist
 from sunyata.metric import *  # noqa
 from sunyata.node import *  # noqa
 from sunyata.optim import *  # noqa
-
-
-def one_hot(indices, num_classes, dtype):
-    assert indices.ndim == 1
-    assert isinstance(num_classes, int)
-    assert 0 < num_classes
-    assert dtype in Z.supported_dtypes()
-    x = np.zeros((len(indices), num_classes), dtype)
-    x[np.arange(len(indices)), indices] = 1
-    return x
-
-
-def scale_pixels(x):
-    return (x / 255 - 0.5) * 2
-
-
-def get_data(dtype):
-    (x_train, y_train), (x_val, y_val) = keras.datasets.mnist.load_data()
-    x_train = np.expand_dims(x_train, 1).astype(dtype)
-    x_train = scale_pixels(x_train)
-    y_train = one_hot(y_train, 10, dtype)
-    x_val = np.expand_dims(x_val, 1).astype(dtype)
-    x_val = scale_pixels(x_val)
-    y_val = one_hot(y_val, 10, dtype)
-    return (x_train, y_train), (x_val, y_val)
 
 
 dtype = Z.default_dtype()
@@ -39,7 +15,7 @@ lr = 0.05
 num_epochs = 10
 batch_size = 64
 
-(x_train, y_train), (x_val, y_val) = get_data(dtype)
+(x_train, y_train), (x_val, y_val) = load_mnist(dtype)
 
 num_classes = y_train.shape[1]
 batches_per_epoch = len(x_train) // batch_size
