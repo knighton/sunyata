@@ -1,4 +1,4 @@
-from . base import APIBase
+from ..base import APIBase
 
 
 class BaseDenseAPI(APIBase):
