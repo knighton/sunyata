@@ -16,7 +16,7 @@ class TensorFlowDataTypeAPI(BaseDataTypeAPI):
 
 
 class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI, TensorFlowDataTypeAPI,
-                                  TensorFlowDeviceAPI,
+                                  TensorFlowDeviceAPI):
     def __init__(self):
         BaseDeviceDataTypeAPI.__init__(self)
         TensorFlowDataTypeAPI.__init__(self)

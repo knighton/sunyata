@@ -46,7 +46,7 @@ class ChainerLogicAPI(BaseLogicAPI):
         return self._cast_bool_output(a, x, dtype)
 
     def less_equal(self, a, b, dtype=None):
-        data = a.data <=  b.data
+        data = a.data <= b.data
         x = chainer.Variable(data)
         return self._cast_bool_output(a, x, dtype)
 

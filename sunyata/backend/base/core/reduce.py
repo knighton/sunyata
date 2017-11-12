@@ -44,8 +44,6 @@ class BaseReduceAPI(APIMixin):
 
     def all(self, x, axis=None, keepdims=False, dtype=None):
         nonneg = self.abs(x)
-        nonzero = self.less(0, x, 'int64')
+        nonzero = self.less(0, nonneg, 'int64')
         sums = self.sum(nonzero, axis, keepdims)
-        return self.less(0, x, dtype)
-
-
+        return self.less(0, sums, dtype)

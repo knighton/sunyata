@@ -3,6 +3,8 @@ import sys
 
 
 _BACKEND = os.environ.get('SUNYATA_BACKEND', 'pytorch')
+print('Backend: %s.' % _BACKEND)
+
 if _BACKEND == 'chainer':
     from .chainer import ChainerBackend as Backend
 elif _BACKEND == 'mxnet':

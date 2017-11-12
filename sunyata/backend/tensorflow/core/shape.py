@@ -5,7 +5,7 @@ from ...base.core.shape import BaseShapeAPI
 
 class TensorFlowShapeAPI(BaseShapeAPI):
     def __init__(self):
-        BaseShapeAPI.__init__()
+        BaseShapeAPI.__init__(self)
 
     def ndim(self, x):
         return len(x.shape)
