@@ -47,6 +47,11 @@ class BaseLogicAPI(APIBase):
     def maximum(self, a, b):
         raise NotImplementedError
 
+    def where(self, cond, true, false):
+        if self.dtype_of(cond) != 'bool':
+            cond = self.less(0, self.abs(cond))
+        return cond * true + (1 - cond) * false
+
     def equal(self, a, b, dtype=None):
         raise NotImplementedError
 
