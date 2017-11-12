@@ -160,7 +160,11 @@ class BaseDataTypeAPI(APIBase):
         return dtype.startswith('int') or dtype.startswith('uint')
 
 
-class BaseDeviceDataTypeAPI(APIBase):
+class BaseDeviceDataTypeAPI(BaseDeviceAPI, BaseDataTypeAPI):
+    def __init__(self):
+        BaseDeviceAPI.__init__(self)
+        BaseDataTypeAPI.__init__(self)
+
     def discover_gpus(self):
         raise NotImplementedError
 
@@ -261,8 +265,6 @@ class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
                   BaseDenseAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
-        BaseDataTypeAPI.__init__(self)
-        BaseDeviceAPI.__init__(self)
         BaseDeviceDataTypeAPI.__init__(self)
         BaseEpsilonAPI.__init__(self)
         BaseLogicAPI.__init__(self)
