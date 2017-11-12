@@ -29,22 +29,22 @@ class PyTorchLogicAPI(BaseLogicAPI):
         return torch.max(a, b)
 
     def equal(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a == b, dtype)
+        return self._cast_bool_output(a, a == b, dtype)
 
     def not_equal(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a != b, dtype)
+        return self._cast_bool_output(a, a != b, dtype)
 
     def less(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a < b, dtype)
+        return self._cast_bool_output(a, a < b, dtype)
 
     def less_equal(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a <= b, dtype)
+        return self._cast_bool_output(a, a <= b, dtype)
 
     def greater_equal(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a >= b, dtype)
+        return self._cast_bool_output(a, a >= b, dtype)
 
     def greater(self, a, b, dtype=None):
-        return self._cast_logic_output(a, a > b, dtype)
+        return self._cast_bool_output(a, a > b, dtype)
 
 
 class PyTorchMapAPI(BaseMapAPI):

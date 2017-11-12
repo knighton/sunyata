@@ -33,32 +33,32 @@ class ChainerLogicAPI(BaseLogicAPI):
     def equal(self, a, b, dtype=None):
         data = a.data == b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
     def not_equal(self, a, b, dtype=None):
         data = a.data != b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
     def less(self, a, b, dtype=None):
         data = a.data < b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
     def less_equal(self, a, b, dtype=None):
         data = a.data <=  b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
     def greater_equal(self, a, b, dtype=None):
         data = a.data >= b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
     def greater(self, a, b, dtype=None):
         data = a.data > b.data
         x = chainer.Variable(data)
-        return self._cast_logic_output(a, x, dtype)
+        return self._cast_bool_output(a, x, dtype)
 
 
 class ChainerMapAPI(BaseMapAPI):
