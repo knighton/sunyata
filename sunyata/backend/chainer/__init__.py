@@ -80,34 +80,36 @@ class ChainerMetricAPI(BaseMetricAPI):
 
 
 class ChainerReduceAPI(BaseReduceAPI):
+    def argmin(self, x, axis=-1):
+        return F.argmin(x, axis)
+
     def argmax(self, x, axis=-1):
         return F.argmax(x, axis)
 
-    def mean(self, x, axis=None, keepdims=False):
-        if axis is None:
-            denom = x.size
-            x = F.math.sum.sum(x, axis, keepdims)
-            if not keepdims:
-                x = self.expand_dims(x, 0)
-            x /= denom
+    def _reduce(self, func_name, x, axis=None, keepdims=False):
+        if isinstance(axis, list):
+            axis = tuple(axis)
+        dtype = self.dtype_of(x)
+        if dtype.startswith('float'):
+            x = getattr(F, func_name)(x, axis, keepdims)
         else:
-            if isinstance(axis, int):
-                axes = [axis]
-            else:
-                axes = axes
-            axes = tuple(map(lambda axis: axis % x.ndim, axes))
-            denom = 1
-            for axis in axes:
-                denom *= x.shape[axis]
-            x = F.math.sum.sum(x, axes, keepdims) / denom
-        return x
-
-    def sum(self, x, axis=None, keepdims=False):
-        axis = tuple(axis) if isinstance(axis, list) else axis
-        x = F.math.sum.sum(x, axis, keepdims)
+            data = getattr(np, func_name)(x.data, axis, keepdims)
+            x = chainer.Variable(data)
         if not x.ndim:
             x = self.expand_dims(x, 0)
         return x
+
+    def min(self, x, axis=None, keepdims=False):
+        return self._reduce('min', x, axis, keepdims)
+
+    def max(self, x, axis=None, keepdims=False):
+        return self._reduce('max', x, axis, keepdims)
+
+    def sum(self, x, axis=None, keepdims=False):
+        return self._reduce('sum', x, axis, keepdims)
+
+    def prod(self, x, axis=None, keepdims=False):
+        return self._reduce('prod', axis, keepdims)
 
 
 class ChainerRelateAPI(BaseRelateAPI):

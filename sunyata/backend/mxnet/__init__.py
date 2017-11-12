@@ -70,6 +70,9 @@ class MXNetMetricAPI(BaseMetricAPI):
 
 
 class MXNetReduceAPI(BaseReduceAPI):
+    def argmin(self, x, axis=-1):
+        return mx.nd.argmin(x, axis)
+
     def argmax(self, x, axis=-1):
         return mx.nd.argmax(x, axis)
 
@@ -78,11 +81,20 @@ class MXNetReduceAPI(BaseReduceAPI):
         func = getattr(mx.nd, name)
         return func(x, axis, keepdims)
 
-    def mean(self, x, axis=None, keepdims=False):
-        return self._reduce('mean', x, axis, keepdims)
+    def min(self, x, axis=None, keepdims=False):
+        return self._reduce(x, axis, keepdims, 'min')
+
+    def max(self, x, axis=None, keepdims=False):
+        return self._reduce(x, axis, keepdims, 'max')
 
     def sum(self, x, axis=None, keepdims=False):
         return self._reduce('sum', x, axis, keepdims)
+
+    def mean(self, x, axis=None, keepdims=False):
+        return self._reduce('mean', x, axis, keepdims)
+
+    def prod(self, x, axis=None, keepdims=False):
+        return self._reduce('prod', x, axis, keepdims)
 
 
 class MXNetRelateAPI(BaseRelateAPI):
