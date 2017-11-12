@@ -9,7 +9,7 @@ class SGD(Optimizer):
         self.lr = lr
 
     def make_context(self, variable):
-        return OptimizerContext(lr=self.lr)
+        return {'lr': self.lr}
 
     def learn(self, var, grad, ctx):
         Z.assign(var, Z.variable_to_tensor(var) - ctx.lr * grad)

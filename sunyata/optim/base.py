@@ -18,6 +18,6 @@ class Optimizer(object):
             variable_id = id(variable)
             context = self.vid2context.get(variable_id)
             if context is None:
-                context = self.make_context(variable)
+                context = OptimizerContext(**self.make_context(variable))
                 self.vid2context[variable_id] = context
             self.learn(variable, gradient, context)
