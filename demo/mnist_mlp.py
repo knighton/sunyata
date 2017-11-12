@@ -26,7 +26,7 @@ spec = SequenceSpec([
     SoftmaxSpec(),
 ])
 
-opt = SGDM()
+opt = NAG()
 
 losses = [CategoricalCrossEntropy()]
 aux_metrics = [[CategoricalAccuracy()]]
