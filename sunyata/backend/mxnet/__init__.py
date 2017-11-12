@@ -4,7 +4,7 @@ import subprocess
 
 from ..base import \
     BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
-    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseDenseAPI, \
     BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
@@ -97,7 +97,7 @@ class MXNetReduceAPI(BaseReduceAPI):
         return self._reduce('prod', x, axis, keepdims)
 
 
-class MXNetRelateAPI(BaseRelateAPI):
+class MXNetDenseAPI(BaseDenseAPI):
     def dense(self, x, kernel, bias):
         return mx.nd.dot(x, kernel) + bias
 
@@ -230,7 +230,7 @@ class MXNetVariableAPI(BaseVariableAPI):
 
 class MXNetBackend(BaseBackend, MXNetActivationAPI, MXNetDataTypeAPI,
                    MXNetDeviceAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
-                   MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetRelateAPI,
+                   MXNetMapAPI, MXNetMetricAPI, MXNetReduceAPI, MXNetDenseAPI,
                    MXNetShapeAPI, MXNetVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
@@ -242,7 +242,7 @@ class MXNetBackend(BaseBackend, MXNetActivationAPI, MXNetDataTypeAPI,
         MXNetMapAPI.__init__(self)
         MXNetMetricAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
-        MXNetRelateAPI.__init__(self)
+        MXNetDenseAPI.__init__(self)
         MXNetShapeAPI.__init__(self)
         MXNetVariableAPI.__init__(self)
         self.name = 'mxnet'

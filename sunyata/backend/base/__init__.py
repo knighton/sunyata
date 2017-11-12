@@ -89,7 +89,7 @@ class BaseMetricAPI(APIBase):
         return self.mean(hits, -1, False)
 
 
-class BaseRelateAPI(APIBase):
+class BaseDenseAPI(APIBase):
     def dense(self, x, kernel, bias):
         raise NotImplementedError
 
@@ -290,7 +290,7 @@ class BaseVariableAPI(APIBase):
 
 class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
                   BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI,
-                  BaseRelateAPI, BaseShapeAPI, BaseVariableAPI):
+                  BaseDenseAPI, BaseShapeAPI, BaseVariableAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
         BaseDataTypeAPI.__init__(self)
@@ -301,7 +301,7 @@ class BaseBackend(BaseActivationAPI, BaseDeviceDataTypeAPI, BaseEpsilonAPI,
         BaseMapAPI.__init__(self)
         BaseMetricAPI.__init__(self)
         BaseReduceAPI.__init__(self)
-        BaseRelateAPI.__init__(self)
+        BaseDenseAPI.__init__(self)
         BaseShapeAPI.__init__(self)
         BaseVariableAPI.__init__(self)
 

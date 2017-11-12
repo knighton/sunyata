@@ -4,7 +4,7 @@ import numpy as np
 
 from ..base import \
     BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
-    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseDenseAPI, \
     BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
@@ -112,7 +112,7 @@ class ChainerReduceAPI(BaseReduceAPI):
         return self._reduce('prod', axis, keepdims)
 
 
-class ChainerRelateAPI(BaseRelateAPI):
+class ChainerDenseAPI(BaseDenseAPI):
     def dense(self, x, kernel, bias):
         return F.connection.linear.linear(x, kernel, bias)
 
@@ -233,7 +233,7 @@ class ChainerVariableAPI(BaseVariableAPI):
 class ChainerBackend(BaseBackend, ChainerActivationAPI, ChainerDeviceAPI,
                      ChainerDataTypeAPI, ChainerDeviceDataTypeAPI,
                      ChainerLogicAPI, ChainerMapAPI, ChainerMetricAPI,
-                     ChainerReduceAPI, ChainerRelateAPI, ChainerShapeAPI,
+                     ChainerReduceAPI, ChainerDenseAPI, ChainerShapeAPI,
                      ChainerVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
@@ -244,7 +244,7 @@ class ChainerBackend(BaseBackend, ChainerActivationAPI, ChainerDeviceAPI,
         ChainerLogicAPI.__init__(self)
         ChainerMapAPI.__init__(self)
         ChainerReduceAPI.__init__(self)
-        ChainerRelateAPI.__init__(self)
+        ChainerDenseAPI.__init__(self)
         ChainerShapeAPI.__init__(self)
         ChainerVariableAPI.__init__(self)
         self.name = 'chainer'

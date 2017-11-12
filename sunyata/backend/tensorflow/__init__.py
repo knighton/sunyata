@@ -4,7 +4,7 @@ import tensorflow.contrib.eager as tfe
 
 from sunyata.backend.base import \
     BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
-    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseDenseAPI, \
     BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
@@ -101,7 +101,7 @@ class TensorFlowReduceAPI(BaseReduceAPI):
         return tf.reduce_all(x, axis, keepdims)
 
 
-class TensorFlowRelateAPI(BaseRelateAPI):
+class TensorFlowDenseAPI(BaseDenseAPI):
     def dense(self, x, kernel, bias):
         return tf.matmul(x, kernel) + bias
 
@@ -232,7 +232,7 @@ class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
                         TensorFlowDataTypeAPI, TensorFlowDeviceAPI,
                         TensorFlowDeviceDataTypeAPI, TensorFlowLogicAPI,
                         TensorFlowMapAPI, TensorFlowMetricAPI,
-                        TensorFlowReduceAPI, TensorFlowRelateAPI,
+                        TensorFlowReduceAPI, TensorFlowDenseAPI,
                         TensorFlowShapeAPI, TensorFlowVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
@@ -244,7 +244,7 @@ class TensorFlowBackend(BaseBackend, TensorFlowActivationAPI,
         TensorFlowMapAPI.__init__(self)
         TensorFlowMetricAPI.__init__(self)
         TensorFlowReduceAPI.__init__(self)
-        TensorFlowRelateAPI.__init__(self)
+        TensorFlowDenseAPI.__init__(self)
         TensorFlowShapeAPI.__init__(self)
         TensorFlowVariableAPI.__init__(self)
         self.name = 'tensorflow'

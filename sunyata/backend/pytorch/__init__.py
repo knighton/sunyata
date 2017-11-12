@@ -6,7 +6,7 @@ import torch.nn.functional as PTF
 
 from ..base import \
     BaseActivationAPI, BaseDataTypeAPI, BaseDeviceAPI, BaseDeviceDataTypeAPI, \
-    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseRelateAPI, \
+    BaseLogicAPI, BaseMapAPI, BaseMetricAPI, BaseReduceAPI, BaseDenseAPI, \
     BaseShapeAPI, BaseVariableAPI, BaseBackend
 
 
@@ -123,7 +123,7 @@ class PyTorchReduceAPI(BaseReduceAPI):
         return self._reduce('prod', x, axis, keepdims)
 
 
-class PyTorchRelateAPI(BaseRelateAPI):
+class PyTorchDenseAPI(BaseDenseAPI):
     def dense(self, x, kernel, bias):
         return x.mm(kernel) + bias
 
@@ -292,7 +292,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
 class PyTorchBackend(BaseBackend, PyTorchActivationAPI, PyTorchDataTypeAPI,
                      PyTorchDeviceAPI, PyTorchDeviceDataTypeAPI,
                      PyTorchLogicAPI, PyTorchMapAPI, PyTorchMetricAPI,
-                     PyTorchReduceAPI, PyTorchRelateAPI, PyTorchShapeAPI,
+                     PyTorchReduceAPI, PyTorchDenseAPI, PyTorchShapeAPI,
                      PyTorchVariableAPI):
     def __init__(self):
         BaseBackend.__init__(self)
@@ -304,7 +304,7 @@ class PyTorchBackend(BaseBackend, PyTorchActivationAPI, PyTorchDataTypeAPI,
         PyTorchMapAPI.__init__(self)
         PyTorchMetricAPI.__init__(self)
         PyTorchReduceAPI.__init__(self)
-        PyTorchRelateAPI.__init__(self)
+        PyTorchDenseAPI.__init__(self)
         PyTorchShapeAPI.__init__(self)
         PyTorchVariableAPI.__init__(self)
         self.name = 'pytorch'
