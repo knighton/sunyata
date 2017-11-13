@@ -4,13 +4,14 @@ from .logic import TensorFlowLogicAPI
 from .map import TensorFlowMapAPI
 from .reduce import TensorFlowReduceAPI
 from .shape import TensorFlowShapeAPI
+from .tensor import TensorFlowTensorAPI
 from .variable import TensorFlowVariableAPI
 
 
 class TensorFlowCoreAPI(BaseCoreAPI, TensorFlowDeviceDataTypeAPI,
                         TensorFlowLogicAPI, TensorFlowMapAPI,
                         TensorFlowReduceAPI, TensorFlowShapeAPI,
-                        TensorFlowVariableAPI):
+                        TensorFlowTensorAPI, TensorFlowVariableAPI):
     def __init__(self):
         BaseCoreAPI.__init__(self)
         TensorFlowDeviceDataTypeAPI.__init__(self)
@@ -18,4 +19,5 @@ class TensorFlowCoreAPI(BaseCoreAPI, TensorFlowDeviceDataTypeAPI,
         TensorFlowMapAPI.__init__(self)
         TensorFlowReduceAPI.__init__(self)
         TensorFlowShapeAPI.__init__(self)
+        TensorFlowTensorAPI.__init__(self)
         TensorFlowVariableAPI.__init__(self)

@@ -4,11 +4,12 @@ from .logic import MXNetLogicAPI
 from .map import MXNetMapAPI
 from .reduce import MXNetReduceAPI
 from .shape import MXNetShapeAPI
+from .tensor import MXNetTensorAPI
 from .variable import MXNetVariableAPI
 
 
 class MXNetCoreAPI(BaseCoreAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
-                   MXNetMapAPI, MXNetReduceAPI, MXNetShapeAPI,
+                   MXNetMapAPI, MXNetReduceAPI, MXNetShapeAPI, MXNetTensorAPI,
                    MXNetVariableAPI):
     def __init__(self):
         BaseCoreAPI.__init__(self)
@@ -17,4 +18,5 @@ class MXNetCoreAPI(BaseCoreAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
         MXNetMapAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
         MXNetShapeAPI.__init__(self)
+        MXNetTensorAPI.__init__(self)
         MXNetVariableAPI.__init__(self)
