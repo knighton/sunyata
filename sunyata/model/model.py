@@ -43,9 +43,9 @@ class Model(object):
         for batch_id in range(batches_per_epoch):
             i = batch_id * batch_size
             x = x_train[i:i + batch_size]
-            x = Z.constant(Z.cast_numpy_to(x))
+            x = Z.constant(Z.numpy_to_device(x))
             y = y_train[i:i + batch_size]
-            y = Z.constant(Z.cast_numpy_to(y))
+            y = Z.constant(Z.numpy_to_device(y))
             result = self.fit_on_batch(x, y, opt, losses, aux_metrics)
             results.append(result)
         losses = np.array(list(map(lambda x: x['loss'], results)))

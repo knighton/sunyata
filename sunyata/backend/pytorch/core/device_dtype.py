@@ -78,7 +78,7 @@ class PyTorchDeviceDataTypeAPI(BaseDeviceDataTypeAPI, PyTorchDeviceAPI,
         module = importlib.import_module(module_name)
         return getattr(module, class_name)
 
-    def cast_to(self, x, dtype=None, device=None, copy=True):
+    def cast_to_device(self, x, dtype=None, device=None, copy=True):
         from_dtype = self.dtype_of(x)
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         from_device = self.device_of(x)
@@ -97,7 +97,7 @@ class PyTorchDeviceDataTypeAPI(BaseDeviceDataTypeAPI, PyTorchDeviceAPI,
                 assert False
         return x
 
-    def cast_numpy_to(self, x, dtype=None, device=None):
+    def cast_numpy_to_device(self, x, dtype=None, device=None):
         from_dtype = x.dtype.name
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         to_device = self.device(device)

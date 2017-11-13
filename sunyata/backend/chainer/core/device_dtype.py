@@ -50,7 +50,7 @@ class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI, ChainerDataTypeAPI,
             x = Variable(x.data.astype(to_dtype))
         return x
 
-    def cast_to(self, x, dtype=None, device=None, copy=True):
+    def cast_to_device(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
         assert from_device is self._devices[0]
         to_device = from_device if device is None else self.device(device)
@@ -61,7 +61,7 @@ class ChainerDeviceDataTypeAPI(BaseDeviceDataTypeAPI, ChainerDataTypeAPI,
             x = self._do_cast(x, from_dtype, to_dtype)
         return x
 
-    def cast_numpy_to(self, x, dtype=None, device=None):
+    def cast_numpy_to_device(self, x, dtype=None, device=None):
         from_dtype = self.dtype_of(x)
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)
         if from_dtype != to_dtype:

@@ -119,14 +119,20 @@ class BaseDeviceDataTypeAPI(BaseDeviceAPI, BaseDataTypeAPI):
     def dtype_of(self, x):
         raise NotImplementedError
 
-    def cast_to(self, x, dtype=None, device=None, copy=False):
+    def cast_to_device(self, x, dtype, device=None, copy=False):
         raise NotImplementedError
 
-    def cast_numpy_to(self, x, dtype=None, device=None):
-        raise NotImplementedError
+    def cast_to_cpu(self, x, dtype, copy=False):
+        device = self._devices[0]
+        return self.cast_to_device(x, dtype, device, copy)
 
-    def cast(self, x, dtype=None, copy=False):
-        return self.cast_to(x, dtype, None, copy)
+    def cast_to_gpu(self, x, dtype, device=None, copy=False):
+        device = self.device(device)
+        assert device.is_gpu()
+        return self.cast_to_device(x, dtype, device, copy)
+
+    def cast(self, x, dtype, copy=False):
+        return self.cast_to_device(x, dtype, None, copy)
 
     def _cast_bool_output(self, input_arg, x, override_dtype):
         if override_dtype is None:
@@ -137,13 +143,35 @@ class BaseDeviceDataTypeAPI(BaseDeviceAPI, BaseDataTypeAPI):
             x = self.cast(x, to_dtype)
         return x
 
-    def to(self, x, device=None, copy=False):
-        return self.cast_to(x, None, device, copy)
+    def to_device(self, x, device=None, copy=False):
+        return self.cast_to_device(x, None, device, copy)
 
     def to_cpu(self, x, copy=False):
         return self.to_device(x, 0, copy)
 
-    def to_gpu(self, x, device, copy=False):
-        device = self.to_device(device)
+    def to_gpu(self, x, device=None, copy=False):
+        device = self.device(device)
         assert device.is_gpu()
         return self.to_device(x, device, copy)
+
+    def cast_numpy_to_device(self, x, dtype, device=None):
+        raise NotImplementedError
+
+    def cast_numpy_to_cpu(self, x, dtype):
+        return self.cast_numpy_to_device(x, dtype, self._devices[0])
+
+    def cast_numpy_to_gpu(self, x, dtype, device):
+        device = self.device(device)
+        assert device.is_gpu()
+        return self.cast_numpy_to_device(x, dtype, device)
+
+    def numpy_to_device(self, x, device=None):
+        return self.cast_numpy_to_device(x, None, device)
+
+    def numpy_to_cpu(self, x):
+        return self.numpy_to_device(x, self._devices[0])
+
+    def numpy_to_gpu(self, x, device):
+        device = self.device(device)
+        assert device.is_gpu()
+        return self.numpy_to_device(x, device)

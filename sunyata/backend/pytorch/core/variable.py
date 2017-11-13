@@ -19,7 +19,7 @@ class PyTorchVariableAPI(BaseVariableAPI):
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             score_vars.append(self.mean(judge(y_true, y_pred)))
             arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
-            score_grads.append(self.cast_numpy_to(arr))
+            score_grads.append(self.numpy_to_device(arr))
         torch.autograd.backward(score_vars, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
         grads_and_params = list(map(lambda x: (x.grad.data, x), params))

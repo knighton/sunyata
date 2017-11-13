@@ -24,7 +24,7 @@ class MXNetVariableAPI(BaseVariableAPI):
             for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
                 scores.append(self.mean(judge(y_true, y_pred)))
                 arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
-                score_grads.append(self.cast_numpy_to(arr))
+                score_grads.append(self.numpy_to_device(arr))
         mx.autograd.backward(scores, score_grads)
         grads_and_params = list(map(lambda x: (x.grad, x), params))
         aux_scores = self._aux_scores(aux_judges, yy_true, yy_pred)

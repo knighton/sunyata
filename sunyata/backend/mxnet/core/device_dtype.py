@@ -62,7 +62,7 @@ class MXNetDeviceDataTypeAPI(BaseDeviceDataTypeAPI, MXNetDataTypeAPI,
     def dtype_of(self, x):
         return x.dtype.__name__
 
-    def cast_to(self, x, dtype=None, device=None, copy=True):
+    def cast_to_device(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
         if from_device is not to_device:
@@ -77,7 +77,7 @@ class MXNetDeviceDataTypeAPI(BaseDeviceDataTypeAPI, MXNetDataTypeAPI,
             x = x.copy()
         return x
 
-    def cast_numpy_to(self, x, dtype=None, device=None):
+    def cast_numpy_to_device(self, x, dtype=None, device=None):
         to_device = self.device(device)
         from_dtype = x.dtype.name
         to_dtype = from_dtype if dtype is None else self.dtype(dtype)

@@ -60,7 +60,7 @@ class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI, TensorFlowDataTypeAPI,
             assert False
         return name
 
-    def cast_to(self, x, dtype=None, device=None, copy=True):
+    def cast_to_device(self, x, dtype=None, device=None, copy=True):
         from_device = self.device_of(x)
         to_device = from_device if device is None else self.device(device)
         from_dtype = self.dtype_of(x)
@@ -73,7 +73,7 @@ class TensorFlowDeviceDataTypeAPI(BaseDeviceDataTypeAPI, TensorFlowDataTypeAPI,
                 x = tf.convert_to_tensor(x, to_dtype)
         return x
 
-    def cast_numpy_to(self, x, dtype=None, device=None):
+    def cast_numpy_to_device(self, x, dtype=None, device=None):
         to_device = self.device(device)
         to_dtype = x.dtype.name if dtype is None else self.dtype(dtype)
         with tf.device(self._device_name(to_device)):

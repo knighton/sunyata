@@ -8,8 +8,8 @@ class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
         if Z.name == 'chainer':
             kernel = kernel.T
-        self.kernel = Z.variable(Z.cast_numpy_to(kernel))
-        self.bias = Z.variable(Z.cast_numpy_to(bias))
+        self.kernel = Z.variable(Z.numpy_to_device(kernel))
+        self.bias = Z.variable(Z.numpy_to_device(bias))
 
     def params(self):
         return [self.kernel, self.bias]
