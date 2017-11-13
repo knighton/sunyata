@@ -9,7 +9,7 @@ class BaseTensorAPI(APIMixin):
 
     def zeros(self, shape, dtype=None, device=None):
         x = np.zeros(shape, self.dtype(dtype))
-        return self.numpy_to_device(x, None, device)
+        return self.numpy_to_device(x, device)
 
     def zeros_like(self, like, dtype=None, device=None):
         return self.zeros(self.shape(like), dtype, device)
