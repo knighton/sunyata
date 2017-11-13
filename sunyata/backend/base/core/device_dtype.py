@@ -140,15 +140,6 @@ class BaseDeviceDataTypeAPI(BaseDeviceAPI, BaseDataTypeAPI):
     def cast(self, x, dtype, copy=False):
         return self.cast_to_device(x, dtype, None, copy)
 
-    def _cast_bool_output(self, input_arg, x, override_dtype):
-        if override_dtype is None:
-            to_dtype = self.dtype_of(input_arg)
-        else:
-            to_dtype = self.dtype(override_dtype)
-        if self.dtype_of(x) != to_dtype:
-            x = self.cast(x, to_dtype)
-        return x
-
     def to_device(self, x, device=None, copy=False):
         return self.cast_to_device(x, None, device, copy)
 

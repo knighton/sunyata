@@ -25,32 +25,26 @@ class ChainerLogicAPI(BaseLogicAPI):
             x = Variable(np.maximum(a.data, b.data))
         return x
 
-    def equal(self, a, b, dtype=None):
-        data = a.data == b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def _compare(self, a, b, func_name):
+        assert a.dtype == b.dtype
+        func = getattr(a.data, func_name)
+        data = func(b.data).astype(a.dtype)
+        return Variable(data)
 
-    def not_equal(self, a, b, dtype=None):
-        data = a.data != b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def equal(self, a, b):
+        return self._compare(a, b, '__eq__')
 
-    def less(self, a, b, dtype=None):
-        data = a.data < b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def not_equal(self, a, b):
+        return self._compare(a, b, '__ne__')
 
-    def less_equal(self, a, b, dtype=None):
-        data = a.data <= b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def less(self, a, b):
+        return self._compare(a, b, '__lt__')
 
-    def greater_equal(self, a, b, dtype=None):
-        data = a.data >= b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def less_equal(self, a, b):
+        return self._compare(a, b, '__le__')
 
-    def greater(self, a, b, dtype=None):
-        data = a.data > b.data
-        x = Variable(data)
-        return self._cast_bool_output(a, x, dtype)
+    def greater_equal(self, a, b):
+        return self._compare(a, b, '__ge__')
+
+    def greater(self, a, b):
+        return self._compare(a, b, '__gt__')

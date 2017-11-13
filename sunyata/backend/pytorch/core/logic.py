@@ -13,20 +13,23 @@ class PyTorchLogicAPI(BaseLogicAPI):
     def maximum(self, a, b):
         return torch.max(a, b)
 
-    def equal(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a == b, dtype)
+    def _compare(self, a, x):
+        return self.cast(x, self.dtype_of(a))
 
-    def not_equal(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a != b, dtype)
+    def equal(self, a, b):
+        return self._compare(a, a == b)
 
-    def less(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a < b, dtype)
+    def not_equal(self, a, b):
+        return self._compare(a, a != b)
 
-    def less_equal(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a <= b, dtype)
+    def less(self, a, b):
+        return self._compare(a, a < b)
 
-    def greater_equal(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a >= b, dtype)
+    def less_equal(self, a, b):
+        return self._compare(a, a <= b)
 
-    def greater(self, a, b, dtype=None):
-        return self._cast_bool_output(a, a > b, dtype)
+    def greater_equal(self, a, b):
+        return self._compare(a, a >= b)
+
+    def greater(self, a, b):
+        return self._compare(a, a > b)

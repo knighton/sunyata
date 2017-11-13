@@ -16,20 +16,20 @@ class BaseLogicAPI(APIMixin):
             cond = self.less(0, self.abs(cond))
         return cond * true + (1 - cond) * false
 
-    def equal(self, a, b, dtype=None):
+    def equal(self, a, b):
         raise NotImplementedError
 
-    def not_equal(self, a, b, dtype=None):
+    def not_equal(self, a, b):
         raise NotImplementedError
 
-    def less(self, a, b, dtype=None):
+    def less(self, a, b):
         raise NotImplementedError
 
-    def less_equal(self, a, b, dtype=None):
+    def less_equal(self, a, b):
         raise NotImplementedError
 
-    def greater_equal(self, a, b, dtype=None):
+    def greater_equal(self, a, b):
         raise NotImplementedError
 
-    def greater(self, a, b, dtype=None):
+    def greater(self, a, b):
         raise NotImplementedError
