@@ -17,4 +17,19 @@ class ChainerShapeAPI(BaseShapeAPI):
         return x.reshape(shape)
 
     def expand_dims(self, x, axis):
-        return F.array.expand_dims.expand_dims(x, axis)
+        return F.expand_dims(x, axis)
+
+    def squeeze(self, x, axis=None):
+        return F.squeeze(x, axis)
+
+    def tile(self, x, reps):
+        return F.tile(x, reps)
+
+    def transpose(self, x, axes):
+        return F.transpose(x, axes)
+
+    def concat(self, xx, axis):
+        return F.concat(xx, axis)
+
+    def stack(self, xx, axis=0):
+        return F.stack(xx, axis)
