@@ -6,7 +6,7 @@ class BaseSignAPI(APIMixin):
         APIMixin.__init__(self)
 
     def abs(self, x):
-        return self.maximum(x, -1 * x)
+        return self.sign(x) * x
 
     def neg(self, x):
         return -1 * x
