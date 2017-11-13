@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from ..base import APIMixin
 
 
@@ -28,31 +30,35 @@ class BaseDeviceAPI(APIMixin):
     def num_gpus(self):
         return len(self._devices) - 1
 
-    def set_devices(self, num_gpus, default_device_id):
+    def set_devices(self, num_gpus, unscoped_device_id):
         self._devices = []
         for device_id in range(num_gpus + 1):
             device = Device(device_id)
             self._devices.append(device)
-        self.set_default_device(default_device_id)
+        self._device_scopes = [None]
+        self.set_unscoped_device(unscoped_device_id)
 
     def devices(self):
         return self._devices
 
-    def set_default_device(self, device):
-        if isinstance(device, Device):
-            assert device in self._devices
-        else:
-            assert isinstance(device, int)
-            assert 0 <= device < len(self._devices)
-            device = self._devices[device]
-        self._default_device = device
+    def set_unscoped_device(self, device):
+        self._device_scopes[0] = self.device(device)
 
-    def default_device(self):
-        return self._default_device
+    def unscoped_device(self):
+        return self._device_scopes[0]
+
+    @contextmanager
+    def device_scope(self, device):
+        self._device_scopes.append(self.device(device))
+        yield
+        self._device_scopes.pop()
+
+    def current_device(self):
+        return self._device_scopes[-1]
 
     def device(self, x):
         if x is None:
-            return self.default_device()
+            device = self.current_device()
         elif isinstance(x, Device):
             device = x
         else:
