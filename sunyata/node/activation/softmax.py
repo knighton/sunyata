@@ -3,7 +3,7 @@ from ..base import TransformLayer, TransformSpec
 
 
 class SoftmaxLayer(TransformLayer):
-    def forward_one(self, x):
+    def forward_one(self, x, is_training):
         return Z.softmax(x)
 
 

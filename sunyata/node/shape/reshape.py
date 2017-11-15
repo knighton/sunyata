@@ -5,7 +5,7 @@ from ..base import Form, TransformLayer, TransformSpec
 
 
 class FlattenLayer(TransformLayer):
-    def forward_one(self, x):
+    def forward_one(self, x, is_training):
         return Z.reshape(x, (Z.shape(x)[0], -1))
 
 

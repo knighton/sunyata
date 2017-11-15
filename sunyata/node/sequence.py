@@ -13,9 +13,9 @@ class SequenceLayer(TransformLayer):
             params += layer.params()
         return params
 
-    def forward_one(self, x):
+    def forward_one(self, x, is_training):
         for layer in self.layers:
-            x = layer.forward_one(x)
+            x = layer.forward_one(x, is_training)
         return x
 
 
