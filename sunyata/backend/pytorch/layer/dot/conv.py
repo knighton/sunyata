@@ -16,14 +16,26 @@ class PyTorchConvAPI(BaseConvAPI):
         ndim = x.dim() - 2
         return self.ndim2conv[ndim](x, kernel, bias, stride, pad, dilation)
 
+    def _conv(self, func_name, x, kernel, bias, stride, pad, dilation):
+        ndim = self.ndim(x) - 2
+        stride = self.to_shape(stride, ndim)
+        pad = self.unpack_conv_pad(pad, ndim)
+        pre_pad, conv_single_pad = self.conv_pad_to_singles(pad)
+        dilation = self.to_shape(dilation, ndim)
+        func = getattr(F, func_name)
+        if ndim == 1:
+            stride, = stride
+            conv_single_pad, = conv_single_pad
+            dilation, = dilation
+        if pre_pad is not None:
+            x = self.constant_pad(x, pre_pad, 0)
+        return func(x, kernel, bias, stride, conv_single_pad, dilation)
+
     def conv1d(self, x, kernel, bias, stride, pad, dilation):
-        stride = self.to_one(stride)
-        pad = self.to_one(pad)
-        dilation = self.to_one(dilation)
-        return F.conv1d(x, kernel, bias, stride, pad, dilation)
+        return self._conv('conv1d', x, kernel, bias, stride, pad, dilation)
 
     def conv2d(self, x, kernel, bias, stride, pad, dilation):
-        return F.conv2d(x, kernel, bias, stride, pad, dilation)
+        return self._conv('conv2d', x, kernel, bias, stride, pad, dilation)
 
     def conv3d(self, x, kernel, bias, stride, pad, dilation):
-        return F.conv3d(x, kernel, bias, stride, pad, dilation)
+        return self._conv('conv3d', x, kernel, bias, stride, pad, dilation)
