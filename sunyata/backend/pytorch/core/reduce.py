@@ -10,25 +10,17 @@ class PyTorchReduceAPI(BaseReduceAPI):
 
     def _normalize_axis(self, axis, keepdims, ndim):
         if axis is None:
-            if keepdims:
-                axes = list(range(ndim))
-            else:
-                return None
+            axes = list(range(ndim))
         elif isinstance(axis, int):
-            axes = [axis]
-        elif isinstance(axis, tuple):
-            axes = list(axis)
-        elif isinstance(axis, list):
-            pass
+            axes = [axis % ndim]
+        elif isinstance(axis, (list, tuple)):
+            axes = sorted(list(map(lambda n: n % ndim, axis)))
         else:
             assert False
-        axes = list(map(lambda n: n % ndim, axes))
-        return sorted(axes)
+        return axes
 
     def _reduce(self, name, x, axis=None, keepdims=False):
         axes = self._normalize_axis(axis, keepdims, x.dim())
-        if axes is None:
-            return getattr(x, name)(None, True)
         for axis in reversed(axes):
             if x.dim() == 1:
                 keepdims = True
