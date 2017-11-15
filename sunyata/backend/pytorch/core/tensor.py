@@ -32,5 +32,5 @@ class PyTorchTensorAPI(BaseTensorAPI):
         return self.cast_to_device(x, dtype, device)
 
     def random_normal(self, shape, mean=0, std=1, dtype=None, device=None):
-        x = torch.randn(*shape) * mean + std
+        x = torch.randn(*shape) * std + mean
         return self.cast_to_device(x, dtype, device)
