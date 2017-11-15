@@ -6,7 +6,7 @@ from ....base.layer.dot.conv import BaseConvAPI
 class PyTorchConvAPI(BaseConvAPI):
     def __init__(self):
         BaseConvAPI.__init__(self)
-        self.ndim2conv = {
+        self._ndim2conv = {
             1: self.conv1d,
             2: self.conv2d,
             3: self.conv3d,
@@ -14,7 +14,7 @@ class PyTorchConvAPI(BaseConvAPI):
 
     def conv(self, x, kernel, bias, stride, pad, dilation):
         ndim = x.dim() - 2
-        return self.ndim2conv[ndim](x, kernel, bias, stride, pad, dilation)
+        return self._ndim2conv[ndim](x, kernel, bias, stride, pad, dilation)
 
     def _conv(self, func_name, x, kernel, bias, stride, pad, dilation):
         ndim = self.ndim(x) - 2
