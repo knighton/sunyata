@@ -39,25 +39,6 @@ class BaseUtilAPI(APIMixin):
             assert False
         return pad
 
-    def conv_pad_to_singles(self, pad):
-        has_pre_pad = False
-        pre_pad = []
-        conv_single_pad = []
-        for left, right in pad:
-            dim = min(left, right)
-            conv_single_pad.append(dim)
-            left -= dim
-            right -= dim
-            if left or right:
-                has_pre_pad = True
-            pre_pad.append((left, right))
-        if has_pre_pad:
-            pre_pad = tuple(pre_pad)
-        else:
-            pre_pad = None
-        conv_single_pad = tuple(conv_single_pad)
-        return pre_pad, conv_single_pad
-
     def unpack_conv_pad(self, kernel, pad, dilation):
         if pad == 'same':
             kernel_shape = self.shape(kernel)
@@ -76,3 +57,22 @@ class BaseUtilAPI(APIMixin):
             ndim = len(self.shape(kernel)) - 2
             pad = self.unpack_int_pad(pad, ndim)
         return pad
+
+    def conv_pad_to_singles(self, pad):
+        has_pre_pad = False
+        pre_pad = []
+        conv_single_pad = []
+        for left, right in pad:
+            dim = min(left, right)
+            conv_single_pad.append(dim)
+            left -= dim
+            right -= dim
+            if left or right:
+                has_pre_pad = True
+            pre_pad.append((left, right))
+        if has_pre_pad:
+            pre_pad = tuple(pre_pad)
+        else:
+            pre_pad = None
+        conv_single_pad = tuple(conv_single_pad)
+        return pre_pad, conv_single_pad
