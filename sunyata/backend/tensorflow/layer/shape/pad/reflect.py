@@ -17,16 +17,17 @@ class TensorFlowReflectPadAPI(BaseReflectPadAPI):
         return self._ndim2reflect_pad[ndim](x, pad, value)
 
     def reflect_pad1d(self, x, pad, value):
-        (left, right), = self.unpack_pad(pad, 1)
+        (left, right), = self.unpack_int_pad(pad, 1)
         pad = (0, 0), (0, 0), (left, right)
         return tf.pad(x, pad, 'reflect')
 
     def reflect_pad2d(self, x, pad, value):
-        (top, bottom), (left, right) = self.unpack_pad(pad, 2)
+        (top, bottom), (left, right) = self.unpack_int_pad(pad, 2)
         pad = (0, 0), (0, 0), (top, bottom), (left, right)
         return tf.pad(x, pad, 'reflect')
 
     def reflect_pad3d(self, x, pad, value):
-        (front, back), (top, bottom), (left, right) = self.unpack_pad(pad, 2)
+        (front, back), (top, bottom), (left, right) = \
+            self.unpack_int_pad(pad, 2)
         pad = (0, 0), (0, 0), (front, back), (top, bottom), (left, right)
         return tf.pad(x, pad, 'reflect')

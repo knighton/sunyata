@@ -19,7 +19,7 @@ class BaseUtilAPI(APIMixin):
     def to_one(self, x):
         return self.to_shape(x, 1)[0]
 
-    def unpack_pad(self, pad, ndim):
+    def unpack_int_pad(self, pad, ndim):
         if isinstance(pad, int):
             pad = ((pad, pad),) * ndim
         elif isinstance(pad, (list, tuple)):

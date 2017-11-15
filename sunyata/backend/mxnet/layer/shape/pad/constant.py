@@ -18,17 +18,18 @@ class MXNetConstantPadAPI(BaseConstantPadAPI):
 
     def constant_pad1d(self, x, pad, value):
         x = mx.nd.expand_dims(x, 2)
-        (left, right), = self.unpack_pad(pad, 1)
+        (left, right), = self.unpack_int_pad(pad, 1)
         pad = (0, 0), (left, right)
         x = self.constant_pad2d(x, pad, value)
         return self.squeeze(x, 2)
 
     def constant_pad2d(self, x, pad, value):
-        (top, bottom), (left, right) = self.unpack_pad(pad, 2)
+        (top, bottom), (left, right) = self.unpack_int_pad(pad, 2)
         mx_pad = 0, 0, 0, 0, top, bottom, left, right
         return mx.nd.pad(x, 'constant', mx_pad, value)
 
     def constant_pad3d(self, x, pad, value):
-        (front, back), (top, bottom), (left, right) = self.unpack_pad(pad, 3)
+        (front, back), (top, bottom), (left, right) = \
+            self.unpack_int_pad(pad, 3)
         mx_pad = 0, 0, 0, 0, front, back, top, bottom, left, right
         return mx.nd.pad(x, 'constant', mx_pad, value)

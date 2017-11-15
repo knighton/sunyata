@@ -18,17 +18,18 @@ class PyTorchReflectPadAPI(BaseReflectPadAPI):
 
     def reflect_pad1d(self, x, pad):
         x = x.unsqueeze(2)
-        (left, right), = self.unpack_pad(pad, 1)
+        (left, right), = self.unpack_int_pad(pad, 1)
         pad = 0, 0, left, right
         x = self.reflect_pad2d(x, pad)
         return x.squeeze(2)
 
     def reflect_pad2d(self, x, pad):
-        (top, bottom), (left, right) = self.unpack_pad(pad, 2)
+        (top, bottom), (left, right) = self.unpack_int_pad(pad, 2)
         pad = top, bottom, left, right
         return F.pad(x, pad, 'reflect')
 
     def reflect_pad3d(self, x, pad):
-        (front, back), (top, bottom), (left, right) = self.unpack_pad(pad, 3)
+        (front, back), (top, bottom), (left, right) = \
+            self.unpack_int_pad(pad, 3)
         pad = front, back, top, bottom, left, right
         return F.pad(x, pad, 'reflect')
