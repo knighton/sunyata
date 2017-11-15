@@ -19,11 +19,15 @@ class TensorFlowConvAPI(BaseConvAPI):
 
     def conv(self, x, kernel, bias, stride, pad, dilation):
         ndim = len(x.shape) - 2
+        face = self.shape(kernel)[:-2]
         stride = self.to_shape(stride, ndim)
         dilation = self.to_shape(dilation, ndim)
-        assert pad == 'SAME'
+        pre_pad, conv_word_pad = self.unpack_conv_pad_to_word(
+            face, pad, dilation)
+        if pre_pad is not None:
+            x = self.constant_pad(x, pre_pad, 0)
         x = self._to_channels_last(x)
-        x = tf.nn.convolution(x, kernel, pad, stride, dilation)
+        x = tf.nn.convolution(x, kernel, conv_word_pad, stride, dilation)
         x = self._to_channels_first(x)
         broadcasted = (1,) + self.shape(bias) + (1,) * ndim
         return x + self.reshape(bias, broadcasted)

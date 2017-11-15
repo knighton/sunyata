@@ -18,18 +18,19 @@ class PyTorchConvAPI(BaseConvAPI):
 
     def _conv(self, func_name, x, kernel, bias, stride, pad, dilation):
         ndim = self.ndim(x) - 2
+        face = self.shape(kernel)[2:]
         stride = self.to_shape(stride, ndim)
         dilation = self.to_shape(dilation, ndim)
-        pad = self.unpack_conv_pad(kernel, pad, dilation)
-        pre_pad, conv_single_pad = self.conv_pad_to_singles(pad)
+        pre_pad, conv_singles_pad = \
+            self.unpack_conv_pad_to_singles(face, pad, dilation)
         func = getattr(F, func_name)
         if ndim == 1:
             stride, = stride
-            conv_single_pad, = conv_single_pad
+            conv_singles_pad, = conv_singles_pad
             dilation, = dilation
         if pre_pad is not None:
             x = self.constant_pad(x, pre_pad, 0)
-        return func(x, kernel, bias, stride, conv_single_pad, dilation)
+        return func(x, kernel, bias, stride, conv_singles_pad, dilation)
 
     def conv1d(self, x, kernel, bias, stride, pad, dilation):
         return self._conv('conv1d', x, kernel, bias, stride, pad, dilation)

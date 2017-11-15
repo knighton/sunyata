@@ -39,32 +39,29 @@ class BaseUtilAPI(APIMixin):
             assert False
         return pad
 
-    def unpack_conv_pad(self, kernel, pad, dilation):
+    def _unpack_conv_pad(self, face, pad, dilation):
+        ndim = len(face)
         if pad == 'same':
-            kernel_shape = self.shape(kernel)
-            ndim = len(kernel_shape) - 2
-            face = kernel_shape[2:]
             dilation = self.to_shape(dilation, ndim)
             pad = []
-            for dim in face:
-                left_right = (dim - 1) // 2, dim // 2
-                pad.append(left_right)
+            for face_dim, dilation_dim in zip(face, dilation):
+                left = (face_dim - 1) // 2 * dilation_dim
+                right = face_dim // 2 * dilation_dim
+                pad.append((left, right))
             pad = tuple(pad)
         elif pad == 'valid':
-            ndim = len(self.shape(kernel)) - 2
             pad = ((0, 0),) * ndim
         else:
-            ndim = len(self.shape(kernel)) - 2
             pad = self.unpack_int_pad(pad, ndim)
         return pad
 
-    def conv_pad_to_singles(self, pad):
+    def _unpacked_conv_pad_to_singles(self, unpacked_pad):
         has_pre_pad = False
         pre_pad = []
-        conv_single_pad = []
-        for left, right in pad:
+        conv_singles_pad = []
+        for left, right in unpacked_pad:
             dim = min(left, right)
-            conv_single_pad.append(dim)
+            conv_singles_pad.append(dim)
             left -= dim
             right -= dim
             if left or right:
@@ -74,5 +71,41 @@ class BaseUtilAPI(APIMixin):
             pre_pad = tuple(pre_pad)
         else:
             pre_pad = None
-        conv_single_pad = tuple(conv_single_pad)
-        return pre_pad, conv_single_pad
+        conv_singles_pad = tuple(conv_singles_pad)
+        return pre_pad, conv_singles_pad
+
+    def _unpacked_conv_pad_to_word(self, face, dilation, unpacked_pad):
+        ndim = len(face)
+        dilation = self.to_shape(dilation, ndim)
+        could_be_same = True
+        could_be_valid = True
+        for (pad_left, pad_right), face_dim, dilation_dim in \
+                zip(unpacked_pad, face, dilation):
+            if (face_dim - 1) // 2 * dilation != pad_left:
+                could_be_same = False
+            if pad_left:
+                could_be_valid = False
+            if face_dim // 2 * dilation != pad_right:
+                could_be_same = False
+            if pad_right:
+                could_be_valid = False
+            if not could_be_same and not could_be_valid:
+                break
+        if could_be_same:
+            pre_pad = None
+            conv_word_pad = 'SAME'
+        elif could_be_valid:
+            pre_pad = None
+            conv_word_pad = 'VALID'
+        else:
+            pre_pad = unpacked_pad
+            conv_word_pad = 'VALID'
+        return pre_pad, conv_word_pad
+
+    def unpack_conv_pad_to_singles(self, face, pad, dilation):
+        unpacked_pad = self._unpack_conv_pad(face, pad, dilation)
+        return self._unpacked_conv_pad_to_singles(unpacked_pad)
+
+    def unpack_conv_pad_to_word(self, face, pad, dilation):
+        unpacked_pad = self._unpack_conv_pad(face, pad, dilation)
+        return self._unpacked_conv_pad_to_word(face, dilation, unpacked_pad)
