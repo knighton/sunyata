@@ -12,17 +12,23 @@ class ChainerReduceAPI(BaseReduceAPI):
     def argmax(self, x, axis=-1):
         return F.argmax(x, axis)
 
+    def _reduce_variable(self, func_name, x, axis, keepdims):
+        axis = tuple(axis) if isinstance(x, list) else axis
+        return getattr(F, func_name)(x, axis, keepdims)
+
+    def _reduce_numpy(self, func_name, x, axis, keepdims):
+        axis = tuple(axis) if isinstance(x, list) else axis
+        return getattr(np, func_name)(x, axis, keepdims=keepdims)
+
     def _reduce(self, func_name, x, axis=None, keepdims=False):
-        if isinstance(axis, list):
-            axis = tuple(axis)
-        dtype = self.dtype_of(x)
-        if dtype.startswith('float'):
-            x = getattr(F, func_name)(x, axis, keepdims)
+        if isinstance(x, Variable):
+            if x.data.dtype.name.startswith('float'):
+                x = self._reduce_variable(func_name, x, axis, keepdims)
+            else:
+                data = self._reduce_numpy(func_name, x.data, axis, keepdims)
+                x = Variable(data)
         else:
-            data = getattr(np, func_name)(x.data, axis, keepdims)
-            x = Variable(data)
-        if not x.ndim:
-            x = self.expand_dims(x, 0)
+            x = self._reduce_numpy(func_name, x, axis, keepdims)
         return x
 
     def min(self, x, axis=None, keepdims=False):
