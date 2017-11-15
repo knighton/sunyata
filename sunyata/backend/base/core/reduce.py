@@ -37,6 +37,15 @@ class BaseReduceAPI(APIMixin):
     def std(self, x, axis=None, keepdims=False):
         return self.sqrt(self.var(x, axis, keepdims))
 
+    def moments(self, x, axis=None, keepdims=False):
+        shift = self.mean(x, axis, True)
+        shifted = x - shift
+        shifted_mean = self.mean(shifted, axis, True)
+        var_mean = self.mean(self.square(shifted), axis, True)
+        var = var_mean - self.square(shifted_mean)
+        mean = shifted_mean + shift
+        return mean, var
+
     def any(self, x, axis=None, keepdims=False, dtype=None):
         nonneg = self.abs(x)
         minima = self.min(nonneg, axis, keepdims)
