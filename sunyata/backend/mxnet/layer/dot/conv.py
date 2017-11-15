@@ -10,11 +10,14 @@ class MXNetConvAPI(BaseConvAPI):
     def conv(self, x, kernel, bias, stride, pad, dilation):
         ndim = x.ndim - 2
         stride = self.to_shape(stride, ndim)
-        pad = self.to_shape(pad, ndim)
+        pad = self.unpack_conv_pad(pad, ndim)
+        pre_pad, conv_single_pad = self.conv_pad_to_singles(pad)
         dilation = self.to_shape(dilation, ndim)
+        if pre_pad is not None:
+            x = self.constant_pad(x, pre_pad, 0)
         return mx.nd.Convolution(
-            x, kernel, bias, kernel.shape[2:], stride, dilation, pad,
-            kernel.shape[0])
+            x, kernel, bias, kernel.shape[2:], stride, dilation,
+            conv_single_pad, kernel.shape[0])
 
     def conv1d(self, x, kernel, bias, stride, pad, dilation):
         return self.conv(x, kernel, bias, stride, pad, dilation)
