@@ -1,8 +1,10 @@
+from ...base.layer import BaseLayerAPI
 from .activation import MXNetActivationAPI
-from .dense import MXNetDenseAPI
+from .dot import MXNetDotAPI
 
 
-class MXNetLayerAPI(MXNetActivationAPI, MXNetDenseAPI):
+class MXNetLayerAPI(BaseLayerAPI, MXNetActivationAPI, MXNetDotAPI):
     def __init__(self):
+        BaseLayerAPI.__init__(self)
         MXNetActivationAPI.__init__(self)
-        MXNetDenseAPI.__init__(self)
+        MXNetDotAPI.__init__(self)

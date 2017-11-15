@@ -1,3 +1,4 @@
+from ...base.core import BaseCoreAPI
 from .device_dtype import PyTorchDeviceDataTypeAPI
 from .logic import PyTorchLogicAPI
 from .map import PyTorchMapAPI
@@ -7,10 +8,11 @@ from .tensor import PyTorchTensorAPI
 from .variable import PyTorchVariableAPI
 
 
-class PyTorchCoreAPI(PyTorchDeviceDataTypeAPI, PyTorchLogicAPI, PyTorchMapAPI,
-                     PyTorchReduceAPI, PyTorchShapeAPI, PyTorchTensorAPI,
-                     PyTorchVariableAPI):
+class PyTorchCoreAPI(BaseCoreAPI, PyTorchDeviceDataTypeAPI, PyTorchLogicAPI,
+                     PyTorchMapAPI, PyTorchReduceAPI, PyTorchShapeAPI,
+                     PyTorchTensorAPI, PyTorchVariableAPI):
     def __init__(self):
+        BaseCoreAPI.__init__(self)
         PyTorchDeviceDataTypeAPI.__init__(self)
         PyTorchLogicAPI.__init__(self)
         PyTorchMapAPI.__init__(self)

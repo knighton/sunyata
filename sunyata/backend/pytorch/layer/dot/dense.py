@@ -1,4 +1,4 @@
-from ...base.layer.dense import BaseDenseAPI
+from ....base.layer.dot.dense import BaseDenseAPI
 
 
 class PyTorchDenseAPI(BaseDenseAPI):

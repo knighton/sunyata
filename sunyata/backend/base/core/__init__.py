@@ -5,12 +5,13 @@ from .map import BaseMapAPI
 from .shape import BaseShapeAPI
 from .reduce import BaseReduceAPI
 from .tensor import BaseTensorAPI
+from .util import BaseUtilAPI
 from .variable import BaseVariableAPI
 
 
 class BaseCoreAPI(BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI,
                   BaseMapAPI, BaseReduceAPI, BaseShapeAPI, BaseTensorAPI,
-                  BaseVariableAPI):
+                  BaseUtilAPI, BaseVariableAPI):
     def __init__(self):
         BaseDeviceDataTypeAPI.__init__(self)
         BaseEpsilonAPI.__init__(self)
@@ -19,4 +20,5 @@ class BaseCoreAPI(BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI,
         BaseReduceAPI.__init__(self)
         BaseShapeAPI.__init__(self)
         BaseTensorAPI.__init__(self)
+        BaseUtilAPI.__init__(self)
         BaseVariableAPI.__init__(self)

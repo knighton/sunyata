@@ -1,8 +1,8 @@
 from .activation import BaseActivationAPI
-from .dense import BaseDenseAPI
+from .dot import BaseDotAPI
 
 
-class BaseLayerAPI(BaseActivationAPI, BaseDenseAPI):
+class BaseLayerAPI(BaseActivationAPI, BaseDotAPI):
     def __init__(self):
         BaseActivationAPI.__init__(self)
-        BaseDenseAPI.__init__(self)
+        BaseDotAPI.__init__(self)

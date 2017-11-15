@@ -1,8 +1,10 @@
+from ...base.layer import BaseLayerAPI
 from .activation import PyTorchActivationAPI
-from .dense import PyTorchDenseAPI
+from .dot import PyTorchDotAPI
 
 
-class PyTorchLayerAPI(PyTorchActivationAPI, PyTorchDenseAPI):
+class PyTorchLayerAPI(BaseLayerAPI, PyTorchActivationAPI, PyTorchDotAPI):
     def __init__(self):
+        BaseLayerAPI.__init__(self)
         PyTorchActivationAPI.__init__(self)
-        PyTorchDenseAPI.__init__(self)
+        PyTorchDotAPI.__init__(self)
