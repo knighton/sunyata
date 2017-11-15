@@ -1,3 +1,4 @@
+import numpy as np
 import os
 from time import time
 from tqdm import tqdm
@@ -70,3 +71,16 @@ def kwargs_only(func):
         wrap.__name__ = func.__name__
         return wrap
     return make_wrap(func)
+
+
+def scale_pixels(x):
+    return x / 127.5 - 1
+
+
+def to_one_hot(indices, num_classes, dtype):
+    assert indices.ndim == 1
+    assert isinstance(num_classes, int)
+    assert 0 < num_classes
+    x = np.zeros((len(indices), num_classes), dtype)
+    x[np.arange(len(indices)), indices] = 1
+    return x
