@@ -5,7 +5,7 @@ import tarfile
 from tqdm import tqdm
 
 from .base import download, get_dataset_dir, kwargs_only, scale_pixels, \
-    to_one_hot
+    to_one_hot, train_test_split
 
 
 _DATASET_NAME = 'cifar'
@@ -121,8 +121,27 @@ def load_cifar100(classes=100, dataset_name=_DATASET_NAME, one_hot=True,
     tar = tarfile.open(local, 'r:gz')
     train = _load_cifar100_split(
         tar, classes, one_hot, scale, x_dtype, y_dtype, 'train')
-    val = _load_cifar100_split(
+    test = _load_cifar100_split(
         tar, classes, one_hot, scale, x_dtype, y_dtype, 'test')
     class_names = _load_cifar100_class_names(tar, classes)
     tar.close()
-    return train, val, class_names
+    return train, test, class_names
+
+
+@kwargs_only
+def load_cifar(cifar10_url=_CIFAR10_URL, cifar100_url=_CIFAR100_URL, classes=10,
+               dataset_name=_DATASET_NAME, one_hot=True, scale=True, val=0.2,
+               verbose=2, x_dtype='float32', y_dtype='float32'):
+    if classes == 10:
+        x, y, class_names = load_cifar10(
+            dataset_name=dataset_name, one_hot=one_hot, scale=scale,
+            url=cifar10_url, verbose=verbose, x_dtype=x_dtype, y_dtype=y_dtype)
+        train, test = train_test_split(x, y, val)
+    elif classes in {20, 100}:
+        train, test, class_names = load_cifar100(
+            classes=classes, dataset_name=dataset_name, one_hot=one_hot,
+            scale=scale, url=cifar100_url, verbose=verbose, x_dtype=x_dtype,
+            y_dtype=y_dtype)
+    else:
+        assert False
+    return train, test, class_names

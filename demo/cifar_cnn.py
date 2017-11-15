@@ -1,4 +1,6 @@
-from sunyata.dataset.cifar import load_cifar10
+from sunyata.dataset.cifar import load_cifar
 
 
-x, y, classes = load_cifar10()
+for classes in [10, 20, 100]:
+    train, val, class_names = load_cifar(classes=classes)
+    print(train[0].shape, train[1].shape)
