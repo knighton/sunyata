@@ -35,4 +35,4 @@ class ChainerReduceAPI(BaseReduceAPI):
         return self._reduce('sum', x, axis, keepdims)
 
     def prod(self, x, axis=None, keepdims=False):
-        return self._reduce('prod', axis, keepdims)
+        return self._reduce('prod', x, axis, keepdims)

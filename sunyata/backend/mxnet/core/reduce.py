@@ -19,10 +19,10 @@ class MXNetReduceAPI(BaseReduceAPI):
         return func(x, axis, keepdims)
 
     def min(self, x, axis=None, keepdims=False):
-        return self._reduce(x, axis, keepdims, 'min')
+        return self._reduce('min', x, axis, keepdims)
 
     def max(self, x, axis=None, keepdims=False):
-        return self._reduce(x, axis, keepdims, 'max')
+        return self._reduce('max', x, axis, keepdims)
 
     def sum(self, x, axis=None, keepdims=False):
         return self._reduce('sum', x, axis, keepdims)
