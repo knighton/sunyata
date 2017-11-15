@@ -60,3 +60,13 @@ def get_sunyata_home():
 
 def get_dataset_dir(dataset):
     return os.path.join(get_sunyata_home(), 'dataset', dataset)
+
+
+def kwargs_only(func):
+    def make_wrap(func):
+        def wrap(*args, **kwargs):
+            assert not args
+            return func(**kwargs)
+        wrap.__name__ = func.__name__
+        return wrap
+    return make_wrap(func)

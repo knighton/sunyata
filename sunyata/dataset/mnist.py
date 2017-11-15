@@ -3,7 +3,7 @@ import numpy as np
 import os
 import pickle
 
-from .base import download, get_dataset_dir
+from .base import download, get_dataset_dir, kwargs_only
 
 
 _NAME = 'mnist'
@@ -23,7 +23,8 @@ def _scale_pixels(x):
     return (x / 255 - 0.5) * 2
 
 
-def load_mnist(dtype, verbose=2):
+@kwargs_only
+def load_mnist(dtype='float32', verbose=2):
     dataset_dir = get_dataset_dir(_NAME)
     local = os.path.join(dataset_dir, os.path.basename(_URL))
     if not os.path.exists(local):
