@@ -34,3 +34,7 @@ class PyTorchTensorAPI(BaseTensorAPI):
     def random_normal(self, shape, mean=0, std=1, dtype=None, device=None):
         x = torch.randn(*shape) * std + mean
         return self.cast_to_device(x, dtype, device)
+
+    def random_binomial(self, shape, prob=0.5, dtype=None, device=None):
+        x = torch.rand(*shape) <= prob
+        return self.cast_to_device(x, dtype, device)

@@ -51,3 +51,8 @@ class MXNetTensorAPI(BaseTensorAPI):
         dtype = self.dtype(dtype)
         ctx = self.device(device).mx_context
         return mx.random.normal(mean, std, shape, ctx=ctx, dtype=dtype)
+
+    def random_binomial(self, shape, prob=0.5, dtype=None, device=None):
+        dtype = self.dtype(dtype)
+        ctx = self.device(device).mx_context
+        return mx.random.uniform(0, 1, shape, ctx=ctx, dtype=dtype) <= prob

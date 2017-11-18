@@ -43,3 +43,7 @@ class BaseTensorAPI(APIMixin):
     def random_normal(self, shape, mean=0, std=1, dtype=None, device=None):
         x = np.random.normal(mean, std, shape)
         return self.cast_numpy_to_device(x, dtype, device)
+
+    def random_binomial(self, shape, prob=0.5, dtype=None, device=None):
+        x = np.random.binomial(1, prob, shape)
+        return self.cast_numpy_to_device(x, dtype, device)

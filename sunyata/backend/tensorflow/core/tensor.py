@@ -46,3 +46,8 @@ class TensorFlowTensorAPI(BaseTensorAPI):
     def random_normal(self, shape, mean=0, std=1, dtype=None, device=None):
         with self.device_scope(device):
             return tf.random_normal(shape, mean, std, self.dtype(dtype))
+
+    def random_binomial(self, shape, prob=0.5, dtype=None, device=None):
+        with self.device_scope(device):
+            x = tf.random_uniform(shape, dtype=dtype) <= prob
+            return tf.cast(x, dtype)
