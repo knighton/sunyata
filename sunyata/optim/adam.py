@@ -32,5 +32,5 @@ class Adam(Optimizer):
             (1 - ctx.beta2) * Z.square(grad)
         iter_velocity = ctx.velocity / (1 - Z.pow(ctx.beta2, ctx.iter))
         ctx.iter += 1
-        Z.decr(var, ctx.lr * iter_momentum /
-               (Z.sqrt(iter_velocity) + ctx.epsilon))
+        Z.assign_sub(var, ctx.lr * iter_momentum /
+                     (Z.sqrt(iter_velocity) + ctx.epsilon))

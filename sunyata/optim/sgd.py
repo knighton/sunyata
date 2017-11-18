@@ -12,4 +12,4 @@ class SGD(Optimizer):
         return {'lr': self.lr}
 
     def update_variable(self, var, grad, ctx):
-        Z.decr(var, ctx.lr * grad)
+        Z.assign_sub(var, ctx.lr * grad)

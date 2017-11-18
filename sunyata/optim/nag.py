@@ -19,6 +19,6 @@ class NAG(Optimizer):
 
     def update_variable(self, var, grad, ctx):
         prev_velocity = ctx.velocity
-        ctx.velocity = ctx.momentum * ctx.velocity - ctx.lr * grad
-        Z.incr(var, (1 + ctx.momentum) * ctx.velocity -
-               ctx.momentum * prev_velocity)
+        ctx.velocity = ctx.momentum * ctx.velocity + ctx.lr * grad
+        Z.assign_sub(var, (1 + ctx.momentum) * ctx.velocity -
+                     ctx.momentum * prev_velocity)

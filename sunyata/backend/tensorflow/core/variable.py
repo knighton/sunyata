@@ -36,8 +36,8 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x
 
-    def assign(self, x, new_value):
-        x.assign(new_value)
+    def assign(self, x, value):
+        x.assign(value)
 
     def numpy(self, x):
         return x.numpy()

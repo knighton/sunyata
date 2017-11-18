@@ -23,4 +23,4 @@ class RMSprop(Optimizer):
     def update_variable(self, var, grad, ctx):
         ctx.cache = ctx.decay_rate * ctx.cache + \
             (1 - ctx.decay_rate) * Z.square(grad)
-        Z.decr(var, ctx.lr * grad / (Z.sqrt(ctx.cache) + ctx.epsilon))
+        Z.assign_sub(var, ctx.lr * grad / (Z.sqrt(ctx.cache) + ctx.epsilon))

@@ -40,14 +40,14 @@ class BaseVariableAPI(APIMixin):
     def result_to_tensor(self, x):
         raise NotImplementedError
 
-    def assign(self, x, new_value):
+    def assign(self, x, value):
         raise NotImplementedError
 
-    def incr(self, x, incr):
-        self.assign(x, self.variable_to_tensor(x) + incr)
+    def assign_add(self, x, value):
+        self.assign(x, self.variable_to_tensor(x) + value)
 
-    def decr(self, x, decr):
-        self.assign(x, self.variable_to_tensor(x) - decr)
+    def assign_sub(self, x, value):
+        self.assign(x, self.variable_to_tensor(x) - value)
 
     def numpy(self, x):
         raise NotImplementedError

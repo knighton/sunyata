@@ -22,4 +22,4 @@ class Adagrad(Optimizer):
 
     def update_variable(self, var, grad, ctx):
         ctx.cache += Z.square(grad)
-        Z.decr(var, ctx.lr * grad / Z.sqrt(ctx.cache + ctx.epsilon))
+        Z.assign_sub(var, ctx.lr * grad / Z.sqrt(ctx.cache + ctx.epsilon))

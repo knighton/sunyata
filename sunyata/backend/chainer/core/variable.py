@@ -37,8 +37,8 @@ class ChainerVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x.data
 
-    def assign(self, x, new_value):
-        x.data = new_value.copy()
+    def assign(self, x, value):
+        x.data = value.copy()
 
     def numpy(self, x):
         return x.data.copy() if isinstance(x, Variable) else x.copy()
