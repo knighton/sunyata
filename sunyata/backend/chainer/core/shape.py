@@ -22,11 +22,14 @@ class ChainerShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return F.squeeze(x, axis)
 
-    def tile(self, x, reps):
-        return F.tile(x, reps)
+    def tile(self, x, repeats):
+        return F.tile(x, repeats)
 
     def transpose(self, x, axes):
         return F.transpose(x, axes)
+
+    def split(self, x, axis):
+        return F.split_axis(x, x.shape[axis], axis)
 
     def concat(self, xx, axis):
         return F.concat(xx, axis)

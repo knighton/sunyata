@@ -30,11 +30,17 @@ class MXNetShapeAPI(BaseShapeAPI):
         to_shape = from_shape[:axis] + from_shape[axis + 1:]
         return mx.nd.reshape(x, to_shape)
 
-    def tile(self, x, reps):
-        return mx.nd.tile(x, reps)
+    def repeat_on_axis(x, axis, repeat):
+        return mx.nd.repeat(x, repeat, axis)
+
+    def tile(self, x, repeats):
+        return mx.nd.tile(x, repeats)
 
     def transpose(self, x, axes):
         return mx.nd.transpose(x, axes)
+
+    def split(self, x, axis):
+        return mx.nd.split(x, x.shape[axis], axis)
 
     def concat(self, xx, axis):
         return mx.nd.concat(*xx, dim=axis)

@@ -25,11 +25,14 @@ class TensorFlowShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return tf.squeeze(x, axis)
 
-    def tile(self, x, reps):
-        return tf.tile(x, reps)
+    def tile(self, x, repeats):
+        return tf.tile(x, repeats)
 
     def transpose(self, x, axes):
         return tf.transpose(x, axes)
+
+    def split(self, x, axis):
+        return tf.split(x, x.shape[axis], axis)
 
     def concat(self, xx, axis):
         return tf.concat(xx, axis)

@@ -23,10 +23,29 @@ class BaseShapeAPI(APIMixin):
     def squeeze(self, x, axis=None):
         raise NotImplementedError
 
-    def tile(self, x, reps):
+    def repeat_on_axis(x, axis, repeat):
+        splits = self.split(x, axis)
+        xx = []
+        for split in splits:
+            for i in range(repeat):
+                xx.append(split)
+        return self.concat(xx, axis)
+
+    def repeat(self, x, repeats):
+        assert len(x.shape) == len(repeats)
+        for i, repeat in enumerate(repeats):
+            if repeat == 1:
+                continue
+            x = self.repeat_on_axis(x, i, repeat)
+        return x
+
+    def tile(self, x, repeats):
         raise NotImplementedError
 
     def transpose(self, x, axes):
+        raise NotImplementedError
+
+    def split(self, x, axis)
         raise NotImplementedError
 
     def concat(self, xx, axis):

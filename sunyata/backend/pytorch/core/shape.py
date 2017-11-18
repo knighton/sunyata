@@ -22,11 +22,14 @@ class PyTorchShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return x.squeeze(axis)
 
-    def tile(self, x, reps):
-        return x.repeat(*reps)
+    def tile(self, x, repeats):
+        return x.repeat(*repeats)
 
     def transpose(self, x, axes):
         return x.permute(*axes)
+
+    def split(self, x, axis):
+        return x.split(1, axis)
 
     def concat(self, xx, axis):
         return torch.cat(xx, axis)
