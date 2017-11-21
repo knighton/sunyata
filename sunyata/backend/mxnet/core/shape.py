@@ -30,8 +30,13 @@ class MXNetShapeAPI(BaseShapeAPI):
         to_shape = from_shape[:axis] + from_shape[axis + 1:]
         return mx.nd.reshape(x, to_shape)
 
-    def repeat_on_axis(x, axis, repeat):
+    def repeat_axis(x, axis, repeat):
         return mx.nd.repeat(x, repeat, axis)
+
+    def tile_axis(self, x, axis, repeat):
+        repeats = [1] * self.ndim(x)
+        repeats[axis] = repeat
+        return mx.nd.tile(x, repeats)
 
     def tile(self, x, repeats):
         return mx.nd.tile(x, repeats)

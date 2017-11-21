@@ -22,6 +22,11 @@ class PyTorchShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return x.squeeze(axis)
 
+    def tile_axis(self, x, axis, repeat):
+        repeats = [1] * self.ndim(x)
+        repeats[axis] = repeat
+        return x.repeat(*repeats)
+
     def tile(self, x, repeats):
         return x.repeat(*repeats)
 

@@ -22,6 +22,11 @@ class ChainerShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return F.squeeze(x, axis)
 
+    def tile_axis(self, x, axis, repeat):
+        repeats = [1] * self.ndim(x)
+        repeats[axis] = repeat
+        return F.tile(x, repeats)
+
     def tile(self, x, repeats):
         return F.tile(x, repeats)
 

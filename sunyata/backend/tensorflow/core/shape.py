@@ -25,6 +25,11 @@ class TensorFlowShapeAPI(BaseShapeAPI):
     def squeeze(self, x, axis=None):
         return tf.squeeze(x, axis)
 
+    def tile_axis(self, x, axis, repeat):
+        repeats = [1] * self.ndim(x)
+        repeats[axis] = repeat
+        return tf.tile(x, repeats)
+
     def tile(self, x, repeats):
         return tf.tile(x, repeats)
 
