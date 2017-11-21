@@ -11,10 +11,10 @@ class TensorFlowShapeAPI(BaseShapeAPI):
         return len(x.shape)
 
     def shape(self, x):
-        return tuple(map(int, x.shape))
+        return tuple(x.get_shape().as_list())
 
     def size(self, x):
-        return int(tf.size(x).numpy())
+        return x.get_shape().num_elements()
 
     def reshape(self, x, shape):
         return tf.reshape(x, shape)
