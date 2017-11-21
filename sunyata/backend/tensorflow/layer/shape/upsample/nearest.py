@@ -29,8 +29,3 @@ class TensorFlowNearestUpsampleAPI(BaseNearestUpsampleAPI):
         x = tf.transpose(x, (0, 2, 3, 1))
         x = tf.image.resize_nearest_neighbor(x, new_shape)
         return tf.transpose(x, (0, 3, 1, 2))
-
-    def nearest_upsample3d(self, x, scale):
-        assert self.ndim(x) == 5
-        scale = self.to_shape(scale, 3)
-        return self.repeat(x, (1, 1) + scale)
