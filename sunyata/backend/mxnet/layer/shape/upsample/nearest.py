@@ -12,6 +12,17 @@ class MXNetNearestUpsampleAPI(BaseNearestUpsampleAPI):
             3: self.nearest_upsample3d,
         }
 
+    def _nearest_upsample(self, x, scale):
+        scale = self.to_shape(scale, self.ndim(x) - 2)
+        scale_uniq = list(set(scale))
+        if scale_uniq == [1]:
+            pass
+        elif len(scale_uniq) == 1:
+            x = mx.nd.UpSampling(x, scale=scale[0], sample_type='nearest')
+        else:
+            x = self.repeat(x, (1, 1) + scale)
+        return x
+
     def nearest_upsample(self, x, scale):
         ndim = self.ndim(x) - 2
         return self._ndim2nearest_upsample[ndim]
@@ -23,8 +34,8 @@ class MXNetNearestUpsampleAPI(BaseNearestUpsampleAPI):
 
     def nearest_upsample2d(self, x, scale):
         assert self.ndim(x) == 4
-        return mx.nd.Upsampling(x, scale=scale, sample_type='nearest')
+        return self._nearest_upsample(x, scale)
 
     def nearest_upsample3d(self, x, scale):
         assert self.ndim(x) == 5
-        return mx.nd.Upsampling(x, scale=scale, sample_type='nearest')
+        return self._nearest_upsample(x, scale)

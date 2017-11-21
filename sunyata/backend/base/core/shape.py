@@ -58,7 +58,7 @@ class BaseShapeAPI(APIMixin):
     def transpose(self, x, axes):
         raise NotImplementedError
 
-    def split(self, x, axis)
+    def split(self, x, axis):
         raise NotImplementedError
 
     def concat(self, xx, axis):
