@@ -5,12 +5,44 @@ from sunyata.node import *  # noqa
 from sunyata.optim import *  # noqa
 
 
-def layer(dim):
+def make_dense(image_shape, dtype, num_classes):
+    def layer(dim):
+        return SequenceSpec([
+            DenseSpec(dim),
+            GlobalBatchNormSpec(),
+            ReLUSpec(),
+            DropoutSpec(),
+        ])
+
     return SequenceSpec([
-        DenseSpec(dim),
-        GlobalBatchNormSpec(),
-        ReLUSpec(),
-        DropoutSpec(),
+        InputSpec(image_shape, dtype),
+        FlattenSpec(),
+        layer(512),
+        layer(512),
+        layer(512),
+        DenseSpec(num_classes),
+        SoftmaxSpec(),
+    ])
+
+
+def make_conv(image_shape, dtype, num_classes):
+    def layer(dim):
+        return SequenceSpec([
+            ConvSpec(dim),
+            GlobalBatchNormSpec(),
+            ReLUSpec(),
+            MaxPoolSpec(),
+        ])
+
+    return SequenceSpec([
+        InputSpec(image_shape, dtype),
+        layer(8),
+        layer(8),
+        layer(8),
+        layer(8),
+        FlattenSpec(),
+        DenseSpec(num_classes),
+        SoftmaxSpec(),
     ])
 
 
@@ -27,15 +59,7 @@ image_shape = x.shape
 y = data[0][1][0]
 num_classes = len(y)
 
-spec = SequenceSpec([
-    InputSpec(image_shape, dtype),
-    FlattenSpec(),
-    layer(512),
-    layer(512),
-    layer(512),
-    DenseSpec(num_classes),
-    SoftmaxSpec(),
-])
+spec = make_conv(image_shape, dtype, num_classes)
 
 opt = NAG()
 
