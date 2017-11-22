@@ -1,4 +1,5 @@
 from .activation import *  # noqa
+from .alpha_dropout import *  # noqa
 from .batch_norm import *  # noqa
 from .dot import *  # noqa
 from .dropout import *  # noqa

@@ -23,11 +23,11 @@ class BaseDropoutAPI(APIMixin):
         return mask_shape
 
     def _dropout(self, x, is_training, rate, keep_axis, ndim):
+        if not is_training:
+            return x
         x_shape = self.shape(x)
         if ndim is not None:
             assert len(x_shape) == ndim + 2
-        if not is_training:
-            return x
         mask_shape = self._dropout_mask_shape(x_shape, keep_axis)
         mask = self.random_binomial(
             mask_shape, rate, self.dtype_of(x), self.device_of(x))
