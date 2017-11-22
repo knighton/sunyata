@@ -8,7 +8,6 @@ class ConstantPadLayer(PadLayer):
         self.value = value
 
     def forward_one(self, x, is_training):
-        assert self.ndim(x) == self.ndim
         return Z.constant_pad(x, self.pad, self.value)
 
 
@@ -17,5 +16,6 @@ class ConstantPadSpec(PadSpec):
         super().__init__(pad, ndim)
         self.value = value
 
-    def make_layer(self, ndim):
-        return ConstantPadLayer(self.pad, self.value, self.ndim)
+    def make_layer(self, form):
+        ndim = self.in_ndim(form.shape)
+        return ConstantPadLayer(self.pad, self.value, ndim)

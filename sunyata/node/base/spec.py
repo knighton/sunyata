@@ -26,6 +26,17 @@ class MergeSpec(Spec):
 
 
 class TransformSpec(Spec):
+    def __init__(self, ndim):
+        super().__init__()
+        assert ndim in {None, 0, 1, 2, 3}
+        self.in_spatial_ndim = ndim
+
+    def in_ndim(self, batch_shape):
+        ndim = len(batch_shape) + 1
+        if self.in_spatial_ndim is not None:
+            assert ndim == self.in_spatial_ndim + 2
+        return ndim
+
     def build_one(self, form):
         raise NotImplementedError
 

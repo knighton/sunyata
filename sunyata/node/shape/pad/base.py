@@ -4,24 +4,21 @@ from ...base import TransformLayer, TransformSpec
 
 class PadLayer(TransformLayer):
     def __init__(self, pad, ndim):
+        super().__init__(ndim)
         self.pad = pad
         self.ndim = ndim
 
 
 class PadSpec(TransformSpec):
     def __init__(self, pad, ndim):
+        super().__init__(ndim)
         self.pad = pad
         self.ndim = ndim
 
-    def make_layer(self, ndim):
+    def make_layer(self, form):
         raise NotImplementedError
 
     def build_one(self, form):
-        if self.ndim is None:
-            ndim = len(form.shape) + 1
-        else:
-            ndim = self.ndim + 2
-            assert len(form.shape) + 1 == ndim
-        layer = self.make_layer(ndim)
+        layer = self.make_layer(form)
         form = Z.pad_out_shape(form.shape, self.pad)
         return layer, form
