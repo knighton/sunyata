@@ -5,13 +5,13 @@ import sys
 _BACKEND = os.environ.get('SUNYATA_BACKEND', 'pytorch')
 print('Backend: %s.' % _BACKEND)
 
-if _BACKEND == 'chainer':
+if _BACKEND in {'ch', 'chainer'}:
     from .chainer import ChainerBackend as Backend
-elif _BACKEND == 'mxnet':
+elif _BACKEND in {'mx', 'mxnet'}:
     from .mxnet import MXNetBackend as Backend
-elif _BACKEND == 'pytorch':
+elif _BACKEND in {'pt', 'pytorch'}:
     from .pytorch import PyTorchBackend as Backend
-elif _BACKEND == 'tensorflow':
+elif _BACKEND in {'tf', 'tensorflow'}:
     from .tensorflow import TensorFlowBackend as Backend
 else:
     assert False
