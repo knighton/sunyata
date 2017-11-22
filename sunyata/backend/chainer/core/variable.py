@@ -16,7 +16,7 @@ class ChainerVariableAPI(BaseVariableAPI):
         return Variable(x)
 
     def gradients(self, params, forward, judges, aux_judges, xx, yy_true):
-        yy_pred = forward(xx)
+        yy_pred = forward(xx, True)
         score_vars = []
         score_grads = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):

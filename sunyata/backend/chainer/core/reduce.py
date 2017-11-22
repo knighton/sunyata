@@ -13,7 +13,7 @@ class ChainerReduceAPI(BaseReduceAPI):
         return F.argmax(x, axis)
 
     def _reduce_variable(self, func_name, x, axis, keepdims):
-        axis = tuple(axis) if isinstance(x, list) else axis
+        axis = tuple(axis) if isinstance(axis, list) else axis
         return getattr(F, func_name)(x, axis, keepdims)
 
     def _reduce_numpy(self, func_name, x, axis, keepdims):

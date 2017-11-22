@@ -6,12 +6,7 @@ class BaseBatchNormAPI(APIMixin):
         APIMixin.__init__(self)
 
     def do_batch_norm(self, x, beta, gamma, mean, var):
-        x = (x - mean) / self.sqrt(var + self.epsilon())
-        if gamma is not None:
-            x *= gamma
-        if beta is not None:
-            x += beta
-        return x
+        return gamma * (x - mean) / self.sqrt(var + self.epsilon()) + beta
 
     def _batch_norm_reduction_axes(self, shape):
         axes = []

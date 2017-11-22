@@ -20,7 +20,7 @@ class MXNetVariableAPI(BaseVariableAPI):
         scores = []
         score_grads = []
         with mx.autograd.record():
-            yy_pred = forward(xx)
+            yy_pred = forward(xx, True)
             for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
                 scores.append(self.mean(judge(y_true, y_pred)))
                 arr = np.ones((1,), self.dtype_of(y_true)) * judge.importance
