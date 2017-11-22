@@ -1,7 +1,7 @@
 import numpy as np
 
-from .. import backend as Z
-from .base import Form, TransformLayer, TransformSpec
+from ... import backend as Z
+from ..base import Form, TransformLayer, TransformSpec
 
 
 class DenseLayer(TransformLayer):
