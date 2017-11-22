@@ -8,7 +8,7 @@ class MXNetShapeAPI(BaseShapeAPI):
         BaseShapeAPI.__init__(self)
 
     def ndim(self, x):
-        return len(x.ndim)
+        return x.ndim
 
     def shape(self, x):
         return x.shape
