@@ -33,13 +33,13 @@ class ConvSpec(TransformSpec):
 
     def build_one(self, form):
         ndim = self.in_ndim(form.shape)
-        out_channels = self.channels
         in_channels = form.shape[0]
+        out_channels = self.channels
         face = Z.to_shape(self.face, ndim - 2)
         kernel_shape = (out_channels, in_channels) + face
         kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)
         bias_shape = out_channels,
-        bias = np.random.normal(0, 0.1, bias_shape).astype(form.dtype)
+        bias = np.zeros(bias_shape, form.dtype)
         layer = ConvLayer(
             kernel, bias, self.stride, self.pad, self.dilation, ndim)
         out_shape = Z.conv_out_shape(

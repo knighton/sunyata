@@ -25,8 +25,9 @@ class DenseSpec(TransformSpec):
     def build_one(self, form):
         assert len(form.shape) == 1
         in_dim, = form.shape
-        kernel = np.random.normal(
-            0, 0.1, (in_dim, self.out_dim)).astype('float32')
-        bias = np.random.normal(0, 0.1, (self.out_dim,)).astype('float32')
-        out_shape = self.out_dim,
+        kernel_shape = in_dim, self.out_dim
+        kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)
+        bias_shape = self.out_dim,
+        bias = np.zeros(bias_shape, form.dtype)
+        out_shape = bias_shape
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
