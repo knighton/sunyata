@@ -5,7 +5,7 @@ class BaseDropoutAPI(APIMixin):
     def __init__(self):
         APIMixin.__init__(self)
 
-    def _spatial_dropout_mask_shape(self, x_shape, keep_axis):
+    def _dropout_mask_shape(self, x_shape, keep_axis):
         if keep_axis is None:
             mask_shape = x_shape
         else:
@@ -22,46 +22,29 @@ class BaseDropoutAPI(APIMixin):
             mask_shape = tuple(mask_shape)
         return mask_shape
 
-    def spatial_dropout(self, x, is_training, keep_axis, rate):
+    def _dropout(self, x, is_training, rate, keep_axis, ndim):
+        x_shape = self.shape(x)
+        if ndim is not None:
+            assert len(x_shape) == ndim + 2
         if not is_training:
             return x
-        mask_shape = self._spatial_dropout_mask_shape(self.shape(x), keep_axis)
+        mask_shape = self._dropout_mask_shape(x_shape, keep_axis)
         mask = self.random_binomial(
             mask_shape, rate, self.dtype_of(x), self.device_of(x))
         mask = self.constant(mask)
         return x * mask / (1 - rate)
 
-    def spatial_dropout0d(self, x, is_training, keep_axis, rate):
-        assert self.ndim(x) == 2
-        return self.spatial_dropout(x, is_training, keep_axis, rate)
+    def dropout(self, x, is_training, rate=0.5, keep_axis=None):
+        return self._dropout(x, is_training, rate, keep_axis, None)
 
-    def spatial_dropout1d(self, x, is_training, keep_axis, rate):
-        assert self.ndim(x) == 3
-        return self.spatial_dropout(x, is_training, keep_axis, rate)
+    def dropout0d(self, x, is_training, rate=0.5, keep_axis=None):
+        return self._dropout(x, is_training, rate, keep_axis, 0)
 
-    def spatial_dropout2d(self, x, is_training, keep_axis, rate):
-        assert self.ndim(x) == 4
-        return self.spatial_dropout(x, is_training, keep_axis, rate)
+    def dropout1d(self, x, is_training, rate=0.5, keep_axis=None):
+        return self._dropout(x, is_training, rate, keep_axis, 1)
 
-    def spatial_dropout3d(self, x, is_training, keep_axis, rate):
-        assert self.ndim(x) == 5
-        return self.spatial_dropout(x, is_training, keep_axis, rate)
+    def dropout2d(self, x, is_training, rate=0.5, keep_axis=None):
+        return self._dropout(x, is_training, rate, keep_axis, 2)
 
-    def vanilla_dropout(self, x, is_training, rate):
-        return self.spatial_dropout(x, is_training, None, rate)
-
-    def vanilla_dropout0d(self, x, is_training, rate):
-        assert self.ndim(x) == 2
-        return self.vanilla_dropout(x, is_training, rate)
-
-    def vanilla_dropout1d(self, x, is_training, rate):
-        assert self.ndim(x) == 3
-        return self.vanilla_dropout(x, is_training, rate)
-
-    def vanilla_dropout2d(self, x, is_training, rate):
-        assert self.ndim(x) == 4
-        return self.vanilla_dropout(x, is_training, rate)
-
-    def vanilla_dropout3d(self, x, is_training, rate):
-        assert self.ndim(x) == 5
-        return self.vanilla_dropout(x, is_training, rate)
+    def dropout3d(self, x, is_training, rate=0.5, keep_axis=None):
+        return self._dropout(x, is_training, rate, keep_axis, 3)
