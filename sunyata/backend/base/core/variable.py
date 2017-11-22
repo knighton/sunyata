@@ -40,12 +40,15 @@ class BaseVariableAPI(APIMixin):
     def result_to_tensor(self, x):
         raise NotImplementedError
 
+    def to_tensor(self, x):
+        raise NotImplementedError
+
     def assign(self, x, value):
         raise NotImplementedError
 
     def assign_momentum(self, x, value, momentum):
-        self.assign(momentum * self.variable_to_tensor(x) +
-                    (1 - momentum) * value)
+        self.assign(x, momentum * self.variable_to_tensor(x) +
+                    (1 - momentum) * self.to_tensor(value))
 
     def assign_add(self, x, value):
         self.assign(x, self.variable_to_tensor(x) + value)

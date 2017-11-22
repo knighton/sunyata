@@ -36,6 +36,9 @@ class MXNetVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x
 
+    def to_tensor(self, x):
+        return x
+
     def assign(self, x, value):
         x[:] = value
         x.grad[:] = 0

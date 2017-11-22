@@ -19,8 +19,8 @@ class DenseLayer(TransformLayer):
 
 
 class DenseSpec(TransformSpec):
-    def __init__(self, out_dim):
-        self.out_dim = out_dim
+    def __init__(self, dim):
+        self.out_dim = dim
 
     def build_one(self, form):
         assert len(form.shape) == 1

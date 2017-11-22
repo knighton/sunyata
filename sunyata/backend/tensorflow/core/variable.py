@@ -15,7 +15,7 @@ class TensorFlowVariableAPI(BaseVariableAPI):
         return tfe.Variable(x, name=self._variable_name())
 
     def _ivag_inner(self, forward, judges, aux_judges, xx, yy_true, bridge):
-        yy_pred = forward(xx)
+        yy_pred = forward(xx, True)
         scores = []
         for judge, y_true, y_pred in zip(judges, yy_true, yy_pred):
             scores.append(self.mean(judge(y_true, y_pred)) * judge.importance)
@@ -36,8 +36,22 @@ class TensorFlowVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x
 
+    def to_tensor(self, x):
+        if isinstance(x, tf.Tensor):
+            pass
+        elif isinstance(x, tfe.Variable):
+            x = x[:]
+        elif x.__class__.__name__ == 'EagerTensor':
+            pass
+        else:
+            assert False
+        return x
+
     def assign(self, x, value):
-        x.assign(value)
+        if isinstance(x, tfe.Variable):
+            x.assign(value)
+        else:
+            x = value
 
     def numpy(self, x):
         return x.numpy()

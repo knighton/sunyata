@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from torch import _TensorBase
 from torch.autograd import Variable
 
 from ...base.core.variable import BaseVariableAPI
@@ -32,9 +33,19 @@ class PyTorchVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x.data
 
+    def to_tensor(self, x):
+        if isinstance(x, Variable):
+            x = x.data
+        elif isinstance(x, _TensorBase):
+            pass
+        else:
+            assert False
+        return x
+
     def assign(self, x, value):
         x.data = value
-        x.grad.data.zero_()
+        if x.grad is not None:
+            x.grad.data.zero_()
 
     def numpy(self, x):
         if isinstance(x, torch._TensorBase):

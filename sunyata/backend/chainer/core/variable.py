@@ -37,6 +37,15 @@ class ChainerVariableAPI(BaseVariableAPI):
     def result_to_tensor(self, x):
         return x.data
 
+    def to_tensor(self, x):
+        if isinstance(x, np.ndarray):
+            pass
+        elif isinstance(x, Variable):
+            x = x.data
+        else:
+            assert False
+        return x
+
     def assign(self, x, value):
         x.data = value.copy()
 
