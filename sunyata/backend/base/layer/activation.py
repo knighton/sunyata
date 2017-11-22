@@ -31,11 +31,10 @@ class BaseActivationAPI(APIMixin):
         return self.less(x, -lam) + self.less(lam, x)
 
     def hard_sigmoid(self, x):
-        x = x / 5 + 0.5
-        return self.clip(x, 0, 1)
+        return self.clip(0.2 * x + 0.5, 0, 1)
 
     def hard_sigmoid_dx(self, x):
-        return (self.less(-2.5, x) * self.less(x, 2.5)) / 5
+        return 0.2 * self.less(-2.5, x) * self.less(x, 2.5)
 
     def hard_tanh(self, x):
         return self.clip(x, -1, 1)
@@ -63,6 +62,9 @@ class BaseActivationAPI(APIMixin):
 
     def log_sigmoid_dx(self, x):
         return 1 / (self.exp(x) + 1)
+
+    def log_softmax(self, x):
+        return self.log(self.softmax(x))
 
     def relu(self, x, min=0, max=np.inf):
         return self.clip(x, min, max)
