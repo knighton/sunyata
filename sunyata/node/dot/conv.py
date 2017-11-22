@@ -5,8 +5,8 @@ from ..base import Form, TransformLayer, TransformSpec
 
 
 class ConvLayer(TransformLayer):
-    def __init__(self, kernel, bias, stride, pad, dilation):
-        TransformLayer.__init__(self)
+    def __init__(self, kernel, bias, stride, pad, dilation, ndim):
+        super().__init__(ndim)
         self.kernel = Z.variable(Z.numpy_to_device(kernel))
         self.bias = Z.variable(Z.numpy_to_device(bias))
         self.stride = stride
@@ -16,7 +16,7 @@ class ConvLayer(TransformLayer):
     def params(self):
         return [self.kernel, self.bias]
 
-    def forward(self, x):
+    def forward_one(self, x, is_training):
         return Z.conv(x, self.kernel, self.bias, self.stride, self.pad,
                       self.dilation)
 
@@ -42,7 +42,8 @@ class ConvSpec(TransformSpec):
         bias = np.random.normal(0, 0.1, bias_shape).astype(form.dtype)
         layer = ConvLayer(
             kernel, bias, self.stride, self.pad, self.dilation, ndim)
-        form = Z.conv_out_shape(
+        out_shape = Z.conv_out_shape(
             form.shape, out_channels, face, self.stride, self.pad,
             self.dilation)
+        form = Form(out_shape, form.dtype)
         return layer, form

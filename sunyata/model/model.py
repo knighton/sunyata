@@ -9,7 +9,7 @@ class Model(object):
         self.layer = None
 
     def build(self):
-        self.layer, out_shape = self.spec.build_one(None)
+        self.layer, out_form = self.spec.build_one(None)
         self.params = self.layer.params()
 
     def _ensure_built(self):
