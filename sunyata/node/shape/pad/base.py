@@ -1,5 +1,5 @@
 from .... import backend as Z
-from ...base import TransformLayer, TransformSpec
+from ...base import Form, TransformLayer, TransformSpec
 
 
 class PadLayer(TransformLayer):
@@ -20,5 +20,6 @@ class PadSpec(TransformSpec):
 
     def build_one(self, form):
         layer = self.make_layer(form)
-        form = Z.pad_out_shape(form.shape, self.pad)
+        out_shape = Z.pad_out_shape(form.shape, self.pad)
+        form = Form(out_shape, form.dtype)
         return layer, form
