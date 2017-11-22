@@ -1,8 +1,8 @@
-from .. import backend as Z
-from .base import TransformLayer, TransformSpec
+from ... import backend as Z
+from ..base import TransformLayer, TransformSpec
 
 
-class DropoutLayer(TransformLayer):
+class GaussianDropoutLayer(TransformLayer):
     def __init__(self, rate, keep_axis, ndim):
         self.rate = rate
         self.keep_axis = keep_axis
@@ -10,10 +10,10 @@ class DropoutLayer(TransformLayer):
 
     def forward_one(self, x, is_training):
         assert Z.ndim(x) == self.ndim
-        return Z.dropout(x, is_training, self.rate, self.keep_axis)
+        return Z.gaussian_dropout(x, is_training, self.rate, self.keep_axis)
 
 
-class DropoutSpec(TransformSpec):
+class GaussianDropoutSpec(TransformSpec):
     def __init__(self, rate=0.5, keep_axis=None, ndim=None):
         self.rate = rate
         self.keep_axis = keep_axis
@@ -25,5 +25,5 @@ class DropoutSpec(TransformSpec):
         else:
             ndim = self.ndim
             assert len(form.shape) + 1 == ndim
-        layer = DropoutLayer(self.rate, self.keep_axis, ndim)
+        layer = GaussianDropoutLayer(self.rate, self.keep_axis, ndim)
         return layer, form

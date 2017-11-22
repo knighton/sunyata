@@ -1,5 +1,5 @@
-from .. import backend as Z
-from .base import TransformLayer, TransformSpec
+from ... import backend as Z
+from ..base import TransformLayer, TransformSpec
 
 
 class GaussianNoiseLayer(TransformLayer):

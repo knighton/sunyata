@@ -1,4 +1,4 @@
-from ..base import APIMixin
+from ...base import APIMixin
 
 
 class BaseDropoutAPI(APIMixin):
