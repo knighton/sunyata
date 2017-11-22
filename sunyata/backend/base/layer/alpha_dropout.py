@@ -27,13 +27,13 @@ class BaseAlphaDropoutAPI(APIMixin):
         return self._alpha_dropout(x, is_training, rate, keep_axis, None)
 
     def alpha_dropout0d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, None)
+        return self._alpha_dropout(x, is_training, rate, keep_axis, 0)
 
     def alpha_dropout1d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, None)
+        return self._alpha_dropout(x, is_training, rate, keep_axis, 1)
 
     def alpha_dropout2d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, None)
+        return self._alpha_dropout(x, is_training, rate, keep_axis, 2)
 
     def alpha_dropout3d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, None)
+        return self._alpha_dropout(x, is_training, rate, keep_axis, 3)
