@@ -5,12 +5,19 @@ from sunyata.node import *  # noqa
 from sunyata.optim import *  # noqa
 
 
-train, val, class_names = load_cifar(classes=100)
+def layer(dim):
+    return SequenceSpec([
+        DenseSpec(dim),
+        GlobalBatchNormSpec(),
+        ReLUSpec(),
+        DropoutSpec(),
+    ])
+
+
+train, val, class_names = load_cifar(classes=20)
 print(train[0].shape, train[1].shape)
 data = train, val
 
-first_hidden_dim = 256
-second_hidden_dim = 64
 num_epochs = 50
 batch_size = 64
 
@@ -23,14 +30,9 @@ num_classes = len(y)
 spec = SequenceSpec([
     InputSpec(image_shape, dtype),
     FlattenSpec(),
-    DenseSpec(first_hidden_dim),
-    GlobalBatchNormSpec(),
-    ReLUSpec(),
-    DropoutSpec(),
-    DenseSpec(second_hidden_dim),
-    GlobalBatchNormSpec(),
-    ReLUSpec(),
-    DropoutSpec(),
+    layer(512),
+    layer(512),
+    layer(512),
     DenseSpec(num_classes),
     SoftmaxSpec(),
 ])

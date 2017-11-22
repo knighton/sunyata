@@ -3,7 +3,7 @@ from .base import Optimizer
 
 
 class NAG(Optimizer):
-    def __init__(self, lr=0.05, momentum=0.9):
+    def __init__(self, lr=0.02, momentum=0.9):
         super().__init__()
         assert 0 < lr
         assert 0 <= momentum <= 1
