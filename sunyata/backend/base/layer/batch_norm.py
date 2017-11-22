@@ -13,67 +13,58 @@ class BaseBatchNormAPI(APIMixin):
             x += beta
         return x
 
-    def _instance_batch_norm(self, x, beta, gamma, ndim):
-        if ndim is None:
-            ndim = self.ndim(x) - 2
-        else:
-            assert self.ndim(x) - 2 == ndim
-        reduce_axes = [0] + list(range(2, ndim))
-        mean, var = self.moments(x, reduce_axes)
-        return self.do_batch_norm(x, beta, gamma, mean, var)
+    def _batch_norm_reduction_axes(self, shape):
+        axes = []
+        for i, dim in enumerate(shape):
+            if dim == 1:
+                axes.append(i)
+        return axes
 
     def instance_batch_norm(self, x, beta, gamma):
-        return self._instance_batch_norm(x, beta, gamma, None)
+        reduction_axes = self._batch_norm_reduction_axes(self.shape(beta))
+        instance_mean, instance_var = self.moments(x, reduction_axes)
+        return self.do_batch_norm(x, beta, gamma, instance_mean, instance_var)
 
     def instance_batch_norm0d(self, x, beta, gamma):
-        return self._instance_batch_norm(x, beta, gamma, 0)
+        return self.instance_batch_norm(x, beta, gamma)
 
     def instance_batch_norm1d(self, x, beta, gamma):
-        return self._instance_batch_norm(x, beta, gamma, 1)
+        return self.instance_batch_norm(x, beta, gamma)
 
     def instance_batch_norm2d(self, x, beta, gamma):
-        return self._instance_batch_norm(x, beta, gamma, 2)
+        return self.instance_batch_norm(x, beta, gamma)
 
     def instance_batch_norm3d(self, x, beta, gamma):
-        return self._instance_batch_norm(x, beta, gamma, 3)
-
-    def _global_batch_norm(self, x, is_training, beta, gamma, momentum,
-                           moving_mean, moving_var, ndim):
-        if ndim is None:
-            ndim = self.ndim(x) - 2
-        else:
-            assert self.ndim(x) - 2 == ndim
-        if is_training:
-            reduce_axes = [0] + list(range(2, ndim + 2))
-            mean, var = self.moments(x, reduce_axes)
-            x = self.do_batch_norm(x, beta, gamma, mean, var)
-            self.assign_momentum(moving_mean, mean, momentum)
-            self.assign_momentum(moving_var, mean, momentum)
-        else:
-            x = self.do_batch_norm(x, beta, gamma, moving_mean, moving_var)
-        return x
+        return self.instance_batch_norm(x, beta, gamma)
 
     def global_batch_norm(self, x, is_training, beta, gamma, momentum,
-                          moving_mean, moving_var):
-        return self._global_batch_norm(x, is_training, beta, gamma, momentum,
-                                       moving_mean, moving_var, None)
+                          global_mean, global_var):
+        if is_training:
+            reduction_axes = self._batch_norm_reduction_axes(self.shape(beta))
+            instance_mean, instance_var = self.moments(x, reduction_axes)
+            x = self.do_batch_norm(x, beta, gamma, instance_mean, instance_var)
+            self.assign_momentum(global_mean, instance_mean, momentum)
+            self.assign_momentum(global_var, instance_var, momentum)
+        else:
+            x = self.do_batch_norm(x, beta, gamma, global_mean, global_var)
+        return x
 
     def global_batch_norm0d(self, x, is_training, beta, gamma, momentum,
-                            moving_mean, moving_var):
-        return self._global_batch_norm(x, is_training, beta, gamma, momentum,
-                                       moving_mean, moving_var, 0)
+                            global_mean, global_var):
+        return self.global_batch_norm(
+            x, is_training, beta, gamma, momentum, global_mean, global_var)
 
     def global_batch_norm1d(self, x, is_training, beta, gamma, momentum,
-                            moving_mean, moving_var):
-        return self._global_batch_norm(x, is_training, beta, gamma, momentum,
-                                       moving_mean, moving_var, 1)
+                            global_mean, global_var):
+        return self.global_batch_norm(
+            x, is_training, beta, gamma, momentum, global_mean, global_var)
 
     def global_batch_norm2d(self, x, is_training, beta, gamma, momentum,
-                            moving_mean, moving_var):
-        return self._global_batch_norm(x, is_training, beta, gamma, momentum,
-                                       moving_mean, moving_var, 2)
+                            global_mean, global_var):
+        return self.global_batch_norm(
+            x, is_training, beta, gamma, momentum, global_mean, global_var)
 
     def global_batch_norm3d(self, x, is_training, beta, gamma, momentum,
-                            moving_mean, moving_var):
-        return self._global_batch_norm(x, is_training, beta, gamma, momentum,
-                                       moving_mean, moving_var, 3)
+                            global_mean, global_var):
+        return self.global_batch_norm(
+            x, is_training, beta, gamma, momentum, global_mean, global_var)
