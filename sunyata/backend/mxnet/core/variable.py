@@ -41,7 +41,15 @@ class MXNetVariableAPI(BaseVariableAPI):
 
     def assign(self, x, value):
         x[:] = value
-        x.grad[:] = 0
+        if x.grad is not None:
+            x.grad[:] = 0
+
+    def assign_momentum(self, x, value, momentum):
+        if x.grad is None:
+            with mx.autograd.pause():
+                self.assign(x, momentum * x + (1 - momentum) * value)
+        else:
+            self.assign(x, momentum * x + (1 - momentum) * value)
 
     def numpy(self, x):
         return x.asnumpy()
