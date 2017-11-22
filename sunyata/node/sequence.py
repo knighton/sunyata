@@ -3,6 +3,7 @@ from .base import TransformLayer, TransformSpec
 
 class SequenceLayer(TransformLayer):
     def __init__(self, layers):
+        super().__init__()
         for layer in layers:
             assert isinstance(layer, TransformLayer)
         self.layers = layers
@@ -21,6 +22,7 @@ class SequenceLayer(TransformLayer):
 
 class SequenceSpec(TransformSpec):
     def __init__(self, specs):
+        super().__init__()
         self.specs = specs
 
     def build_one(self, form):

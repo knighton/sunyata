@@ -26,7 +26,7 @@ class MergeSpec(Spec):
 
 
 class TransformSpec(Spec):
-    def __init__(self, ndim):
+    def __init__(self, ndim=None):
         super().__init__()
         assert ndim in {None, 0, 1, 2, 3}
         self.in_spatial_ndim = ndim

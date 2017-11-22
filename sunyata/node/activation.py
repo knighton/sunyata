@@ -8,8 +8,12 @@ class ArcTanLayer(TransformLayer):
 
 
 class ArcTanSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return ArcTanLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return ArcTanLayer(ndim), form
 
 
 class BentIdentityLayer(TransformLayer):
@@ -18,13 +22,17 @@ class BentIdentityLayer(TransformLayer):
 
 
 class BentIdentitySpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return BentIdentityLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return BentIdentityLayer(ndim), form
 
 
 class ELULayer(TransformLayer):
-    def __init__(self, alpha):
-        super().__init__()
+    def __init__(self, alpha, ndim):
+        super().__init__(ndim)
         self.alpha = alpha
 
     def forward_one(self, x, is_training):
@@ -32,17 +40,18 @@ class ELULayer(TransformLayer):
 
 
 class ELUSpec(TransformSpec):
-    def __init__(self, alpha=1.):
-        super().__init__()
+    def __init__(self, alpha=1., ndim=None):
+        super().__init__(ndim)
         self.alpha = alpha
 
     def build_one(self, form):
-        return ELULayer(self.alpha), form
+        ndim = self.in_ndim(form.shape)
+        return ELULayer(self.alpha, ndim), form
 
 
 class HardShrinkLayer(TransformLayer):
-    def __init__(self, lam):
-        super().__init__()
+    def __init__(self, lam, ndim):
+        super().__init__(ndim)
         self.lam = lam
 
     def forward_one(self, x, is_training):
@@ -50,12 +59,13 @@ class HardShrinkLayer(TransformLayer):
 
 
 class HardShrinkSpec(TransformSpec):
-    def __init__(self, lam=0.5):
-        super().__init__()
+    def __init__(self, lam=0.5, ndim=None):
+        super().__init__(ndim)
         self.lam = lam
 
     def build_one(self, form):
-        return HardShrinkLayer(self.lam), form
+        ndim = self.in_ndim(form.shape)
+        return HardShrinkLayer(self.lam, ndim), form
 
 
 class HardSigmoidLayer(TransformLayer):
@@ -64,8 +74,12 @@ class HardSigmoidLayer(TransformLayer):
 
 
 class HardSigmoidSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return HardSigmoidLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return HardSigmoidLayer(ndim), form
 
 
 class HardTanhLayer(TransformLayer):
@@ -74,8 +88,12 @@ class HardTanhLayer(TransformLayer):
 
 
 class HardTanhSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return HardTanhLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return HardTanhLayer(ndim), form
 
 
 class IdentityLayer(TransformLayer):
@@ -84,13 +102,17 @@ class IdentityLayer(TransformLayer):
 
 
 class IdentitySpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return IdentityLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return IdentityLayer(ndim), form
 
 
 class LeakyReLULayer(TransformLayer):
-    def __init__(self, alpha):
-        super().__init__()
+    def __init__(self, alpha, ndim):
+        super().__init__(ndim)
         self.alpha = alpha
 
     def forward_one(self, x, is_training):
@@ -98,12 +120,13 @@ class LeakyReLULayer(TransformLayer):
 
 
 class LeakyReLUSpec(TransformSpec):
-    def __init__(self, alpha=0.1):
-        super().__init__()
+    def __init__(self, alpha=0.1, ndim=None):
+        super().__init__(ndim)
         self.alpha = alpha
 
     def build_one(self, form):
-        return LeakyReLULayer(self.alpha), form
+        ndim = self.in_ndim(form.shape)
+        return LeakyReLULayer(self.alpha, ndim), form
 
 
 class LogSigmoidLayer(TransformLayer):
@@ -112,13 +135,17 @@ class LogSigmoidLayer(TransformLayer):
 
 
 class LogSigmoidSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return LogSigmoidLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return LogSigmoidLayer(ndim), form
 
 
 class ReLULayer(TransformLayer):
-    def __init__(self, min, max):
-        super().__init__()
+    def __init__(self, min, max, ndim):
+        super().__init__(ndim)
         self.min = min
         self.max = max
 
@@ -127,13 +154,14 @@ class ReLULayer(TransformLayer):
 
 
 class ReLUSpec(TransformSpec):
-    def __init__(self, min=0., max=None):
-        super().__init__()
+    def __init__(self, min=0., max=None, ndim=None):
+        super().__init__(ndim)
         self.min = min
         self.max = max
 
     def build_one(self, form):
-        return ReLULayer(self.min, self.max), form
+        ndim = self.in_ndim(form.shape)
+        return ReLULayer(self.min, self.max, ndim), form
 
 
 class SELULayer(TransformLayer):
@@ -142,8 +170,12 @@ class SELULayer(TransformLayer):
 
 
 class SELUSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SELULayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SELULayer(ndim), form
 
 
 class SigmoidLayer(TransformLayer):
@@ -152,8 +184,12 @@ class SigmoidLayer(TransformLayer):
 
 
 class SigmoidSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SigmoidLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SigmoidLayer(ndim), form
 
 
 class SoftExponentialLayer(TransformLayer):
@@ -162,8 +198,12 @@ class SoftExponentialLayer(TransformLayer):
 
 
 class SoftExponentialSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SoftExponentialLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SoftExponentialLayer(ndim), form
 
 
 class SoftmaxLayer(TransformLayer):
@@ -172,8 +212,12 @@ class SoftmaxLayer(TransformLayer):
 
 
 class SoftmaxSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SoftmaxLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SoftmaxLayer(ndim), form
 
 
 class SoftminLayer(TransformLayer):
@@ -182,8 +226,12 @@ class SoftminLayer(TransformLayer):
 
 
 class SoftminSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SoftminLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SoftminLayer(ndim), form
 
 
 class SoftPlusLayer(TransformLayer):
@@ -192,13 +240,17 @@ class SoftPlusLayer(TransformLayer):
 
 
 class SoftPlusSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SoftPlusLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SoftPlusLayer(ndim), form
 
 
 class SoftShrinkLayer(TransformLayer):
-    def __init__(self, lam):
-        super().__init__()
+    def __init__(self, lam, ndim):
+        super().__init__(ndim)
         self.lam = lam
 
     def forward_one(self, x, is_training):
@@ -206,12 +258,13 @@ class SoftShrinkLayer(TransformLayer):
 
 
 class SoftShrinkSpec(TransformSpec):
-    def __init__(self, lam=0.5):
-        super().__init__()
+    def __init__(self, lam=0.5, ndim=None):
+        super().__init__(ndim)
         self.lam = lam
 
     def build_one(self, form):
-        return SoftShrinkLayer(self.lam), form
+        ndim = self.in_ndim(form.shape)
+        return SoftShrinkLayer(self.lam, ndim), form
 
 
 class SoftSignLayer(TransformLayer):
@@ -220,8 +273,12 @@ class SoftSignLayer(TransformLayer):
 
 
 class SoftSignSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return SoftSignLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return SoftSignLayer(ndim), form
 
 
 class TanhLayer(TransformLayer):
@@ -230,8 +287,12 @@ class TanhLayer(TransformLayer):
 
 
 class TanhSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return TanhLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return TanhLayer(ndim), form
 
 
 class TanhShrinkLayer(TransformLayer):
@@ -240,5 +301,9 @@ class TanhShrinkLayer(TransformLayer):
 
 
 class TanhShrinkSpec(TransformSpec):
+    def __init__(self, ndim=None):
+        super().__init__(ndim)
+
     def build_one(self, form):
-        return TanhShrinkLayer(), form
+        ndim = self.in_ndim(form.shape)
+        return TanhShrinkLayer(ndim), form

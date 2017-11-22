@@ -11,7 +11,7 @@ class MergeLayer(Layer):
 
 
 class TransformLayer(Layer):
-    def __init__(self, ndim):
+    def __init__(self, ndim=None):
         self.in_ndim = ndim
 
     def forward_one(self, x, is_training):
@@ -20,6 +20,7 @@ class TransformLayer(Layer):
     def forward_multi(self, xx, is_training):
         assert len(xx) == 1
         x, = xx
-        assert self.ndim(x) == self.in_ndim
+        if self.in_ndim is not None:
+            assert self.ndim(x) == self.in_ndim
         x = self.forward_one(x, is_training)
         return [x]
