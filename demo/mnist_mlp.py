@@ -5,7 +5,8 @@ from sunyata.node import *  # noqa
 from sunyata.optim import *  # noqa
 
 
-hidden_dim = 100
+first_hidden_dim = 256
+second_hidden_dim = 64
 num_epochs = 10
 batch_size = 64
 
@@ -19,8 +20,14 @@ num_classes = len(y)
 spec = SequenceSpec([
     InputSpec(image_shape, dtype),
     FlattenSpec(),
-    DenseSpec(hidden_dim),
+    DenseSpec(first_hidden_dim),
+    GlobalBatchNormSpec(),
     ReLUSpec(),
+    DropoutSpec(),
+    DenseSpec(second_hidden_dim),
+    GlobalBatchNormSpec(),
+    ReLUSpec(),
+    DropoutSpec(),
     DenseSpec(num_classes),
     SoftmaxSpec(),
 ])
