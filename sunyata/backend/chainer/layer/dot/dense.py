@@ -8,4 +8,4 @@ class ChainerDenseAPI(BaseDenseAPI):
         BaseDenseAPI.__init__(self)
 
     def dense(self, x, kernel, bias):
-        return F.connection.linear.linear(x, kernel, bias)
+        return F.linear(x, kernel, bias)

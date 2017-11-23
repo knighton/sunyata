@@ -1,3 +1,5 @@
+import numpy as np
+
 from .. import backend as Z
 from .base import TransformLayer, TransformSpec
 
@@ -154,7 +156,7 @@ class ReLULayer(TransformLayer):
 
 
 class ReLUSpec(TransformSpec):
-    def __init__(self, min=0., max=None, ndim=None):
+    def __init__(self, min=0., max=np.inf, ndim=None):
         super().__init__(ndim)
         self.min = min
         self.max = max

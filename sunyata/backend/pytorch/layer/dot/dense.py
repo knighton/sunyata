@@ -6,4 +6,7 @@ class PyTorchDenseAPI(BaseDenseAPI):
         BaseDenseAPI.__init__(self)
 
     def dense(self, x, kernel, bias):
-        return x.mm(kernel) + bias
+        x = x.mm(kernel)
+        if bias is not None:
+            x += bias
+        return x
