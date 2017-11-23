@@ -19,10 +19,10 @@ class SeparableConvLayer(TransformLayer):
         self.dilation = dilation
 
     def params(self):
-        variables = [self.depthwise_kernel, self.pointwise_kernel]
+        params = [self.depthwise_kernel, self.pointwise_kernel]
         if self.bias is not None:
-            variables.append(self.bias)
-        return variables
+            params.append(self.bias)
+        return params
 
     def forward_one(self, x, is_training):
         return Z.separable_conv(x, self.depthwise_kernel, self.pointwise_kernel,
@@ -30,15 +30,15 @@ class SeparableConvLayer(TransformLayer):
 
 
 class SeparableConvSpec(TransformSpec):
-    def __init__(self, channels=None, face=3, stride=1, pad='same',
-                 dilation=1, depth_mul=1, has_bias=True, ndim=None):
+    def __init__(self, channels=None, depth_mul=1, face=3, stride=1, pad='same',
+                 dilation=1, has_bias=True, ndim=None):
         super().__init__(ndim)
         self.channels = channels
+        self.depth_mul = depth_mul
         self.face = face
         self.stride = stride
         self.pad = pad
         self.dilation = dilation
-        self.depth_mul = depth_mul
         self.has_bias = has_bias
 
     def build_one(self, form):

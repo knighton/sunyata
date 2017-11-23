@@ -15,11 +15,10 @@ class DenseLayer(TransformLayer):
             self.bias = Z.variable(Z.numpy_to_device(bias))
 
     def params(self):
-        if self.bias is None:
-            variables = [self.kernel]
-        else:
-            variables = [self.kernel, self.bias]
-        return variables
+        params = [self.kernel]
+        if self.bias is not None:
+            params.append(self.bias)
+        return params
 
     def forward_one(self, x, is_training):
         return Z.dense(x, self.kernel, self.bias)

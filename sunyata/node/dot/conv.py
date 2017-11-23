@@ -17,11 +17,10 @@ class ConvLayer(TransformLayer):
         self.dilation = dilation
 
     def params(self):
-        if self.bias is None:
-            variables = [self.kernel]
-        else:
-            variables = [self.kernel, self.bias]
-        return variables
+        params = [self.kernel]
+        if self.bias is not None:
+            params.append(self.bias)
+        return params
 
     def forward_one(self, x, is_training):
         return Z.conv(x, self.kernel, self.bias, self.stride, self.pad,
