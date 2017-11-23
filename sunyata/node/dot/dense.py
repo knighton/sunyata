@@ -26,19 +26,20 @@ class DenseLayer(TransformLayer):
 
 
 class DenseSpec(TransformSpec):
-    def __init__(self, dim, has_bias=True):
+    def __init__(self, dim=None, has_bias=True):
         self.out_dim = dim
         self.has_bias = has_bias
 
     def build_one(self, form):
         assert len(form.shape) == 1
         in_dim, = form.shape
-        kernel_shape = in_dim, self.out_dim
+        out_dim = in_dim if self.out_dim is None else self.out_dim
+        kernel_shape = in_dim, out_dim
         kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)
         if self.has_bias:
-            bias_shape = self.out_dim,
+            bias_shape = out_dim,
             bias = np.zeros(bias_shape, form.dtype)
         else:
             bias = None
-        out_shape = self.out_dim,
+        out_shape = out_dim,
         return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
