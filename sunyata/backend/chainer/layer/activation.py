@@ -4,6 +4,9 @@ from ...base.layer.activation import BaseActivationAPI
 
 
 class ChainerActivationAPI(BaseActivationAPI):
+    def __init__(self):
+        BaseActivationAPI.__init__(self)
+
     def elu(self, x, alpha=1):
         return F.elu(x, alpha)
 

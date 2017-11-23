@@ -10,7 +10,7 @@ class ChainerVariableAPI(BaseVariableAPI):
         BaseVariableAPI.__init__(self)
 
     def constant(self, x):
-        return x
+        return Variable(x, requires_grad=False)
 
     def variable(self, x):
         return Variable(x)
@@ -48,6 +48,10 @@ class ChainerVariableAPI(BaseVariableAPI):
 
     def assign(self, x, value):
         x.data = value.copy()
+
+    def assign_momentum(self, x, value, momentum):
+        self.assign(x, momentum * self.variable_to_tensor(x) +
+                    (1 - momentum) * self.to_tensor(value))
 
     def numpy(self, x):
         return x.data.copy() if isinstance(x, Variable) else x.copy()

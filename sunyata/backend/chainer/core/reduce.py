@@ -42,3 +42,14 @@ class ChainerReduceAPI(BaseReduceAPI):
 
     def prod(self, x, axis=None, keepdims=False):
         return self._reduce('prod', x, axis, keepdims)
+
+    def moments(self, x, axis=None, keepdims=False):
+        shift = self.mean(x, axis, True)
+        x, shift = F.broadcast(x, shift)
+        shifted = x - shift
+        shifted_mean = self.mean(shift, axis, True)
+        var_mean = self.mean(self.square(shifted), axis, True)
+        var = var_mean - self.square(shifted_mean)
+        shifted_mean, shift = F.broadcast(shifted_mean, shift)
+        mean = shifted_mean + shift
+        return mean, var
