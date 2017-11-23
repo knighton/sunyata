@@ -29,8 +29,10 @@ class TensorFlowConvAPI(BaseConvAPI):
         x = self._to_channels_last(x)
         x = tf.nn.convolution(x, kernel, conv_word_pad, stride, dilation)
         x = self._to_channels_first(x)
-        broadcasted = (1,) + self.shape(bias) + (1,) * spatial_ndim
-        return x + self.reshape(bias, broadcasted)
+        if bias is not None:
+            bias_shape = (1,) + self.shape(bias) + (1,) * spatial_ndim
+            x += self.reshape(bias, bias_shape)
+        return x
 
     def conv1d(self, x, kernel, bias, stride, pad, dilation):
         assert self.ndim(x) == 3

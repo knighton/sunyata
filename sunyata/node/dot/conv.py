@@ -8,13 +8,20 @@ class ConvLayer(TransformLayer):
     def __init__(self, kernel, bias, stride, pad, dilation, ndim):
         super().__init__(ndim)
         self.kernel = Z.variable(Z.numpy_to_device(kernel))
-        self.bias = Z.variable(Z.numpy_to_device(bias))
+        if bias is None:
+            self.bias = None
+        else:
+            self.bias = Z.variable(Z.numpy_to_device(bias))
         self.stride = stride
         self.pad = pad
         self.dilation = dilation
 
     def params(self):
-        return [self.kernel, self.bias]
+        if self.bias is None:
+            variables = [self.kernel]
+        else:
+            variables = [self.kernel, self.bias]
+        return variables
 
     def forward_one(self, x, is_training):
         return Z.conv(x, self.kernel, self.bias, self.stride, self.pad,
@@ -23,13 +30,14 @@ class ConvLayer(TransformLayer):
 
 class ConvSpec(TransformSpec):
     def __init__(self, channels=None, face=3, stride=1, pad='same', dilation=1,
-                 ndim=None):
+                 has_bias=True, ndim=None):
         super().__init__(ndim)
         self.channels = channels
         self.face = face
         self.stride = stride
         self.pad = pad
         self.dilation = dilation
+        self.has_bias = has_bias
 
     def build_one(self, form):
         ndim = self.in_ndim(form.shape)
@@ -38,8 +46,11 @@ class ConvSpec(TransformSpec):
         face = Z.to_shape(self.face, ndim - 2)
         kernel_shape = (out_channels, in_channels) + face
         kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)
-        bias_shape = out_channels,
-        bias = np.zeros(bias_shape, form.dtype)
+        if self.has_bias:
+            bias_shape = out_channels,
+            bias = np.zeros(bias_shape, form.dtype)
+        else:
+            bias = None
         layer = ConvLayer(
             kernel, bias, self.stride, self.pad, self.dilation, ndim)
         out_shape = Z.conv_out_shape(
