@@ -1,5 +1,4 @@
 import numpy as np
-py_max = max
 
 from .avg import BaseAvgPoolAPI
 from .max import BaseMaxPoolAPI
@@ -18,6 +17,6 @@ class BasePoolAPI(BaseAvgPoolAPI, BaseMaxPoolAPI):
         out_shape = [in_shape[0]]
         for i in range(len(in_shape) - 1):
             dim = (in_shape[i + 1] + 2 * pad[i] - face[i]) / stride[i]
-            dim = int(np.floor(py_max(dim, 0))) + 1
+            dim = int(np.floor(np.maximum(dim, 0))) + 1
             out_shape.append(dim)
         return tuple(out_shape)
