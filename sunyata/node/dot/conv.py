@@ -42,7 +42,7 @@ class ConvSpec(TransformSpec):
     def build_one(self, form):
         ndim = self.in_ndim(form.shape)
         in_channels = form.shape[0]
-        out_channels = self.channels
+        out_channels = in_channels if self.channels is None else self.channels
         face = Z.to_shape(self.face, ndim - 2)
         kernel_shape = (out_channels, in_channels) + face
         kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)

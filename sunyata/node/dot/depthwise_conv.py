@@ -28,10 +28,9 @@ class DepthwiseConvLayer(TransformLayer):
 
 
 class DepthwiseConvSpec(TransformSpec):
-    def __init__(self, channels=1, face=3, stride=1, pad='same',
-                 dilation=1, depth_mul=1, has_bias=True, ndim=None):
+    def __init__(self, face=3, stride=1, pad='same', dilation=1, depth_mul=1,
+                 has_bias=True, ndim=None):
         super().__init__(ndim)
-        self.channels = channels
         self.face = face
         self.stride = stride
         self.pad = pad

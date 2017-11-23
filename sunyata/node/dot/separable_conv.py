@@ -30,7 +30,7 @@ class SeparableConvLayer(TransformLayer):
 
 
 class SeparableConvSpec(TransformSpec):
-    def __init__(self, channels=1, face=3, stride=1, pad='same',
+    def __init__(self, channels=None, face=3, stride=1, pad='same',
                  dilation=1, depth_mul=1, has_bias=True, ndim=None):
         super().__init__(ndim)
         self.channels = channels
@@ -46,7 +46,10 @@ class SeparableConvSpec(TransformSpec):
         depthwise_in_channels = form.shape[0]
         depthwise_out_channels = self.depth_mul
         pointwise_in_channels = depthwise_in_channels * depthwise_out_channels
-        pointwise_out_channels = self.channels
+        if self.channels is None:
+            pointwise_out_channels = depthwise_in_channels
+        else:
+            pointwise_out_channels = self.channels
         face = Z.to_shape(self.face, ndim - 2)
         depthwise_kernel_shape = \
             (depthwise_out_channels, depthwise_in_channels) + face
