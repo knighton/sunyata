@@ -4,7 +4,7 @@ from spacy.tokenizer import Tokenizer
 from .base import Transformer
 
 
-class Tokenize(Transformer):
+class SpacyTokenize(Transformer):
     def __init__(self):
         nlp = spacy.load('en')
         self.tok = Tokenizer(nlp.vocab)

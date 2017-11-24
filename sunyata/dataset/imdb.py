@@ -125,7 +125,7 @@ def load_imdb(dataset_name=_DATASET_NAME, proc_subdir=_PROC_SUBDIR,
         dataset_name=dataset_name, proc_subdir=proc_subdir,
         tgz_subdir=tgz_subdir, url=url, verbose=verbose, y_dtype=y_dtype)
     if x_tf is None:
-        x_tf = Pipe(Tokenize(), Length(512), Dict(), Numpy('int64'))
+        x_tf = Pipe(AlnumTokenize(), Length(512), Dict(), Numpy('int64'))
     x_train = x_tf.fit_transform(x_train)
     x_val = x_tf.transform(x_val)
     return ((x_train, y_train), (x_val, y_val)), x_tf
