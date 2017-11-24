@@ -1,4 +1,6 @@
-from sunyata.dataset.imdb import load_imdb_raw
+from sunyata.dataset.imdb import load_imdb
 
 
-(x_train, y_train), (x_val, y_val) = data = load_imdb_raw()
+data, tf = load_imdb()
+print(data[0][0].shape)
+print(data[0][1].shape)

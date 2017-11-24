@@ -6,6 +6,7 @@ from time import time
 from tqdm import tqdm
 
 from .base import download, get_dataset_dir, kwargs_only
+from ..transform import *  # noqa
 
 
 _DATASET_NAME = 'imdb'
@@ -114,3 +115,18 @@ def load_imdb_raw(dataset_name=_DATASET_NAME, proc_subdir=_PROC_SUBDIR,
             _extract(dataset_dir, tgz_basename, verbose)
         _preprocess(tgz_dir, proc_dir, verbose)
     return _load(proc_dir, verbose, y_dtype)
+
+
+@kwargs_only
+def load_imdb(dataset_name=_DATASET_NAME, proc_subdir=_PROC_SUBDIR,
+              tgz_subdir=_TGZ_SUBDIR, url=_URL, verbose=2, x_tf=None,
+              y_dtype='float32'):
+    (x_train, y_train), (x_val, y_val) = load_imdb_raw(
+        dataset_name=dataset_name, proc_subdir=proc_subdir,
+        tgz_subdir=tgz_subdir, url=url, verbose=verbose, y_dtype=y_dtype)
+    if x_tf is None:
+        x_tf = Pipe(LowerCase(), Tokenize(), Length(512), Dict(),
+                    Numpy('int64'))
+    x_train = x_tf.fit_transform(x_train)
+    x_val = x_tf.transform(x_val)
+    return ((x_train, y_train), (x_val, y_val)), x_tf
