@@ -12,5 +12,8 @@ class Tokenize(Transformer):
     def transform(self, xx):
         rrr = []
         for doc in self.tok.pipe(xx):
-            rrr.append(list(doc))
+            rr = []
+            for token in doc:
+                rr.append(token.text.lower())
+            rrr.append(rr)
         return rrr
