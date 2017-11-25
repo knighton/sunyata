@@ -33,6 +33,19 @@ def make_conv(seq_len, in_dtype, vocab_size):
     return Model(SequenceSpec(seq))
 
 
+def make_rnn(seq_len, in_dtype, vocab_size):
+    seq = [
+        InputSpec((seq_len,), in_dtype),
+        EmbedSpec(vocab_size, 8),
+        SimpleRNNSpec(256),
+        ReLUSpec(),
+        DenseSpec(1),
+        SigmoidSpec(),
+    ]
+
+    return Model(SequenceSpec(seq))
+
+
 num_epochs = 50
 batch_size = 64
 
@@ -44,7 +57,7 @@ x_train, y_train = data[0]
 seq_len = x_train.shape[1]
 vocab_size = int(np.max(x_train)) + 1
 
-model = make_conv(seq_len, x_train.dtype, vocab_size)
+model = make_rnn(seq_len, x_train.dtype, vocab_size)
 
 opt = NAG()
 
