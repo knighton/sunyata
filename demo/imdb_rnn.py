@@ -36,8 +36,10 @@ def make_conv(seq_len, in_dtype, vocab_size):
 def make_rnn(seq_len, in_dtype, vocab_size):
     seq = [
         InputSpec((seq_len,), in_dtype),
-        EmbedSpec(vocab_size, 8),
-        SimpleRNNSpec(256),
+        EmbedSpec(vocab_size, 16),
+        SimpleRNNSpec(16),
+        ReLUSpec(),
+        SimpleRNNSpec(64, ret='last'),
         ReLUSpec(),
         DenseSpec(1),
         SigmoidSpec(),

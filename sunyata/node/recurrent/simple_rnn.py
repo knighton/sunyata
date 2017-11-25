@@ -5,11 +5,12 @@ from ..base import Form, TransformLayer, TransformSpec
 
 
 class SimpleRNNLayer(TransformLayer):
-    def __init__(self, input_kernel, recurrent_kernel, bias):
+    def __init__(self, input_kernel, recurrent_kernel, bias, ret):
         self.input_kernel = Z.variable(Z.numpy_to_device(input_kernel))
         self.recurrent_kernel = Z.variable(Z.numpy_to_device(recurrent_kernel))
         self.bias = Z.variable(Z.numpy_to_device(bias))
         self.out_dim = Z.shape(self.input_kernel)[1]
+        self.ret = ret
 
     def step(self, x, prev_state):
         return Z.tanh(Z.matmul(x, self.input_kernel) +
@@ -21,21 +22,27 @@ class SimpleRNNLayer(TransformLayer):
         initial_state_shape = batch_size, self.out_dim
         initial_state = Z.constant(Z.zeros(initial_state_shape, Z.dtype_of(x)))
         states = [initial_state]
-        timesteps = range(num_timesteps)
-        for timestep in timesteps:
+        for timestep in range(num_timesteps):
             x_step = x[:, :, timestep]
             next_state = self.step(x_step, states[-1])
             states.append(next_state)
-        return states[-1]
+        if self.ret == 'all':
+            out = Z.stack(states[1:], 2)
+        elif self.ret == 'last':
+            out = states[-1]
+        else:
+            assert False
+        return out
 
 
 class SimpleRNNSpec(TransformSpec):
-    def __init__(self, dim=None):
+    def __init__(self, dim=None, ret='all'):
         super().__init__()
         self.dim = dim
+        self.ret = ret
 
     def build_one(self, form):
-        in_dim = form.shape[0]
+        in_dim, num_timesteps = form.shape
         out_dim = self.dim if self.dim else in_dim
         input_kernel_shape = in_dim, out_dim
         input_kernel = np.random.normal(
@@ -45,7 +52,12 @@ class SimpleRNNSpec(TransformSpec):
             0, 0.1, recurrent_kernel_shape).astype(form.dtype)
         bias_shape = out_dim,
         bias = np.random.normal(0, 0.1, bias_shape).astype(form.dtype)
-        layer = SimpleRNNLayer(input_kernel, recurrent_kernel, bias)
-        out_shape = out_dim,
+        layer = SimpleRNNLayer(input_kernel, recurrent_kernel, bias, self.ret)
+        if self.ret == 'all':
+            out_shape = out_dim, num_timesteps
+        elif self.ret == 'last':
+            out_shape = out_dim,
+        else:
+            assert False
         form = Form(out_shape, form.dtype)
         return layer, form
