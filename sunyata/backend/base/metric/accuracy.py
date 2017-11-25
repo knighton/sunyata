@@ -6,6 +6,9 @@ class BaseAccuracyAPI(APIMixin):
         APIMixin.__init__(self)
 
     def binary_accuracy(self, true, pred):
+        shape = self.shape(pred)
+        assert len(shape) == 2
+        assert shape[1] == 1
         pred = self.round(pred)
         hits = self.equal(true, pred)
         return self.mean(hits, -1, False)
