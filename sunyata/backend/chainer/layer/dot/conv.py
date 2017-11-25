@@ -13,7 +13,7 @@ class ChainerConvAPI(BaseConvAPI):
         }
 
     def conv(self, x, kernel, bias, stride, pad, dilation):
-        ndim = x.dim() - 2
+        ndim = x.ndim - 2
         return self._ndim2conv[ndim](x, kernel, bias, stride, pad, dilation)
 
     def _conv(self, x, kernel, bias, stride, pad, dilation, ndim):

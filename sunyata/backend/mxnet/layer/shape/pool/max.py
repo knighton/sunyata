@@ -9,9 +9,9 @@ class MXNetMaxPoolAPI(BaseMaxPoolAPI):
 
     def _max_pool(self, x, face, stride, pad, ndim):
         if ndim is None:
-            ndim = self.ndim(x)
+            ndim = self.ndim(x) - 2
         else:
-            assert self.ndim(x) == ndim
+            assert self.ndim(x) - 2 == ndim
         face = self.to_shape(face, ndim)
         stride = self.to_shape(stride, ndim)
         pad = self.to_shape(pad, ndim)

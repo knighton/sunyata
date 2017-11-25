@@ -1,7 +1,7 @@
 from ...base.layer import BaseLayerAPI
 from .activation import MXNetActivationAPI
 from .dot import MXNetDotAPI
-from .embed impor MXNetEmbedAPI
+from .embed import MXNetEmbedAPI
 from .shape import MXNetShapeAPI
 
 

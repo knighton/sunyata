@@ -10,5 +10,5 @@ class MXNetDenseAPI(BaseDenseAPI):
     def dense(self, x, kernel, bias):
         x = mx.nd.dot(x, kernel)
         if bias is not None:
-            x += bias
+            x = x + bias
         return x
