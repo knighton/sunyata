@@ -89,8 +89,10 @@ def _load_split(proc_dir, split, verbose, y_dtype):
     pos = _load_split_polarity(proc_dir, split, 'pos', verbose)
     neg = _load_split_polarity(proc_dir, split, 'neg', verbose)
     data = _combine(pos, neg)
-    texts, labels = list(zip(*data))
-    return texts, np.array(labels, dtype=y_dtype)
+    x, y = list(zip(*data))
+    y = np.array(y, dtype=y_dtype)
+    y = np.expand_dims(y, 1)
+    return x, y
 
 
 def _load(proc_dir, verbose, y_dtype):
