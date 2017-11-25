@@ -1,5 +1,6 @@
 from .device_dtype import BaseDeviceDataTypeAPI
 from .epsilon import BaseEpsilonAPI
+from .linalg import BaseLinearAlgebraAPI
 from .logic import BaseLogicAPI
 from .map import BaseMapAPI
 from .shape import BaseShapeAPI
@@ -9,12 +10,13 @@ from .util import BaseUtilAPI
 from .variable import BaseVariableAPI
 
 
-class BaseCoreAPI(BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLogicAPI,
-                  BaseMapAPI, BaseReduceAPI, BaseShapeAPI, BaseTensorAPI,
-                  BaseUtilAPI, BaseVariableAPI):
+class BaseCoreAPI(BaseDeviceDataTypeAPI, BaseEpsilonAPI, BaseLinearAlgebraAPI,
+                  BaseLogicAPI, BaseMapAPI, BaseReduceAPI, BaseShapeAPI,
+                  BaseTensorAPI, BaseUtilAPI, BaseVariableAPI):
     def __init__(self):
         BaseDeviceDataTypeAPI.__init__(self)
         BaseEpsilonAPI.__init__(self)
+        BaseLinearAlgebraAPI.__init__(self)
         BaseLogicAPI.__init__(self)
         BaseMapAPI.__init__(self)
         BaseReduceAPI.__init__(self)

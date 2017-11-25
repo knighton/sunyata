@@ -1,5 +1,6 @@
 from ...base.core import BaseCoreAPI
 from .device_dtype import MXNetDeviceDataTypeAPI
+from .linalg import MXNetLinearAlgebraAPI
 from .logic import MXNetLogicAPI
 from .map import MXNetMapAPI
 from .reduce import MXNetReduceAPI
@@ -8,12 +9,13 @@ from .tensor import MXNetTensorAPI
 from .variable import MXNetVariableAPI
 
 
-class MXNetCoreAPI(BaseCoreAPI, MXNetDeviceDataTypeAPI, MXNetLogicAPI,
-                   MXNetMapAPI, MXNetReduceAPI, MXNetShapeAPI, MXNetTensorAPI,
-                   MXNetVariableAPI):
+class MXNetCoreAPI(BaseCoreAPI, MXNetDeviceDataTypeAPI, MXNetLinearAlgebraAPI,
+                   MXNetLogicAPI, MXNetMapAPI, MXNetReduceAPI, MXNetShapeAPI,
+                   MXNetTensorAPI, MXNetVariableAPI):
     def __init__(self):
         BaseCoreAPI.__init__(self)
         MXNetDeviceDataTypeAPI.__init__(self)
+        MXNetLinearAlgebraAPI.__init__(self)
         MXNetLogicAPI.__init__(self)
         MXNetMapAPI.__init__(self)
         MXNetReduceAPI.__init__(self)
