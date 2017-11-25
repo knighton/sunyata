@@ -5,11 +5,12 @@ from ..base import Form, TransformLayer, TransformSpec
 
 
 class SimpleRNNLayer(TransformLayer):
-    def __init__(self, input_kernel, recurrent_kernel, bias, ret):
+    def __init__(self, input_kernel, recurrent_kernel, bias, go, ret):
         self.input_kernel = Z.variable(Z.numpy_to_device(input_kernel))
         self.recurrent_kernel = Z.variable(Z.numpy_to_device(recurrent_kernel))
         self.bias = Z.variable(Z.numpy_to_device(bias))
         self.out_dim = Z.shape(self.input_kernel)[1]
+        self.go = go
         self.ret = ret
 
     def step(self, x, prev_state):
@@ -22,7 +23,10 @@ class SimpleRNNLayer(TransformLayer):
         initial_state_shape = batch_size, self.out_dim
         initial_state = Z.constant(Z.zeros(initial_state_shape, Z.dtype_of(x)))
         states = [initial_state]
-        for timestep in range(num_timesteps):
+        timesteps = range(num_timesteps)
+        if self.go == 'backward':
+            timesteps = reversed(timesteps)
+        for timestep in timesteps:
             x_step = x[:, :, timestep]
             next_state = self.step(x_step, states[-1])
             states.append(next_state)
@@ -36,9 +40,10 @@ class SimpleRNNLayer(TransformLayer):
 
 
 class SimpleRNNSpec(TransformSpec):
-    def __init__(self, dim=None, ret='all'):
+    def __init__(self, dim=None, go='forward', ret='all'):
         super().__init__()
         self.dim = dim
+        self.go = go
         self.ret = ret
 
     def build_one(self, form):
@@ -52,7 +57,8 @@ class SimpleRNNSpec(TransformSpec):
             0, 0.1, recurrent_kernel_shape).astype(form.dtype)
         bias_shape = out_dim,
         bias = np.random.normal(0, 0.1, bias_shape).astype(form.dtype)
-        layer = SimpleRNNLayer(input_kernel, recurrent_kernel, bias, self.ret)
+        layer = SimpleRNNLayer(input_kernel, recurrent_kernel, bias, self.go,
+                               self.ret)
         if self.ret == 'all':
             out_shape = out_dim, num_timesteps
         elif self.ret == 'last':
