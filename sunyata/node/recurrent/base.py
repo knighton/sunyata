@@ -3,31 +3,29 @@ from ..base import Form, TransformLayer, TransformSpec
 
 
 class RecurrentLayer(TransformLayer):
-    def __init__(self, dim, dtype, forward=True, last=False):
+    def __init__(self, dim, dtype, forward=True, last=False, internal_dim=None):
         self.out_dim = dim
         self.dtype = dtype
         self.go_forward = forward
         self.ret_last = last
+        self.internal_dim = internal_dim
 
-    def step(self, x, prev_state):
+    def step(self, x, prev_state, prev_internal_state):
         raise NotImplementedError
 
-    def make_initial_state(self, batch_size, dim):
-        return Z.constant(Z.zeros((batch_size, dim), self.dtype))
-
-    def internal_state_dim(self):
-        return None
-
-    def make_initial_internal_state(self, batch_size):
-        dim = self.internal_state_dim()
-        if dim is None:
-            return None
-        return Z.constant(Z.zeros((batch_size, dim), self.dtype))
+    def start_states(self, batch_size):
+        shape = batch_size, self.out_dim
+        initial_state = Z.constant(Z.zeros(shape, self.dtype))
+        if self.internal_dim:
+            shape = batch_size, self.internal_dim
+            initial_internal_state = Z.constant(Z.zeros(shape, self.dtype))
+        else:
+            initial_internal_state = None
+        return [initial_state], [initial_internal_state]
 
     def forward_one(self, x, is_training):
         batch_size, _, num_steps = Z.shape(x)
-        states = [self.make_initial_state(batch_size, self.out_dim)]
-        internal_states = [self.make_initial_internal_state(batch_size)]
+        states, internal_states = self.start_states(batch_size)
         steps = range(num_steps)
         if not self.go_forward:
             steps = reversed(steps)
