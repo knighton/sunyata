@@ -8,7 +8,4 @@ class MXNetDenseAPI(BaseDenseAPI):
         BaseDenseAPI.__init__(self)
 
     def dense(self, x, kernel, bias):
-        x = mx.nd.dot(x, kernel)
-        if bias is not None:
-            x = x + bias
-        return x
+        return mx.nd.FullyConnected(x, kernel, bias, bias.shape[0])

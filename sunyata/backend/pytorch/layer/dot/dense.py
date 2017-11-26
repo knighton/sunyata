@@ -1,3 +1,5 @@
+from torch.nn import functional as F
+
 from ....base.layer.dot.dense import BaseDenseAPI
 
 
@@ -6,7 +8,4 @@ class PyTorchDenseAPI(BaseDenseAPI):
         BaseDenseAPI.__init__(self)
 
     def dense(self, x, kernel, bias):
-        x = x.mm(kernel)
-        if bias is not None:
-            x += bias
-        return x
+        return F.linear(x, kernel, bias)

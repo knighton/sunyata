@@ -6,8 +6,6 @@ from ..base import Form, TransformLayer, TransformSpec
 
 class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
-        if Z.name == 'chainer':
-            kernel = kernel.T
         self.kernel = Z.variable(Z.numpy_to_device(kernel))
         if bias is None:
             self.bias = None
@@ -33,7 +31,7 @@ class DenseSpec(TransformSpec):
         assert len(form.shape) == 1
         in_dim, = form.shape
         out_dim = in_dim if self.out_dim is None else self.out_dim
-        kernel_shape = in_dim, out_dim
+        kernel_shape = out_dim, in_dim
         kernel = np.random.normal(0, 0.1, kernel_shape).astype(form.dtype)
         if self.has_bias:
             bias_shape = out_dim,
