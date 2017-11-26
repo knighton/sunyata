@@ -8,7 +8,7 @@ class TensorFlowDenseAPI(BaseDenseAPI):
         BaseDenseAPI.__init__(self)
 
     def dense(self, x, kernel, bias):
-        x = tf.matmul(kernel, x)
+        x = tf.matmul(x, kernel, transpose_b=True)
         if bias is not None:
             x += bias
         return x
