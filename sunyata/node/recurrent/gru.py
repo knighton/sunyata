@@ -20,6 +20,9 @@ class GRULayer(RecurrentLayer):
         self.new_recurrent_kernel = self.recurrent_kernel[:, i:]
         self.new_bias = self.bias[i:]
 
+    def params(self):
+        return [self.input_kernel, self.recurrent_kernel, self.bias]
+
     def step(self, x, prev_state, prev_internal_state):
         gates = Z.sigmoid(
             Z.matmul(x, self.reset_update_input_kernel) +

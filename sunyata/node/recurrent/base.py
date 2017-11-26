@@ -10,6 +10,9 @@ class RecurrentLayer(TransformLayer):
         self.ret_last = last
         self.internal_dim = internal_dim
 
+    def params(self):
+        raise NotImplementedError
+
     def step(self, x, prev_state, prev_internal_state):
         raise NotImplementedError
 

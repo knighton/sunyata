@@ -13,6 +13,9 @@ class SimpleRULayer(RecurrentLayer):
         self.recurrent_kernel = Z.variable(Z.numpy_to_device(recurrent_kernel))
         self.bias = Z.variable(Z.numpy_to_device(bias))
 
+    def params(self):
+        return [self.input_kernel, self.recurrent_kernel, self.bias]
+
     def step(self, x, prev_state, prev_internal_state):
         return Z.tanh(Z.matmul(x, self.input_kernel) +
                       Z.matmul(prev_state, self.recurrent_kernel) +
