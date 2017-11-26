@@ -4,7 +4,7 @@ from ... import backend as Z
 from .base import RecurrentLayer, RecurrentSpec
 
 
-class MinimalRNNLayer(RecurrentLayer):
+class MinimalRULayer(RecurrentLayer):
     def __init__(self, forward, last, gate_input_kernel, gate_recurrent_kernel,
                  gate_bias, latent_kernel, latent_bias):
         dim = gate_input_kernel.shape[1]
@@ -31,7 +31,7 @@ class MinimalRNNLayer(RecurrentLayer):
         return state, None
 
 
-class MinimalRNNSpec(RecurrentSpec):
+class MinimalRUSpec(RecurrentSpec):
     def __init__(self, dim=None, forward=True, last=False):
         super().__init__(dim, forward, last)
 
@@ -49,6 +49,6 @@ class MinimalRNNSpec(RecurrentSpec):
             0, 0.1, latent_kernel_shape).astype(dtype)
         latent_bias_shape = out_dim,
         latent_bias = np.zeros(latent_bias_shape, dtype)
-        return MinimalRNNLayer(
+        return MinimalRULayer(
             self.go_forward, self.ret_last, gate_input_kernel,
             gate_recurrent_kernel, gate_bias, latent_kernel, latent_bias)

@@ -4,7 +4,7 @@ from ... import backend as Z
 from .base import RecurrentLayer, RecurrentSpec
 
 
-class SimpleRULayer(RecurrentLayer):
+class ElmanRULayer(RecurrentLayer):
     def __init__(self, forward, last, input_kernel, recurrent_kernel, bias):
         dim = input_kernel.shape[1]
         dtype = input_kernel.dtype.name
@@ -22,7 +22,7 @@ class SimpleRULayer(RecurrentLayer):
                       self.bias), None
 
 
-class SimpleRUSpec(RecurrentSpec):
+class ElmanRUSpec(RecurrentSpec):
     def __init__(self, dim=None, forward=True, last=False):
         super().__init__(dim, forward, last)
 
@@ -35,5 +35,5 @@ class SimpleRUSpec(RecurrentSpec):
             0, 0.1, recurrent_kernel_shape).astype(dtype)
         bias_shape = out_dim,
         bias = np.random.normal(0, 0.1, bias_shape).astype(dtype)
-        return SimpleRULayer(self.go_forward, self.ret_last, input_kernel,
-                             recurrent_kernel, bias)
+        return ElmanRULayer(self.go_forward, self.ret_last, input_kernel,
+                            recurrent_kernel, bias)
