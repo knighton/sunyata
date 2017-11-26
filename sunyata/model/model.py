@@ -10,7 +10,7 @@ class Model(object):
 
     def build(self):
         self.layer, out_form = self.spec.build_one(None)
-        self.params = self.layer.params()
+        self.params = self.layer.get_params()
 
     def _ensure_built(self):
         if self.layer is None:

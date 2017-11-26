@@ -6,10 +6,7 @@ from .base import Form, TransformLayer, TransformSpec
 class EmbedLayer(TransformLayer):
     def __init__(self, reference):
         super().__init__()
-        self.reference = Z.variable(Z.numpy_to_device(reference))
-
-    def params(self):
-        return [self.reference]
+        self.reference = self.add_param(reference)
 
     def forward_one(self, x, is_training):
         return Z.embed(x, self.reference)

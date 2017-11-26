@@ -6,20 +6,14 @@ from ..base import Form, TransformLayer, TransformSpec
 class DepthwiseConvLayer(TransformLayer):
     def __init__(self, depthwise_kernel, bias, stride, pad, dilation, ndim):
         super().__init__(ndim)
-        self.depthwise_kernel = Z.variable(Z.numpy_to_device(depthwise_kernel))
+        self.depthwise_kernel = self.add_param(depthwise_kernel)
         if bias is None:
             self.bias = None
         else:
-            self.bias = Z.variable(Z.numpy_to_device(bias))
+            self.bias = self.add_param(bias)
         self.stride = stride
         self.pad = pad
         self.dilation = dilation
-
-    def params(self):
-        params = [self.depthwise_kernel]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params
 
     def forward_one(self, x, is_training):
         return Z.depthwise_conv(x, self.depthwise_kernel, self.bias,

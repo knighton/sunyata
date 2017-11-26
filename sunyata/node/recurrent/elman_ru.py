@@ -8,12 +8,9 @@ class ElmanRULayer(RecurrentLayer):
         dim = input_kernel.shape[1]
         dtype = input_kernel.dtype.name
         super().__init__(dim, dtype, forward, last)
-        self.input_kernel = Z.variable(Z.numpy_to_device(input_kernel))
-        self.recurrent_kernel = Z.variable(Z.numpy_to_device(recurrent_kernel))
-        self.bias = Z.variable(Z.numpy_to_device(bias))
-
-    def params(self):
-        return [self.input_kernel, self.recurrent_kernel, self.bias]
+        self.input_kernel = self.add_param(input_kernel)
+        self.recurrent_kernel = self.add_param(recurrent_kernel)
+        self.bias = self.add_param(bias)
 
     def step(self, x, prev_state, prev_internal_state):
         return Z.tanh(Z.matmul(x, self.input_kernel) +

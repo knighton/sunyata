@@ -6,20 +6,14 @@ from ..base import Form, TransformLayer, TransformSpec
 class ConvLayer(TransformLayer):
     def __init__(self, kernel, bias, stride, pad, dilation, ndim):
         super().__init__(ndim)
-        self.kernel = Z.variable(Z.numpy_to_device(kernel))
+        self.kernel = self.add_param(kernel)
         if bias is None:
             self.bias = None
         else:
-            self.bias = Z.variable(Z.numpy_to_device(bias))
+            self.bias = self.add_param(bias)
         self.stride = stride
         self.pad = pad
         self.dilation = dilation
-
-    def params(self):
-        params = [self.kernel]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params
 
     def forward_one(self, x, is_training):
         return Z.conv(x, self.kernel, self.bias, self.stride, self.pad,

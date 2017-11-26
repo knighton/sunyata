@@ -8,10 +8,10 @@ class SequenceLayer(TransformLayer):
             assert isinstance(layer, TransformLayer)
         self.layers = layers
 
-    def params(self):
+    def get_params(self):
         params = []
         for layer in self.layers:
-            params += layer.params()
+            params += layer.get_params()
         return params
 
     def forward_one(self, x, is_training):

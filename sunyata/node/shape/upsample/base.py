@@ -6,14 +6,12 @@ class UpsampleLayer(TransformLayer):
     def __init__(self, scale, ndim):
         super().__init__(ndim)
         self.scale = scale
-        self.ndim = ndim
 
 
 class UpsampleSpec(TransformSpec):
     def __init__(self, scale, ndim):
         super().__init__(ndim)
         self.scale = scale
-        self.ndim = ndim
 
     def make_layer(self, form):
         raise NotImplementedError

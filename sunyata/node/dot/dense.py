@@ -5,17 +5,12 @@ from ..base import Form, TransformLayer, TransformSpec
 
 class DenseLayer(TransformLayer):
     def __init__(self, kernel, bias):
-        self.kernel = Z.variable(Z.numpy_to_device(kernel))
+        super().__init__(2)
+        self.kernel = self.add_param(kernel)
         if bias is None:
             self.bias = None
         else:
-            self.bias = Z.variable(Z.numpy_to_device(bias))
-
-    def params(self):
-        params = [self.kernel]
-        if self.bias is not None:
-            params.append(self.bias)
-        return params
+            self.bias = self.add_param(bias)
 
     def forward_one(self, x, is_training):
         return Z.dense(x, self.kernel, self.bias)
@@ -24,6 +19,7 @@ class DenseLayer(TransformLayer):
 class DenseSpec(TransformSpec):
     def __init__(self, dim=None, has_bias=True, kernel_init='glorot_uniform',
                  bias_init='zeros'):
+        super().__init__(0)
         self.out_dim = dim
         self.has_bias = has_bias
         self.kernel_init = init.get(kernel_init)

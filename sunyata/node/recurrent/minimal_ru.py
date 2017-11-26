@@ -9,17 +9,11 @@ class MinimalRULayer(RecurrentLayer):
         dim = gate_input_kernel.shape[1]
         dtype = gate_input_kernel.dtype.name
         super().__init__(dim, dtype, forward, last)
-        self.gate_input_kernel = \
-            Z.variable(Z.numpy_to_device(gate_input_kernel))
-        self.gate_recurrent_kernel = \
-            Z.variable(Z.numpy_to_device(gate_recurrent_kernel))
-        self.gate_bias = Z.variable(Z.numpy_to_device(gate_bias))
-        self.latent_kernel = Z.variable(Z.numpy_to_device(latent_kernel))
-        self.latent_bias = Z.variable(Z.numpy_to_device(latent_bias))
-
-    def params(self):
-        return [self.gate_input_kernel, self.gate_recurrent_kernel,
-                self.gate_bias, self.latent_kernel, self.latent_bias]
+        self.gate_input_kernel = self.add_param(gate_input_kernel)
+        self.gate_recurrent_kernel = self.add_param(gate_recurrent_kernel)
+        self.gate_bias = self.add_param(gate_bias)
+        self.latent_kernel = self.add_param(latent_kernel)
+        self.latent_bias = self.add_param(latent_bias)
 
     def step(self, x, prev_state, prev_internal_state):
         latent_x = Z.tanh(Z.dense(x, self.latent_kernel, self.latent_bias))

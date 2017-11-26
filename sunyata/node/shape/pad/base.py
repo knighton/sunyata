@@ -6,14 +6,12 @@ class PadLayer(TransformLayer):
     def __init__(self, pad, ndim):
         super().__init__(ndim)
         self.pad = pad
-        self.ndim = ndim
 
 
 class PadSpec(TransformSpec):
     def __init__(self, pad, ndim=None):
         super().__init__(ndim)
         self.pad = pad
-        self.ndim = ndim
 
     def make_layer(self, form):
         raise NotImplementedError

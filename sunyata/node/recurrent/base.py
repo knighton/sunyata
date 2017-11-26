@@ -4,14 +4,12 @@ from ..base import Form, TransformLayer, TransformSpec
 
 class RecurrentLayer(TransformLayer):
     def __init__(self, dim, dtype, forward=True, last=False, internal_dim=None):
+        super().__init__(3)
         self.out_dim = dim
         self.dtype = dtype
         self.go_forward = forward
         self.ret_last = last
         self.internal_dim = internal_dim
-
-    def params(self):
-        raise NotImplementedError
 
     def step(self, x, prev_state, prev_internal_state):
         raise NotImplementedError
@@ -47,7 +45,7 @@ class RecurrentLayer(TransformLayer):
 
 class RecurrentSpec(TransformSpec):
     def __init__(self, dim=None, forward=True, last=False):
-        super().__init__()
+        super().__init__(1)
         self.out_dim = dim
         self.go_forward = forward
         self.ret_last = last
