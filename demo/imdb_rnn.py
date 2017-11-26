@@ -37,9 +37,9 @@ def make_rnn(seq_len, in_dtype, vocab_size):
     seq = [
         InputSpec((seq_len,), in_dtype),
         EmbedSpec(vocab_size, 16),
-        SimpleRNNSpec(16),
+        SimpleRUSpec(16),
         ReLUSpec(),
-        SimpleRNNSpec(64, ret='last'),
+        SimpleRUSpec(64, last=True),
         ReLUSpec(),
         DenseSpec(1),
         SigmoidSpec(),

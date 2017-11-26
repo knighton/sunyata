@@ -1,1 +1,1 @@
-from .simple_rnn import *  # noqa
+from .simple_ru import *  # noqa
