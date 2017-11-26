@@ -1,6 +1,5 @@
-import numpy as np
-
 from ... import backend as Z
+from ... import init
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -38,17 +37,22 @@ class CFNLayer(RecurrentLayer):
 
 
 class CFNSpec(RecurrentSpec):
-    def __init__(self, dim=None, forward=True, last=False):
+    def __init__(self, dim=None, forward=True, last=False,
+                 input_kernel_init='glorot_uniform',
+                 recurrent_kernel_init='orthogonal', bias_init='zeros'):
         super().__init__(dim, forward, last)
+        self.input_kernel_init = init.get(input_kernel_init)
+        self.recurrent_kernel_init = init.get(recurrent_kernel_init)
+        self.bias_init = init.get(bias_init)
 
     def make_layer(self, in_dim, out_dim, dtype):
         input_kernel_shape = in_dim, 3 * out_dim
-        input_kernel = np.random.normal(
-            0, 0.1, input_kernel_shape).astype(dtype)
+        input_kernel = self.input_kernel_init(
+            input_kernel_shape, dtype, 'conv_kernel')
         recurrent_kernel_shape = out_dim, 3 * out_dim
-        recurrent_kernel = np.random.normal(
-            0, 0.1, recurrent_kernel_shape).astype(dtype)
+        recurrent_kernel = self.recurrent_kernel_init(
+            recurrent_kernel_shape, dtype)
         bias_shape = 3 * out_dim,
-        bias = np.random.normal(0, 0.1, bias_shape).astype(dtype)
+        bias = self.bias_init(bias_shape, dtype)
         return CFNLayer(self.go_forward, self.ret_last, input_kernel,
                         recurrent_kernel, bias)

@@ -1,6 +1,5 @@
-import numpy as np
-
 from ... import backend as Z
+from ... import init
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -32,23 +31,32 @@ class MinimalRULayer(RecurrentLayer):
 
 
 class MinimalRUSpec(RecurrentSpec):
-    def __init__(self, dim=None, forward=True, last=False):
+    def __init__(self, dim=None, forward=True, last=False,
+                 gate_input_kernel_init='glorot_uniform',
+                 gate_recurrent_kernel_init='orthogonal',
+                 gate_bias_init='zeros', latent_kernel_init='glorot_uniform',
+                 latent_bias_init='zeros'):
         super().__init__(dim, forward, last)
+        self.gate_input_kernel_init = init.get(gate_input_kernel_init)
+        self.gate_recurrent_kernel_init = init.get(gate_recurrent_kernel_init)
+        self.gate_bias_init = init.get(gate_bias_init)
+        self.latent_kernel_init = init.get(latent_kernel_init)
+        self.latent_bias_init = init.get(latent_bias_init)
 
     def make_layer(self, in_dim, out_dim, dtype):
         gate_input_kernel_shape = out_dim, out_dim
-        gate_input_kernel = np.random.normal(
-            0, 0.1, gate_input_kernel_shape).astype(dtype)
+        gate_input_kernel = self.gate_input_kernel_init(
+            gate_input_kernel_shape, dtype)
         gate_recurrent_kernel_shape = out_dim, out_dim
-        gate_recurrent_kernel = np.random.normal(
-            0, 0.1, gate_recurrent_kernel_shape).astype(dtype)
+        gate_recurrent_kernel = self.gate_recurrent_kernel_init(
+            gate_recurrent_kernel_shape, dtype)
         gate_bias_shape = out_dim,
-        gate_bias = np.random.normal(0, 0.1, gate_bias_shape).astype(dtype)
+        gate_bias = self.gate_bias_init(gate_bias_shape, dtype)
         latent_kernel_shape = in_dim, out_dim
-        latent_kernel = np.random.normal(
-            0, 0.1, latent_kernel_shape).astype(dtype)
+        latent_kernel = self.latent_kernel_init(
+            latent_kernel_shape, dtype, 'conv_kernel')
         latent_bias_shape = out_dim,
-        latent_bias = np.zeros(latent_bias_shape, dtype)
+        latent_bias = self.latent_bias_init(latent_bias_shape, dtype)
         return MinimalRULayer(
             self.go_forward, self.ret_last, gate_input_kernel,
             gate_recurrent_kernel, gate_bias, latent_kernel, latent_bias)

@@ -1,6 +1,5 @@
-import numpy as np
-
 from .. import backend as Z
+from .. import init
 from .base import Form, TransformLayer, TransformSpec
 
 
@@ -17,15 +16,16 @@ class EmbedLayer(TransformLayer):
 
 
 class EmbedSpec(TransformSpec):
-    def __init__(self, vocab, channels, dtype=None):
+    def __init__(self, vocab, channels, dtype=None, reference_init='uniform'):
         super().__init__()
         self.vocab_size = vocab
         self.channels = channels
         self.dtype = Z.dtype(dtype)
+        self.reference_init = init.get(reference_init)
 
     def build_one(self, form):
         reference_shape = self.vocab_size, self.channels
-        reference = np.random.uniform(0, 1, reference_shape).astype(self.dtype)
+        reference = self.reference_init(reference_shape, self.dtype)
         layer = EmbedLayer(reference)
         in_len, = form.shape
         out_shape = self.channels, in_len

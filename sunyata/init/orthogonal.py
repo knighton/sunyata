@@ -8,7 +8,7 @@ def _orthogonal(shape, scale=1, dtype='float32'):
     x = np.random.normal(0, 1, shape_2d)
     u, s, v = np.linalg.svd(x, full_matrices=False)
     x = u if u.shape == shape_2d else v
-    return scale * x.reshape(shape)
+    return scale * x.reshape(shape).astype(dtype)
 
 
 class Orthogonal(Initializer):

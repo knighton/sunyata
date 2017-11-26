@@ -1,6 +1,5 @@
-import numpy as np
-
 from .. import backend as Z
+from .. import init
 from .base import TransformLayer, TransformSpec
 
 
@@ -39,47 +38,54 @@ class InstanceBatchNormLayer(BaseBatchNormLayer):
 
 
 class InstanceBatchNormSpec(BaseBatchNormSpec):
-    def __init__(self, axis=1, ndim=None):
+    def __init__(self, axis=1, beta_init='zeros', gamma_init='ones', ndim=None):
         self.axis = axis
+        self.beta_init = init.get(beta_init)
+        self.gamma_init = init.get(gamma_init)
         self.ndim = ndim
 
     def build_one(self, form):
         shape = self._norm_data_shape(self.axis, self.ndim, form.shape)
-        beta = np.zeros(shape, form.dtype)
-        gamma = np.ones(shape, form.dtype)
+        beta = self.beta_init(shape, form.dtype)
+        gamma = self.gamma_init(shape, form.dtype)
         layer = InstanceBatchNormLayer(beta, gamma)
         return layer, form
 
 
 class GlobalBatchNormLayer(BaseBatchNormLayer):
-    def __init__(self, beta, gamma, momentum, global_mean, global_var):
+    def __init__(self, beta, gamma, momentum, mean, var):
         self.beta = Z.variable(Z.numpy_to_device(beta))
         self.gamma = Z.variable(Z.numpy_to_device(gamma))
         self.momentum = momentum
-        self.global_mean = Z.constant(Z.numpy_to_device(global_mean))
-        self.global_var = Z.constant(Z.numpy_to_device(global_var))
+        self.mean = Z.constant(Z.numpy_to_device(mean))
+        self.var = Z.constant(Z.numpy_to_device(var))
 
     def params(self):
         return [self.beta, self.gamma]
 
     def forward_one(self, x, is_training):
         return Z.global_batch_norm(
-            x, is_training, self.beta, self.gamma, self.momentum,
-            self.global_mean, self.global_var)
+            x, is_training, self.beta, self.gamma, self.momentum, self.mean,
+            self.var)
 
 
 class GlobalBatchNormSpec(BaseBatchNormSpec):
-    def __init__(self, momentum=0.99, axis=1, ndim=None):
+    def __init__(self, momentum=0.99, axis=1, beta_init='zeros',
+                 gamma_init='ones', mean_init='zeros', var_init='ones',
+                 ndim=None):
         self.momentum = momentum
         self.axis = axis
+        self.beta_init = init.get(beta_init)
+        self.gamma_init = init.get(gamma_init)
+        self.mean_init = init.get(mean_init)
+        self.var_init = init.get(var_init)
         self.ndim = ndim
 
     def build_one(self, form):
         shape = self._norm_data_shape(self.axis, self.ndim, form.shape)
-        beta = np.zeros(shape, form.dtype)
-        gamma = np.ones(shape, form.dtype)
-        global_mean = np.zeros(shape, form.dtype)
-        global_var = np.ones(shape, form.dtype)
-        layer = GlobalBatchNormLayer(
-            beta, gamma, self.momentum, global_mean, global_var)
+        beta = self.beta_init(shape, form.dtype)
+        gamma = self.gamma_init(shape, form.dtype)
+        mean = self.mean_init(shape, form.dtype)
+        var = self.var_init(shape, form.dtype)
+        layer = GlobalBatchNormLayer(beta, gamma, self.momentum, mean, var)
         return layer, form
