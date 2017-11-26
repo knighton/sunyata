@@ -1,5 +1,3 @@
-import numpy as np
-
 from ... import backend as Z
 from ... import init
 from ..base import Form, TransformLayer, TransformSpec
@@ -24,8 +22,8 @@ class DenseLayer(TransformLayer):
 
 
 class DenseSpec(TransformSpec):
-    def __init__(self, dim=None, has_bias=True,
-                 kernel_init='glorot_trunc_normal', bias_init='zeros'):
+    def __init__(self, dim=None, has_bias=True, kernel_init='glorot_uniform',
+                 bias_init='zeros'):
         self.out_dim = dim
         self.has_bias = has_bias
         self.kernel_init = init.get(kernel_init)
