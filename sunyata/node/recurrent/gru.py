@@ -13,23 +13,26 @@ class GRULayer(RecurrentLayer):
         self.recurrent_kernel = Z.variable(Z.numpy_to_device(recurrent_kernel))
         self.bias = Z.variable(Z.numpy_to_device(bias))
         i = 2 * self.out_dim
-        self.rz_input_kernel = self.input_kernel[:, :i]
-        self.rz_recurrent_kernel = self.recurrent_kernel[:, :i]
-        self.rz_bias = self.bias[:i]
-        self.h_input_kernel = self.input_kernel[:, i:]
-        self.h_recurrent_kernel = self.recurrent_kernel[:, i:]
-        self.h_bias = self.bias[i:]
+        self.reset_update_input_kernel = self.input_kernel[:, :i]
+        self.reset_update_recurrent_kernel = self.recurrent_kernel[:, :i]
+        self.reset_update_bias = self.bias[:i]
+        self.new_input_kernel = self.input_kernel[:, i:]
+        self.new_recurrent_kernel = self.recurrent_kernel[:, i:]
+        self.new_bias = self.bias[i:]
 
     def step(self, x, prev_state, prev_internal_state):
-        rz = Z.sigmoid(Z.matmul(x, self.rz_input_kernel) +
-                       Z.matmul(prev_state, self.rz_recurrent_kernel) +
-                       self.rz_bias)
-        r = rz[:, :self.out_dim]
-        z = rz[:, self.out_dim:2 * self.out_dim]
-        h = Z.tanh(Z.matmul(x, self.h_input_kernel) +
-                   Z.matmul(r * prev_state, self.h_recurrent_kernel) +
-                   self.h_bias)
-        state = z * prev_state + (1 - z) * h
+        gates = Z.sigmoid(
+            Z.matmul(x, self.reset_update_input_kernel) +
+            Z.matmul(prev_state, self.reset_update_recurrent_kernel) +
+            self.reset_update_bias)
+        i = self.out_dim
+        reset_gate = gates[:, :i]
+        update_gate = gates[:, i:2 * i]
+        new_state = Z.tanh(
+            Z.matmul(x, self.new_input_kernel) +
+            Z.matmul(reset_gate * prev_state, self.new_recurrent_kernel) +
+            self.new_bias)
+        state = update_gate * prev_state + (1 - update_gate) * new_state
         return state, None
 
 
