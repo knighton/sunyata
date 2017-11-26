@@ -6,7 +6,7 @@ from .shape import MXNetShapeAPI
 
 
 class MXNetLayerAPI(BaseLayerAPI, MXNetActivationAPI, MXNetDotAPI,
-                     MXNetEmbedAPI, MXNetShapeAPI):
+                    MXNetEmbedAPI, MXNetShapeAPI):
     def __init__(self):
         BaseLayerAPI.__init__(self)
         MXNetActivationAPI.__init__(self)
