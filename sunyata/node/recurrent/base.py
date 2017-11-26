@@ -48,7 +48,7 @@ class RecurrentLayer(TransformLayer):
 class RecurrentSpec(TransformSpec):
     def __init__(self, dim=None, forward=True, last=False):
         super().__init__()
-        self.dim = dim
+        self.out_dim = dim
         self.go_forward = forward
         self.ret_last = last
 
@@ -57,7 +57,7 @@ class RecurrentSpec(TransformSpec):
 
     def build_one(self, form):
         in_dim, num_steps = form.shape
-        out_dim = self.dim if self.dim else in_dim
+        out_dim = self.out_dim or in_dim
         layer = self.make_layer(in_dim, out_dim, form.dtype)
         if self.ret_last:
             out_shape = out_dim,
