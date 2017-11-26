@@ -12,18 +12,31 @@ class RecurrentLayer(TransformLayer):
     def step(self, x, prev_state):
         raise NotImplementedError
 
+    def make_initial_state(self, batch_size, dim):
+        return Z.constant(Z.zeros((batch_size, dim), self.dtype))
+
+    def internal_state_dim(self):
+        return None
+
+    def make_initial_internal_state(self, batch_size):
+        dim = self.internal_state_dim()
+        if dim is None:
+            return None
+        return Z.constant(Z.zeros((batch_size, dim), self.dtype))
+
     def forward_one(self, x, is_training):
         batch_size, _, num_steps = Z.shape(x)
-        state_shape = batch_size, self.out_dim
-        initial_state = Z.constant(Z.zeros(state_shape, self.dtype))
-        states = [initial_state]
+        states = [self.make_initial_state(batch_size, self.out_dim)]
+        internal_states = [self.make_initial_internal_state(batch_size)]
         steps = range(num_steps)
         if not self.go_forward:
             steps = reversed(steps)
         for step in steps:
             x_step = x[:, :, step]
-            next_state = self.step(x_step, states[-1])
-            states.append(next_state)
+            state, internal_state = self.step(
+                x_step, states[-1], internal_states[-1])
+            states.append(state)
+            internal_states.append(state)
         if self.ret_last:
             out = states[-1]
         else:

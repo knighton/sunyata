@@ -20,7 +20,7 @@ class GRULayer(RecurrentLayer):
         self.h_recurrent_kernel = self.recurrent_kernel[:, i:]
         self.h_bias = self.bias[i:]
 
-    def step(self, x, prev_state):
+    def step(self, x, prev_state, prev_internal_state):
         rz = Z.sigmoid(Z.matmul(x, self.rz_input_kernel) +
                        Z.matmul(prev_state, self.rz_recurrent_kernel) +
                        self.rz_bias)
@@ -29,7 +29,8 @@ class GRULayer(RecurrentLayer):
         h = Z.tanh(Z.matmul(x, self.h_input_kernel) +
                    Z.matmul(r * prev_state, self.h_recurrent_kernel) +
                    self.h_bias)
-        return z * prev_state + (1 - z) * h
+        state = z * prev_state + (1 - z) * h
+        return state, None
 
 
 class GRUSpec(RecurrentSpec):
