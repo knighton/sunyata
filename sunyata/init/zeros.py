@@ -4,7 +4,7 @@ from .base import Initializer
 
 
 def _zeros(shape, dtype='float32'):
-    np.zeros(shape, dtype)
+    return np.zeros(shape, dtype)
 
 
 class Zeros(Initializer):
