@@ -2,7 +2,7 @@ import numpy as np
 
 from .base import Initializer
 from .normal import _normal
-from .trunc_norm import _trunc_norm_stds
+from .trunc_normal import _trunc_normal_stds
 from .uniform import _uniform
 
 
@@ -33,9 +33,9 @@ def _smart_scaler_fan(shape, dtype, dist, fan, scale=1):
     if dist == 'normal':
         std = np.sqrt(scale)
         x = _normal(shape, 0, std, dtype)
-    elif dist == 'trunc_norm':
+    elif dist == 'trunc_normal':
         std = np.sqrt(scale)
-        x = _trunc_norm_stds(shape, 0, std, dtype)
+        x = _trunc_normal_stds(shape, 0, std, dtype)
     elif dist == 'uniform':
         limit = np.sqrt(3 * scale)
         x = _uniform(shape, -limit, limit, dtype)
@@ -66,8 +66,8 @@ def glorot_normal():
     return SmartScaler('normal', 'avg', 1)
 
 
-def glorot_trunc_norm():
-    return SmartScaler('trunc_norm', 'avg', 1)
+def glorot_trunc_normal():
+    return SmartScaler('trunc_normal', 'avg', 1)
 
 
 def glorot_uniform():
@@ -78,8 +78,8 @@ def he_normal():
     return SmartScaler('normal', 'in', 2)
 
 
-def he_trunc_norm():
-    return SmartScaler('trunc_norm', 'in', 2)
+def he_trunc_normal():
+    return SmartScaler('trunc_normal', 'in', 2)
 
 
 def he_uniform():
@@ -90,8 +90,8 @@ def lecun_normal():
     return SmartScaler('normal', 'in', 1)
 
 
-def lecun_trunc_norm():
-    return SmartScaler('trunc_norm', 'in', 1)
+def lecun_trunc_normal():
+    return SmartScaler('trunc_normal', 'in', 1)
 
 
 def lecun_uniform():
