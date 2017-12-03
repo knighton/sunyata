@@ -1,3 +1,5 @@
+from ... import backend as Z
+from .spec import Form
 
 
 class PseudoNode(object):
@@ -21,8 +23,27 @@ class PseudoNode(object):
     def inputs_as_model(self):
         return self._inputs_as_model
 
+    @classmethod
+    def collect_inputs_as_model(cls, pseudo_nodes):
+        inputs_set = set()
+        inputs = []
+        for node in pseudo_nodes:
+            for input_ in node.inputs_as_model():
+                if input_ in inputs_set:
+                    continue
+                inputs_set.add(input_)
+                inputs.append(input_)
+        return inputs
+
     def forms(self):
         return self._forms
+
+    @classmethod
+    def validate_forms(cls, forms):
+        assert forms
+        assert isinstance(forms, list)
+        for form in forms:
+            assert isinstance(form, Form)
 
     def initialize_forms(self, forms):
         self.validate_forms(forms)
