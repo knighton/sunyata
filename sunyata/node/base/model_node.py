@@ -22,7 +22,6 @@ class ModelNode(Model, Node):
     def build_inner(self):
         for input_ in self.model_inputs():
             input_.input_build()
-        self.validate_forms()
 
     def params(self):
         self.ensure_built()

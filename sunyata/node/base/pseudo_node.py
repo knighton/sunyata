@@ -55,9 +55,9 @@ class PseudoNode(object):
 
     def set_data(self, data):
         assert len(self._forms) == len(data)
-        for form, tensor in zip(self._forms, data):
-            assert Z.shape(tensor)[1:] == form.shape
-            assert Z.dtype_of(tensor) == form.dtype
+        for form, x in zip(self._forms, data):
+            assert Z.shape(x)[1:] == form.shape
+            assert Z.dtype_of(x) == form.dtype
         self._data = data
 
     def children(self):
