@@ -1,16 +1,16 @@
-from .base.model_node import ModelNode
+from .base.model_or_nexus import ModelOrNexus
 
 
-class Graph(ModelNode):
+class Graph(ModelOrNexus):
     """
     A model/node realized as a static computational graph.
     """
 
     def __init__(self, inputs, outputs, _parents=None):
         parents = self.normalize_parents(_parents)
-        ModelNode.__init__(self, parents)
+        ModelOrNexus.__init__(self, parents)
         self._node_inputs = \
-            self.collect_model_inputs(self.as_pseudo_node_list(inputs))
+            self.collect_model_inputs(self.as_node_list(inputs))
         self._node_outputs = self.as_node_list(outputs)
 
     def node_build_inner(self, forms):

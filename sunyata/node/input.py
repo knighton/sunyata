@@ -1,18 +1,18 @@
 from .. import backend as Z
-from .base.pseudo_node import PseudoNode
+from .base.node import Node
 from .base.spec import Form
 
 
-class Input(PseudoNode):
+class Input(Node):
     """
     Placeholder for model input data within a computational graph.
 
-    Input is one of the two kinds of PseudoNode (everything else is a Node).
+    Input is one of the two kinds of Node (everything else is a Nexus).
     """
 
     def __init__(self, shape, dtype=None):
         model_inputs = [self]
-        PseudoNode.__init__(self, model_inputs)
+        Node.__init__(self, model_inputs)
         dtype = Z.dtype(dtype)
         form = Form(shape, dtype)
         self.initialize_forms([form])

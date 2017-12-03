@@ -1,21 +1,21 @@
 from copy import deepcopy
 
-from .layer import Layer
-from .model_node import ModelNode
-from .spec import Spec
+from ..node.base.layer import Layer
+from ..node.base.spec import Spec
+from .base.model_or_nexus import ModelOrNexus
 
 
-class LayerNode(ModelNode):
+class Atom(ModelOrNexus):
     def __init__(self, spec, _parents=None):
         parents = self.normalize_parents(_parents)
-        ModelNode.__init__(self, parents)
+        ModelOrNexus.__init__(self, parents)
         assert isinstance(spec, Spec)
         self._spec = spec
         self._layer = None
 
     def __call__(self, *parents):
         assert not parents
-        return LayerNode(deepcopy(self._spec), parents)
+        return Atom(deepcopy(self._spec), parents)
 
     def node_build_inner(self, forms):
         self._layer, forms = self._spec.build(forms)

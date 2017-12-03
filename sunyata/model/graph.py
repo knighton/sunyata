@@ -1,1 +1,1 @@
-from ..node.graph import Graph  # noqa
+from ..node.arch.graph import Graph  # noqa

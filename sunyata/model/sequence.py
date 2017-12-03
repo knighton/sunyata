@@ -1,1 +1,1 @@
-from ..node.sequence import Sequence  # noqa
+from ..node.arch.sequence import Sequence  # noqa

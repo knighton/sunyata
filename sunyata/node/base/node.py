@@ -1,95 +1,80 @@
-from .pseudo_node import PseudoNode
+from ... import backend as Z
+from .spec import Form
 
 
-class Node(PseudoNode):
+class Node(object):
     """
-    A non-input node of a computational graph, that connects inputs to outputs.
+    A node of a computational graph.
 
-    The forms of its inputs and outputs are fixed, but how it turns one into the
-    other is up to the implementations.
+    There are two types:
+    * Input (placeholder for model input)
+    * Nexus (everything else: receives inputs and broadcasts outputs)
+
+    Tracks its outputs.  Also caches references to the inputs nodes of all its
+    ancestors, which are needed by models.
     """
+
+    def __init__(self, model_inputs):
+        self._model_inputs = model_inputs
+        self._output_forms = None
+        self._output_data = None
+        self._children = []
+
+    def model_inputs(self):
+        return self._model_inputs
 
     @classmethod
-    def normalize_parents(cls, parents):
-        if parents is None:
-            parents = []
+    def collect_model_inputs(cls, nodes):
+        inputs_set = set()
+        inputs = []
+        for node in nodes:
+            for input_ in node.model_inputs():
+                if input_ in inputs_set:
+                    continue
+                inputs_set.add(input_)
+                inputs.append(input_)
+        return inputs
+
+    def forms(self):
+        return self._output_forms
+
+    @classmethod
+    def validate_forms(cls, forms):
+        assert forms
+        assert isinstance(forms, list)
+        for form in forms:
+            assert isinstance(form, Form)
+
+    def initialize_output_forms(self, forms):
+        self.validate_forms(forms)
+        assert self._output_forms is None
+        self._output_forms = forms
+
+    def output_data(self):
+        return self._output_data
+
+    def set_output_data(self, data):
+        assert len(self._output_forms) == len(data)
+        for form, x in zip(self._output_forms, data):
+            assert Z.shape(x)[1:] == form.shape
+            assert Z.dtype_of(x) == form.dtype
+        self._output_data = data
+
+    def children(self):
+        return self._children
+
+    def adopt_child(self, child):
+        index = len(self._children)
+        self._children.append(child)
+        return index
+
+    @classmethod
+    def as_list(cls, x):
+        if isinstance(x, list):
+            nodes = x
         else:
-            assert isinstance(parents, (list, tuple))
-            for parent in parents:
-                assert isinstance(parent, PseudoNode)
-            parents = list(parents)
-        return parents
-
-    def adopt_parent(self, parent):
-        assert isinstance(parent, PseudoNode)
-        index_of_child = parent.adopt_child(self)
-        self._parents.append(parent)
-        self._parent_indices.append(index_of_child)
-
-    def __init__(self, parents):
-        model_inputs = self.collect_model_inputs(parents)
-        PseudoNode.__init__(self, model_inputs)
-        self._parents = []
-        self._parent_indices = []
-        self._parents_ready_to_build = 0
-        self._parents_ready_to_forward = 0
-        for parent in parents:
-            self.adopt_parent(parent)
-
-    def node_is_built(self):
-        return self._parents_ready_to_build is None
-
-    def node_build_inner(self, forms):
-        """
-        forms -> forms
-        """
-        raise NotImplementedError
-
-    def node_build(self):
-        self._parents_ready_to_build += 1
-        if self._parents_ready_to_build < len(self._parents):
-            return
-        input_forms = []
-        for parent in self._parents:
-            input_forms += parent.output_forms()
-        output_forms = self.node_build_inner(input_forms)
-        self.initialize_output_forms(output_forms)
-        for child in self.children():
-            child.node_build()
-        self._parents_ready_to_build = None
-
-    def node_params_inner(self, nodes_seen, params_seen, params):
-        """
-        Node set, Variable set, Variable list ->
-        """
-        raise NotImplementedError
-
-    def node_params(self, nodes_seen, params_seen, params):
-        if self in nodes_seen:
-            return
-        nodes_seen.add(self)
-        self.node_params_inner(nodes_seen, params_seen, params)
-        for child in self.children():
-            child.node_params(nodes_seen, params_seen, params)
-
-    def node_forward_inner(self, xx, is_training):
-        """
-        xx, is_training -> yy
-        """
-        raise NotImplementedError
-
-    def node_forward(self, is_training):
-        self._parents_ready_to_forward += 1
-        if self._parents_ready_to_forward < len(self._parents):
-            return
-        xx = []
-        for parent in self.parents():
-            xx += parent.output_data()
-        yy = self.node_forward_inner(xx, is_training)
-        self.set_output_data(yy)
-        for child in self.children(is_training):
-            child.node_forward(is_training)
-        self._parents_ready_to_forward = 0
+            nodes = [x]
+        return nodes
 
     @classmethod
     def as_node_list(cls, x):

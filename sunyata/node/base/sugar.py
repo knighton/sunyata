@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .layer_node import LayerNode
+from ..arch.atom import Atom
 from .spec import Spec
 
 
@@ -22,4 +22,4 @@ class Sugar(object):
         kw = deepcopy(self.default_kwargs)
         kw.update(deepcopy(kwargs))
         spec = self.spec_class(*args, **kw)
-        return LayerNode(spec)
+        return Atom(spec)
