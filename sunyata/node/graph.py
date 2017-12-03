@@ -19,7 +19,7 @@ class Graph(ModelNode):
         forms = []
         for output in self._node_outputs:
             assert output.node_is_built()
-            forms += output.forms()
+            forms += output.output_forms()
         return forms
 
     def node_params_inner(self, nodes_seen, params_seen, params):
@@ -32,5 +32,5 @@ class Graph(ModelNode):
             input_.input_forward(x, is_training)
         yy = []
         for output in self._node_outputs:
-            yy += output.data()
+            yy += output.output_data()
         return yy

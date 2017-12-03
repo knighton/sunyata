@@ -16,8 +16,8 @@ class PseudoNode(object):
 
     def __init__(self, model_inputs):
         self._model_inputs = model_inputs
-        self._forms = None
-        self._data = None
+        self._output_forms = None
+        self._output_data = None
         self._children = []
 
     def model_inputs(self):
@@ -36,7 +36,7 @@ class PseudoNode(object):
         return inputs
 
     def forms(self):
-        return self._forms
+        return self._output_forms
 
     @classmethod
     def validate_forms(cls, forms):
@@ -45,20 +45,20 @@ class PseudoNode(object):
         for form in forms:
             assert isinstance(form, Form)
 
-    def initialize_forms(self, forms):
+    def initialize_output_forms(self, forms):
         self.validate_forms(forms)
-        assert self._forms is None
-        self._forms = forms
+        assert self._output_forms is None
+        self._output_forms = forms
 
-    def data(self):
-        return self._data
+    def output_data(self):
+        return self._output_data
 
-    def set_data(self, data):
-        assert len(self._forms) == len(data)
-        for form, x in zip(self._forms, data):
+    def set_output_data(self, data):
+        assert len(self._output_forms) == len(data)
+        for form, x in zip(self._output_forms, data):
             assert Z.shape(x)[1:] == form.shape
             assert Z.dtype_of(x) == form.dtype
-        self._data = data
+        self._output_data = data
 
     def children(self):
         return self._children

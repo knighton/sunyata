@@ -49,11 +49,11 @@ class Node(PseudoNode):
         self._parents_ready_to_build += 1
         if self._parents_ready_to_build < len(self._parents):
             return
-        forms = []
+        input_forms = []
         for parent in self._parents:
-            forms += parent.forms()
-        forms = self.node_build_inner(forms)
-        self.initialize_forms(forms)
+            input_forms += parent.output_forms()
+        output_forms = self.node_build_inner(input_forms)
+        self.initialize_output_forms(output_forms)
         for child in self.children():
             child.node_build()
         self._parents_ready_to_build = None
@@ -84,9 +84,9 @@ class Node(PseudoNode):
             return
         xx = []
         for parent in self.parents():
-            xx += parent.data()
+            xx += parent.output_data()
         yy = self.node_forward_inner(xx, is_training)
-        self.set_data(yy)
+        self.set_output_data(yy)
         for child in self.children(is_training):
             child.node_forward(is_training)
         self._parents_ready_to_forward = 0

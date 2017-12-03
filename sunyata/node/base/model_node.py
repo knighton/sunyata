@@ -37,4 +37,4 @@ class ModelNode(Model, Node):
         assert len(xx) == len(inputs)
         for input_, x in zip(inputs, xx):
             input_.input_forward(x, is_training)
-        return self.data()
+        return self.output_data()
