@@ -2,6 +2,10 @@ from .model_node import ModelNode
 
 
 class Graph(ModelNode):
+    """
+    A model/node realized as a static computational graph.
+    """
+
     def __init__(self, inputs, outputs, _parents=None):
         ModelNode.__init__(self, _parents)
         self._node_inputs = \
