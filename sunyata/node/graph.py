@@ -1,4 +1,4 @@
-from .model_node import ModelNode
+from .base.model_node import ModelNode
 
 
 class Graph(ModelNode):

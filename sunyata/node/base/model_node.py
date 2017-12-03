@@ -1,4 +1,4 @@
-from ..model.model import Model
+from ...model.model import Model
 from .node import Node
 
 

@@ -1,8 +1,8 @@
 from copy import deepcopy
 
-from .base.layer import Layer
-from .base.model_node import ModelNode
-from .base.spec import Spec
+from .layer import Layer
+from .model_node import ModelNode
+from .spec import Spec
 
 
 class LayerNode(ModelNode):
