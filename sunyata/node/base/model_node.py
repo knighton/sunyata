@@ -20,7 +20,7 @@ class ModelNode(Model, Node):
         Node.__init__(self, parents)
 
     def build_inner(self):
-        for input_ in self.inputs():
+        for input_ in self.model_inputs():
             input_.input_build()
         self.validate_forms()
 
@@ -29,12 +29,12 @@ class ModelNode(Model, Node):
         nodes_seen = set()
         params_seen = set()
         params = []
-        for input_ in self.inputs():
+        for input_ in self.model_inputs():
             input_.input_params(nodes_seen, params_seen, params)
         return params
 
     def forward(self, xx, is_training):
-        inputs = self.inputs()
+        inputs = self.model_inputs()
         assert len(xx) == len(inputs)
         for input_, x in zip(inputs, xx):
             input_.input_forward(x, is_training)

@@ -11,8 +11,8 @@ class Input(PseudoNode):
     """
 
     def __init__(self, shape, dtype=None):
-        inputs = [self]
-        PseudoNode.__init__(self, inputs)
+        model_inputs = [self]
+        PseudoNode.__init__(self, model_inputs)
         dtype = Z.dtype(dtype)
         form = Form(shape, dtype)
         self.initialize_forms([form])

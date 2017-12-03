@@ -24,8 +24,8 @@ class Node(PseudoNode):
         self._parent_indices.append(index_of_child)
 
     def __init__(self, parents):
-        inputs_as_model = self.collect_inputs_as_model(parents)
-        PseudoNode.__init__(self, inputs_as_model)
+        inputs = self.collect_model_inputs(parents)
+        PseudoNode.__init__(self, inputs)
         self._parents = []
         self._parent_indices = []
         self._parents_ready_to_build = 0

@@ -9,7 +9,7 @@ class Graph(ModelNode):
     def __init__(self, inputs, outputs, _parents=None):
         ModelNode.__init__(self, _parents)
         self._node_inputs = \
-            self.collect_inputs(self.as_pseudo_node_list(inputs))
+            self.collect_model_inputs(self.as_pseudo_node_list(inputs))
         self._node_outputs = self.as_node_list(outputs)
 
     def node_build_inner(self, forms):

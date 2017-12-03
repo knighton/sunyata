@@ -15,20 +15,20 @@ class PseudoNode(object):
     """
 
     def __init__(self, inputs):
-        self._inputs_as_model = inputs
+        self._model_inputs = inputs
         self._forms = None
         self._data = None
         self._children = []
 
-    def inputs_as_model(self):
-        return self._inputs_as_model
+    def model_inputs(self):
+        return self._model_inputs
 
     @classmethod
-    def collect_inputs_as_model(cls, pseudo_nodes):
+    def collect_model_inputs(cls, pseudo_nodes):
         inputs_set = set()
         inputs = []
         for node in pseudo_nodes:
-            for input_ in node.inputs_as_model():
+            for input_ in node.model_inputs():
                 if input_ in inputs_set:
                     continue
                 inputs_set.add(input_)
