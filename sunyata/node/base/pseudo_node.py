@@ -14,8 +14,8 @@ class PseudoNode(object):
     ancestors, which are needed by models.
     """
 
-    def __init__(self, inputs):
-        self._model_inputs = inputs
+    def __init__(self, model_inputs):
+        self._model_inputs = model_inputs
         self._forms = None
         self._data = None
         self._children = []

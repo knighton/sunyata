@@ -10,11 +10,14 @@ class Node(PseudoNode):
     """
 
     @classmethod
-    def _normalize_parents(cls, parents):
-        parents = parents or []
-        assert isinstance(parents, list)
-        for parent in parents:
-            assert isinstance(parent, PseudoNode)
+    def normalize_parents(cls, parents):
+        if parents is None:
+            parents = []
+        else:
+            assert isinstance(parents, (list, tuple))
+            for parent in parents:
+                assert isinstance(parent, PseudoNode)
+            parents = list(parents)
         return parents
 
     def adopt_parent(self, parent):
@@ -24,13 +27,13 @@ class Node(PseudoNode):
         self._parent_indices.append(index_of_child)
 
     def __init__(self, parents):
-        inputs = self.collect_model_inputs(parents)
-        PseudoNode.__init__(self, inputs)
+        model_inputs = self.collect_model_inputs(parents)
+        PseudoNode.__init__(self, model_inputs)
         self._parents = []
         self._parent_indices = []
         self._parents_ready_to_build = 0
         self._parents_ready_to_forward = 0
-        for parent in self._normalize_parents(parents):
+        for parent in parents:
             self.adopt_parent(parent)
 
     def node_is_built(self):

@@ -1,26 +1,15 @@
 from copy import deepcopy
 
+from .base.layer import Layer
 from .base.model_node import ModelNode
-from .base.pseudo_node import PseudoNode
+from .base.spec import Spec
 
 
 class LayerNode(ModelNode):
-    @classmethod
-    def _init_parents(cls, parents):
-        if parents is None:
-            parents = []
-        else:
-            assert parents
-            assert isinstance(parents, tuple)
-            for parent in parents:
-                assert isinstance(parent, PseudoNode)
-            parents = list(parents)
-        return parents
-
     def __init__(self, spec, _parents=None):
-        parents = self._init_parents(_parents)
-        for parent in parents:
-            self.adopt_parent(parent)
+        parents = self.normalize_parents(_parents)
+        ModelNode.__init__(self, parents)
+        assert isinstance(spec, Spec)
         self._spec = spec
         self._layer = None
 
@@ -30,6 +19,7 @@ class LayerNode(ModelNode):
 
     def node_build_inner(self, forms):
         self._layer, forms = self._spec.build(forms)
+        assert isinstance(self._layer, Layer)
         return forms
 
     def node_params_inner(self, nodes_seen, params_seen, params):

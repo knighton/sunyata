@@ -9,18 +9,6 @@ class Sequence(ModelNode):
     """
 
     @classmethod
-    def _seq_init_parents(cls, parents):
-        if parents is None:
-            parents = []
-        else:
-            assert parents
-            assert isinstance(parents, tuple)
-            for parent in parents:
-                assert isinstance(parent, PseudoNode)
-            parents = list(parents)
-        return parents
-
-    @classmethod
     def _seq_init_head_steps(cls, nodes, has_parents):
         assert nodes
         assert isinstance(nodes, list)
@@ -43,11 +31,11 @@ class Sequence(ModelNode):
         return head, steps
 
     def __init__(self, *nodes, _parents=None):
-        parents = self._seq_init_parents(_parents)
+        parents = self.normalize_parents(_parents)
         head, steps = self._seq_init_steps(nodes, bool(parents))
         for parent in parents:
             head.adopt_parent(parent)
-        self.adopt_parent(head)
+        ModelNode.__init__(self, [head])
         self._steps = steps
 
     def node_build_inner(self, forms):
