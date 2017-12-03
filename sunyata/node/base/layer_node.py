@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from .base.model_node import ModelNode
 from .base.pseudo_node import PseudoNode
 
@@ -21,6 +23,10 @@ class LayerNode(ModelNode):
             self.adopt_parent(parent)
         self._spec = spec
         self._layer = None
+
+    def __call__(self, *parents):
+        assert not parents
+        return LayerNode(deepcopy(self._spec), parents)
 
     def node_build_inner(self, forms):
         self._layer, forms = self._spec.build(forms)
