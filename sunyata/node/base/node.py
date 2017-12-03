@@ -87,3 +87,10 @@ class Node(PseudoNode):
         for child in self.children(is_training):
             child.node_forward(is_training)
         self._parents_ready_to_forward = 0
+
+    @classmethod
+    def as_node_list(cls, x):
+        nodes = cls.as_list(x)
+        for node in nodes:
+            assert isinstance(node, Node)
+        return nodes

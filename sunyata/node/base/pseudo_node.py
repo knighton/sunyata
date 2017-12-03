@@ -67,3 +67,18 @@ class PseudoNode(object):
         index = len(self._children)
         self._children.append(child)
         return index
+
+    @classmethod
+    def as_list(cls, x):
+        if isinstance(x, list):
+            nodes = x
+        else:
+            nodes = [x]
+        return nodes
+
+    @classmethod
+    def as_pseudo_node_list(cls, x):
+        nodes = cls.as_list(x)
+        for node in nodes:
+            assert isinstance(node, PseudoNode)
+        return nodes
