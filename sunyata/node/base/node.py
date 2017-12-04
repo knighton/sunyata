@@ -1,8 +1,9 @@
 from ... import backend as Z
 from .form import Form
+from .pseudo_node import PseudoNode
 
 
-class Node(object):
+class Node(PseudoNode):
     """
     A node of a computational graph.
 

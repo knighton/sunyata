@@ -1,10 +1,11 @@
 from copy import deepcopy
 
 from ..network.atom import Atom
+from .pseudo_node import PseudoNode
 from .spec import Spec
 
 
-class Sugar(object):
+class Sugar(PseudoNode):
     """
     Syntactic sugar for creating layer nodes.
 
