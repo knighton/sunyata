@@ -5,41 +5,71 @@ from ... import backend as Z
 
 class Layer(object):
     def __init__(self):
-        self.params = []
+        self._input_ndim = None
+        self._params = []
 
-    def add_param(self, x, trainable=True):
+    def initialize_input_ndim(self, ndim):
+        assert isinstance(ndim, int)
+        assert 1 <= ndim
+        assert self._input_ndim is None
+        self._input_ndim = ndim
+
+    def add_param(self, x, train=True):
         if isinstance(x, np.ndarray):
             x = Z.numpy_to_device(x)
-        if trainable:
-            x = Z.variable(x)
-            self.params.append(x)
+        if train:
+            x = Z.variablde(x)
+            self._params.append(x)
         else:
             x = Z.constant(x)
         return x
 
-    def get_params(self):
-        return self.params
+    def params(self):
+        return self._params
 
-    def forward_multi(self, xx, is_training):
+    def forward_inner(self, xx, is_training):
         raise NotImplementedError
 
+    def forward(self, xx, is_training):
+        if self._input_ndim is not None:
+            for x in xx:
+                assert Z.ndim(x) == self._input_ndim
+        return self.forward_inner(xx, is_training)
 
-class MergeLayer(Layer):
-    pass
 
-
-class TransformLayer(Layer):
-    def __init__(self, ndim=None):
-        super().__init__()
-        self.in_ndim = ndim
-
-    def forward_one(self, x, is_training):
+class Transform(Layer):
+    def transform(self, x, is_training):
         raise NotImplementedError
 
-    def forward_multi(self, xx, is_training):
+    def forward_inner(self, xx, is_training):
         assert len(xx) == 1
         x, = xx
-        if self.in_ndim is not None:
-            assert Z.ndim(x) == self.in_ndim
-        x = self.forward_one(x, is_training)
-        return [x]
+        y = self.transform(x, is_training)
+        return [y]
+
+
+class Merge(Layer):
+    def merge(self, xx, is_training):
+        raise NotImplementedError
+
+    def forward_inner(self, xx, is_training):
+        y = self.merge(xx, is_training)
+        return [y]
+
+
+class Fork(Layer):
+    def fork(self, x, is_training):
+        raise NotImplementedError
+
+    def forward_inner(self, xx, is_training):
+        assert len(xx) == 1
+        x, = xx
+        return self.fork(x, is_training)
+
+
+class Flex(Layer):
+    def flex(self, xx, is_training):
+        raise NotImplementedError
+
+    def forward_inner(self, xx, is_training):
+        return self.flex(xx, is_training)
