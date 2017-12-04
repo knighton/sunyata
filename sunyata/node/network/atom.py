@@ -1,7 +1,7 @@
 from copy import deepcopy
 
-from ..node.base.layer import Layer
-from ..node.base.spec import Spec
+from ..base.layer import Layer
+from ..base.spec import Spec
 from .base.model_or_nexus import ModelOrNexus
 
 

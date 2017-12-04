@@ -1,5 +1,5 @@
-from ..node.base.nexus import Nexus
-from ..node.base.node import Node
+from ..base.nexus import Nexus
+from ..base.node import Node
 from .base.model_or_nexus import ModelOrNexus
 
 

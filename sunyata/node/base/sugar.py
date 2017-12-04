@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from ..arch.atom import Atom
+from ..network.atom import Atom
 from .spec import Spec
 
 
