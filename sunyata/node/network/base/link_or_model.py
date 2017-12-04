@@ -1,10 +1,10 @@
 from ....model.base.model import Model
-from ...base.nexus import Nexus
+from ...base.link import Link
 
 
-class ModelOrNexus(Model, Nexus):
+class LinkOrModel(Link, Model):
     """
-    A nexus that also can be treated as a model to refer to its entire network.
+    A link that also can be treated as a model to refer to its entire network.
 
     Examples are Sequences and Graphs.
 
@@ -16,8 +16,8 @@ class ModelOrNexus(Model, Nexus):
     """
 
     def __init__(self, parents):
+        Link.__init__(self, parents)
         Model.__init__(self)
-        Nexus.__init__(self, parents)
 
     def build_inner(self):
         for input_ in self.model_inputs():

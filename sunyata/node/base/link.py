@@ -1,9 +1,9 @@
 from .node import Node
 
 
-class Nexus(Node):
+class Link(Node):
     """
-    A non-input node of a computational graph, that connects inputs to outputs.
+    A non-input node of a computational graph, that links inputs to outputs.
 
     The forms of its inputs and outputs are fixed, but how it turns one into the
     other is up to the implementation.
@@ -36,64 +36,64 @@ class Nexus(Node):
         for parent in parents:
             self.adopt_parent(parent)
 
-    def node_is_built(self):
+    def link_is_built(self):
         return self._parents_ready_to_build is None
 
-    def node_build_inner(self, forms):
+    def link_build_inner(self, forms):
         """
         forms -> forms
         """
         raise NotImplementedError
 
-    def node_build(self):
+    def link_build(self):
         self._parents_ready_to_build += 1
         if self._parents_ready_to_build < len(self._parents):
             return
         input_forms = []
         for parent in self._parents:
             input_forms += parent.output_forms()
-        output_forms = self.node_build_inner(input_forms)
+        output_forms = self.link_build_inner(input_forms)
         self.initialize_output_forms(output_forms)
         for child in self.children():
-            child.node_build()
+            child.link_build()
         self._parents_ready_to_build = None
 
-    def node_params_inner(self, nodes_seen, params_seen, params):
+    def link_params_inner(self, links_seen, params_seen, params):
         """
         Node set, Variable set, Variable list ->
         """
         raise NotImplementedError
 
-    def node_params(self, nodes_seen, params_seen, params):
-        if self in nodes_seen:
+    def link_params(self, links_seen, params_seen, params):
+        if self in links_seen:
             return
-        nodes_seen.add(self)
-        self.node_params_inner(nodes_seen, params_seen, params)
+        links_seen.add(self)
+        self.link_params_inner(links_seen, params_seen, params)
         for child in self.children():
-            child.node_params(nodes_seen, params_seen, params)
+            child.link_params(links_seen, params_seen, params)
 
-    def node_forward_inner(self, xx, is_training):
+    def link_forward_inner(self, xx, is_training):
         """
         xx, is_training -> yy
         """
         raise NotImplementedError
 
-    def node_forward(self, is_training):
+    def link_forward(self, is_training):
         self._parents_ready_to_forward += 1
         if self._parents_ready_to_forward < len(self._parents):
             return
         xx = []
         for parent in self.parents():
             xx += parent.output_data()
-        yy = self.node_forward_inner(xx, is_training)
+        yy = self.link_forward_inner(xx, is_training)
         self.set_output_data(yy)
         for child in self.children(is_training):
-            child.node_forward(is_training)
+            child.link_forward(is_training)
         self._parents_ready_to_forward = 0
 
     @classmethod
-    def as_node_list(cls, x):
-        nodes = cls.as_list(x)
-        for node in nodes:
-            assert isinstance(node, Nexus)
-        return nodes
+    def as_links(cls, x):
+        links = cls.as_list(x)
+        for link in links:
+            assert isinstance(link, Link)
+        return links

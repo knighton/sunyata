@@ -8,7 +8,7 @@ class Node(object):
 
     There are two types:
     * Input (placeholder for model input)
-    * Nexus (everything else: receives inputs and broadcasts outputs)
+    * Link (everything else: receives inputs and broadcasts outputs)
 
     Tracks its outputs.  Also caches references to the inputs nodes of all its
     ancestors, which are needed by models.
@@ -77,7 +77,7 @@ class Node(object):
         return nodes
 
     @classmethod
-    def as_node_list(cls, x):
+    def as_nodes(cls, x):
         nodes = cls.as_list(x)
         for node in nodes:
             assert isinstance(node, Node)

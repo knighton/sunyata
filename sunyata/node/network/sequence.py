@@ -1,11 +1,11 @@
-from ..base.nexus import Nexus
+from ..base.link import Link
 from ..base.node import Node
-from .base.model_or_nexus import ModelOrNexus
+from .base.link_or_model import LinkOrModel
 
 
-class Sequence(ModelOrNexus):
+class Sequence(LinkOrModel):
     """
-    A model/node realized as a sequence of nodes.
+    A link/model realized as a sequence of nodes.
     """
 
     @classmethod
@@ -14,7 +14,7 @@ class Sequence(ModelOrNexus):
         assert isinstance(nodes, list)
         if has_parents:
             for node in nodes:
-                assert isinstance(node, Nexus)
+                assert isinstance(node, Link)
                 assert not node.parents()
                 assert not node.children()
             head = nodes[0]
@@ -25,7 +25,7 @@ class Sequence(ModelOrNexus):
             assert not head.children()
             steps = nodes[1:]
             for step in steps:
-                assert isinstance(step, Nexus)
+                assert isinstance(step, Link)
                 assert not step.parents()
                 assert not step.children()
         return head, steps
@@ -35,19 +35,19 @@ class Sequence(ModelOrNexus):
         head, steps = self._seq_init_steps(nodes, bool(parents))
         for parent in parents:
             head.adopt_parent(parent)
-        ModelOrNexus.__init__(self, [head])
+        LinkOrModel.__init__(self, [head])
         self._steps = steps
 
-    def node_build_inner(self, forms):
+    def link_build_inner(self, forms):
         for step in self._steps:
-            forms = step.node_build_inner(forms)
+            forms = step.link_build_inner(forms)
         return forms
 
-    def node_params_inner(self, nodes_seen, params_seen, params):
+    def link_params_inner(self, nodes_seen, params_seen, params):
         for step in self._steps:
-            step.node_params_inner(nodes_seen, params_seen, params)
+            step.link_params_inner(nodes_seen, params_seen, params)
 
-    def node_forward_inner(self, xx, is_training):
+    def link_forward_inner(self, xx, is_training):
         for step in self._steps:
-            xx = step.node_forward_inner(xx, is_training)
+            xx = step.link_forward_inner(xx, is_training)
         return xx
