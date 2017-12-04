@@ -1,4 +1,4 @@
-class LayerSpec(object):
+class Spec(object):
     def __init__(self, spatial_ndim=None):
         if spatial_ndim is None:
             ndim = None
@@ -25,7 +25,7 @@ class LayerSpec(object):
         return layer, forms
 
 
-class TransformSpec(LayerSpec):
+class TransformSpec(Spec):
     def build_change(self, form):
         raise NotImplementedError
 
@@ -36,7 +36,7 @@ class TransformSpec(LayerSpec):
         return layer, [form]
 
 
-class MergeSpec(LayerSpec):
+class MergeSpec(Spec):
     def build_merge(self, forms):
         raise NotImplementedError
 
@@ -45,7 +45,7 @@ class MergeSpec(LayerSpec):
         return layer, [form]
 
 
-class ForkSpec(LayerSpec):
+class ForkSpec(Spec):
     def build_fork(self, forms):
         raise NotImplementedError
 
@@ -56,7 +56,7 @@ class ForkSpec(LayerSpec):
         return layer, forms
 
 
-class FlexSpec(LayerSpec):
+class FlexSpec(Spec):
     def build_flex(self, forms):
         raise NotImplementedError
 

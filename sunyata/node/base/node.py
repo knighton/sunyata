@@ -1,5 +1,5 @@
 from ... import backend as Z
-from .spec import Form
+from .form import Form
 
 
 class Node(object):
