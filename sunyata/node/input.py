@@ -15,7 +15,7 @@ class Input(Node):
         Node.__init__(self, model_inputs)
         dtype = Z.dtype(dtype)
         form = Form(shape, dtype)
-        self.initialize_forms([form])
+        self.initialize_output_forms([form])
 
     def input_build(self):
         for child in self.children():
