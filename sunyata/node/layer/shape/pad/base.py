@@ -18,6 +18,6 @@ class PadSpec(TransformSpec):
 
     def build_transform(self, form):
         layer = self.make_layer(form)
-        out_shape = Z.pad_out_shape(form.shape, self.pad)
+        out_shape = Z.pad_out_shape(form.batch_shape, self.pad)
         form = Form(out_shape, form.dtype)
         return layer, form

@@ -54,7 +54,7 @@ class RecurrentSpec(TransformSpec):
         raise NotImplementedError
 
     def build_transform(self, form):
-        in_dim, num_steps = form.shape
+        in_dim, num_steps = form.batch_shape
         out_dim = self.out_dim or in_dim
         layer = self.make_layer(in_dim, out_dim, form.dtype)
         if self.ret_last:

@@ -25,7 +25,7 @@ class EmbedSpec(TransformSpec):
         reference_shape = self.vocab_size, self.channels
         reference = self.reference_init(reference_shape, self.dtype)
         layer = EmbedLayer(reference, self.x_ndim())
-        in_len, = form.shape
+        in_len, = form.batch_shape
         out_shape = self.channels, in_len
         form = Form(out_shape, self.dtype)
         return layer, form

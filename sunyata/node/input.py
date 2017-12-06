@@ -26,6 +26,6 @@ class Input(Node):
             child.child_params(nodes_seen, params_seen, params)
 
     def input_forward(self, x, is_training):
-        self.set_data([x])
+        self.set_output_data([x])
         for child in self.children():
             child.child_forward(is_training)

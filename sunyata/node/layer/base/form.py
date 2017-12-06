@@ -16,5 +16,5 @@ class Form(object):
         return len(self.batch_shape)
 
     def check(self, x):
-        assert Z.shape(x)[1:] == self.shape
+        assert Z.shape(x)[1:] == self.batch_shape
         assert Z.dtype_of(x) == self.dtype

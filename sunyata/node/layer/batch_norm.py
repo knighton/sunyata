@@ -48,7 +48,7 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
 
     def build_transform(self, form):
         shape = self._norm_data_shape(
-            self.axis, self.spatial_ndim(), form.shape)
+            self.axis, self.spatial_ndim(), form.batch_shape)
         beta = self.beta_init(shape, form.dtype)
         gamma = self.gamma_init(shape, form.dtype)
         layer = InstanceBatchNormLayer(beta, gamma)
@@ -87,7 +87,7 @@ class GlobalBatchNormSpec(BaseBatchNormSpec):
 
     def build_transform(self, form):
         shape = self._norm_data_shape(
-            self.axis, self.spatial_ndim(), form.shape)
+            self.axis, self.spatial_ndim(), form.batch_shape)
         beta = self.beta_init(shape, form.dtype)
         gamma = self.gamma_init(shape, form.dtype)
         mean = self.mean_init(shape, form.dtype)

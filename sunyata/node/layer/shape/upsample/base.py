@@ -18,6 +18,6 @@ class UpsampleSpec(TransformSpec):
 
     def build_transform(self, form):
         layer = self.make_layer(form)
-        out_shape = Z.upsample_out_shape(form.shape, self.scale)
+        out_shape = Z.upsample_out_shape(form.batch_shape, self.scale)
         form = Form(out_shape, form.dtype)
         return layer, form

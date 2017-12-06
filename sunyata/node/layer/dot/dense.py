@@ -26,8 +26,8 @@ class DenseSpec(TransformSpec):
         self.bias_init = init.get(bias_init)
 
     def build_transform(self, form):
-        assert len(form.shape) == 1
-        in_dim, = form.shape
+        assert len(form.batch_shape) == 1
+        in_dim, = form.batch_shape
         out_dim = in_dim if self.out_dim is None else self.out_dim
         kernel_shape = out_dim, in_dim
         kernel = self.kernel_init(kernel_shape, form.dtype, 'conv_kernel')

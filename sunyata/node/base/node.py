@@ -60,8 +60,7 @@ class Node(PseudoNode):
     def set_output_data(self, data):
         assert len(self._output_forms) == len(data)
         for form, x in zip(self._output_forms, data):
-            assert Z.shape(x)[1:] == form.shape
-            assert Z.dtype_of(x) == form.dtype
+            form.check(x)
         self._output_data = data
 
     def children(self):

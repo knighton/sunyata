@@ -20,11 +20,11 @@ class Layer(object):
     def params(self):
         return self._params
 
-    def add_param(self, x, train=True):
+    def add_param(self, x, trainable=True):
         if isinstance(x, np.ndarray):
             x = Z.numpy_to_device(x)
-        if train:
-            x = Z.variablde(x)
+        if trainable:
+            x = Z.variable(x)
             self._params.append(x)
         else:
             x = Z.constant(x)

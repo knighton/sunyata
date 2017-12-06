@@ -1,3 +1,6 @@
+from ... import backend as Z
+
+
 class Model(object):
     """
     Object containing parameters which forward/backpropagates.

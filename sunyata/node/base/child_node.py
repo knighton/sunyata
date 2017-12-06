@@ -91,7 +91,7 @@ class ChildNode(Node):
             xx += parent.output_data()
         yy = self.child_forward_inner(xx, is_training)
         self.set_output_data(yy)
-        for child in self.children(is_training):
+        for child in self.children():
             child.child_forward(is_training)
         self._parents_ready_to_forward = 0
 

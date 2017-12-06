@@ -36,7 +36,7 @@ class DepthwiseConvSpec(TransformSpec):
         self.bias_init = init.get(bias_init)
 
     def build_transform(self, form):
-        depthwise_in_channels = form.shape[0]
+        depthwise_in_channels = form.batch_shape[0]
         depthwise_out_channels = self.depth_mul
         face = Z.to_shape(self.face, self.spatial_ndim())
         depthwise_kernel_shape = \
@@ -52,7 +52,7 @@ class DepthwiseConvSpec(TransformSpec):
             depthwise_kernel, bias, self.stride, self.pad, self.dilation,
             self.x_ndim())
         out_shape = Z.depthwise_conv_out_shape(
-            form.shape, face, self.stride, self.pad, self.dilation)
+            form.batch_shape, face, self.stride, self.pad, self.dilation)
         form = Form(out_shape, form.dtype)
         return layer, form
 

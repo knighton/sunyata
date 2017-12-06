@@ -23,6 +23,6 @@ class PoolSpec(TransformSpec):
     def build_transform(self, form):
         layer = self.make_layer(form)
         out_shape = Z.pool_out_shape(
-            form.shape, self.face, self.stride, self.pad)
+            form.batch_shape, self.face, self.stride, self.pad)
         form = Form(out_shape, form.dtype)
         return layer, form

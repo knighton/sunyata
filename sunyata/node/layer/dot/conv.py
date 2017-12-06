@@ -35,7 +35,7 @@ class ConvSpec(TransformSpec):
         self.bias_init = init.get(bias_init)
 
     def build_transform(self, form):
-        in_channels = form.shape[0]
+        in_channels = form.batch_shape[0]
         out_channels = in_channels if self.channels is None else self.channels
         face = Z.to_shape(self.face, self.spatial_ndim())
         kernel_shape = (out_channels, in_channels) + face
@@ -48,7 +48,7 @@ class ConvSpec(TransformSpec):
         layer = ConvLayer(
             kernel, bias, self.stride, self.pad, self.dilation, self.x_ndim())
         out_shape = Z.conv_out_shape(
-            form.shape, out_channels, face, self.stride, self.pad,
+            form.batch_shape, out_channels, face, self.stride, self.pad,
             self.dilation)
         form = Form(out_shape, form.dtype)
         return layer, form

@@ -17,7 +17,7 @@ class FlattenSpec(TransformSpec):
         super().__init__(spatial_ndim)
 
     def build_transform(self, form):
-        out_shape = (int(np.prod(form.shape)),)
+        out_shape = (int(np.prod(form.batch_shape)),)
         form = Form(out_shape, form.dtype)
         return FlattenLayer(self.x_ndim()), form
 

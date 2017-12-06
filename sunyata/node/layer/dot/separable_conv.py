@@ -41,7 +41,7 @@ class SeparableConvSpec(TransformSpec):
         self.bias_init = init.get(bias_init)
 
     def build_transform(self, form):
-        depthwise_in_channels = form.shape[0]
+        depthwise_in_channels = form.batch_shape[0]
         depthwise_out_channels = self.depth_mul
         pointwise_in_channels = depthwise_in_channels * depthwise_out_channels
         if self.channels is None:
@@ -66,7 +66,7 @@ class SeparableConvSpec(TransformSpec):
             depthwise_kernel, pointwise_kernel, bias, self.stride, self.pad,
             self.dilation, self.x_ndim())
         out_shape = Z.separable_conv_out_shape(
-            form.shape, pointwise_out_channels, face, self.stride, self.pad,
-            self.dilation)
+            form.batch_shape, pointwise_out_channels, face, self.stride,
+            self.pad, self.dilation)
         form = Form(out_shape, form.dtype)
         return layer, form
