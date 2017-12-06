@@ -1,4 +1,4 @@
-from ... import backend as Z
+from .... import backend as Z
 from ..base import Form, TransformLayer, TransformSpec
 
 
@@ -24,7 +24,7 @@ class RecurrentLayer(TransformLayer):
             initial_internal_state = None
         return [initial_state], [initial_internal_state]
 
-    def forward_one(self, x, is_training):
+    def transform(self, x, is_training):
         batch_size, _, num_steps = Z.shape(x)
         states, internal_states = self.start_states(batch_size)
         steps = range(num_steps)
@@ -53,7 +53,7 @@ class RecurrentSpec(TransformSpec):
     def make_layer(self, in_dim, out_dim, dtype):
         raise NotImplementedError
 
-    def build_one(self, form):
+    def build_transform(self, form):
         in_dim, num_steps = form.shape
         out_dim = self.out_dim or in_dim
         layer = self.make_layer(in_dim, out_dim, form.dtype)

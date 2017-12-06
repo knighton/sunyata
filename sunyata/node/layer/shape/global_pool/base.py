@@ -1,4 +1,4 @@
-from .... import backend as Z
+from ..... import backend as Z
 from ...base import Form, TransformLayer, TransformSpec
 
 
@@ -10,7 +10,7 @@ class GlobalPoolSpec(TransformSpec):
     def make_layer(self, form):
         raise NotImplementedError
 
-    def build_one(self, form):
+    def build_transform(self, form):
         layer = self.make_layer(form)
         out_shape = Z.global_pool_out_shape(form.shape)
         form = Form(out_shape, form.dtype)

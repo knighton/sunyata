@@ -8,11 +8,8 @@ class ArcTanLayer(TransformLayer):
 
 
 class ArcTanSpec(TransformSpec):
-    def __init__(self, ndim=None):
-        super().__init__(ndim)
-
     def build_transform(self, form):
-        return ArcTanLayer(), form
+        return ArcTanLayer(self.x_ndim()), form
 
 
 node_wrap(ArcTanSpec)

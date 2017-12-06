@@ -8,11 +8,11 @@ class SoftSignLayer(TransformLayer):
 
 
 class SoftSignSpec(TransformSpec):
-    def __init__(self, ndim=None):
-        super().__init__(ndim)
+    def __init__(self, spatial_ndim=None):
+        super().__init__(spatial_ndim)
 
     def build_transform(self, form):
-        return SoftSignLayer(), form
+        return SoftSignLayer(self.x_ndim()), form
 
 
 node_wrap(SoftSignSpec)

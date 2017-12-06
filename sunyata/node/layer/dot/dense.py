@@ -1,6 +1,6 @@
-from ... import backend as Z
-from ... import init
-from ..base import Form, TransformLayer, TransformSpec
+from .... import backend as Z
+from .... import init
+from ..base import Form, node_wrap, TransformLayer, TransformSpec
 
 
 class DenseLayer(TransformLayer):
@@ -12,7 +12,7 @@ class DenseLayer(TransformLayer):
         else:
             self.bias = self.add_param(bias)
 
-    def forward_one(self, x, is_training):
+    def transform(self, x, is_training):
         return Z.dense(x, self.kernel, self.bias)
 
 
@@ -25,7 +25,7 @@ class DenseSpec(TransformSpec):
         self.kernel_init = init.get(kernel_init)
         self.bias_init = init.get(bias_init)
 
-    def build_one(self, form):
+    def build_transform(self, form):
         assert len(form.shape) == 1
         in_dim, = form.shape
         out_dim = in_dim if self.out_dim is None else self.out_dim
@@ -37,4 +37,9 @@ class DenseSpec(TransformSpec):
         else:
             bias = None
         out_shape = out_dim,
-        return DenseLayer(kernel, bias), Form(out_shape, form.dtype)
+        layer = DenseLayer(kernel, bias)
+        form = Form(out_shape, form.dtype)
+        return layer, form
+
+
+node_wrap(DenseSpec)

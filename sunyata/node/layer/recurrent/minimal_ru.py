@@ -1,5 +1,5 @@
-from ... import backend as Z
-from ... import init
+from .... import backend as Z
+from .... import init
 from .base import RecurrentLayer, RecurrentSpec
 
 

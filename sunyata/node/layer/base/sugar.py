@@ -28,9 +28,8 @@ class LinkBuilder(PseudoNode):
 
 
 def _normalize_ndims(ndims):
-    if isinstance(ndims, list):
+    if isinstance(ndims, (list, tuple)):
         assert len(set(ndims)) == len(ndims)
-        assert ndims == sorted(ndims)
     else:
         ndims = [ndims]
     for ndim in ndims:

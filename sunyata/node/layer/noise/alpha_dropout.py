@@ -1,24 +1,26 @@
-from ... import backend as Z
-from ..base import TransformLayer, TransformSpec
+from .... import backend as Z
+from ..base import node_wrap, TransformLayer, TransformSpec
 
 
 class AlphaDropoutLayer(TransformLayer):
-    def __init__(self, rate, keep_axis, ndim):
-        super().__init__(ndim)
+    def __init__(self, rate, keep_axis, x_ndim=None):
+        super().__init__(x_ndim)
         self.rate = rate
         self.keep_axis = keep_axis
 
-    def forward_one(self, x, is_training):
+    def transform(self, x, is_training):
         return Z.alpha_dropout(x, is_training, self.rate, self.keep_axis)
 
 
 class AlphaDropoutSpec(TransformSpec):
-    def __init__(self, rate=0.5, keep_axis=None, ndim=None):
-        super().__init__(ndim)
+    def __init__(self, rate=0.5, keep_axis=None, spatial_ndim=None):
+        super().__init__(spatial_ndim)
         self.rate = rate
         self.keep_axis = keep_axis
 
-    def build_one(self, form):
-        ndim = self.in_ndim(form.shape)
-        layer = AlphaDropoutLayer(self.rate, self.keep_axis, ndim)
+    def build_transform(self, form):
+        layer = AlphaDropoutLayer(self.rate, self.keep_axis, self.x_ndim())
         return layer, form
+
+
+node_wrap(AlphaDropoutSpec, (None, 0, 1, 2, 3))

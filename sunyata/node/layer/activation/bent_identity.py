@@ -8,11 +8,8 @@ class BentIdentityLayer(TransformLayer):
 
 
 class BentIdentitySpec(TransformSpec):
-    def __init__(self, ndim=None):
-        super().__init__(ndim)
-
     def build_transform(self, form):
-        return BentIdentityLayer(), form
+        return BentIdentityLayer(self.x_ndim()), form
 
 
 node_wrap(BentIdentitySpec)

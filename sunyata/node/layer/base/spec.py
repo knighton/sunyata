@@ -1,11 +1,20 @@
 class Spec(object):
     def __init__(self, spatial_ndim=None):
         if spatial_ndim is None:
-            ndim = None
+            x_ndim = None
         else:
             assert spatial_ndim in {0, 1, 2, 3}
-            ndim = spatial_ndim + 2
-        self._x_ndim = ndim
+            x_ndim = spatial_ndim + 2
+        self._x_ndim = x_ndim
+
+    def x_ndim(self):
+        return self._x_ndim
+
+    def batch_ndim(self):
+        return self._x_ndim - 1
+
+    def spatial_ndim(self):
+        return self._x_ndim - 2
 
     def build_inner(self, forms):
         raise NotImplementedError
@@ -13,16 +22,15 @@ class Spec(object):
     def build(self, forms):
         assert forms
         if self._x_ndim is None:
-            x_ndim = forms[0].batch_ndim + 1
-            start = 1
+            self._x_ndim = forms[0].batch_ndim + 1
+            for form in forms[1:]:
+                if form.batch_ndim + 1 != self._x_ndim:
+                    self._x_ndim = None
+                    break
         else:
-            x_ndim = self._x_ndim
-            start = 0
-        for form in forms[start:]:
-            assert form.batch_ndim + 1 == x_ndim
-        layer, forms = self.build_inner(self, forms)
-        layer.initialize_input_ndim(x_ndim)
-        return layer, forms
+            for form in forms:
+                assert form.batch_ndim + 1 == self._x_ndim
+        return self.build_inner(forms)
 
 
 class TransformSpec(Spec):
@@ -52,8 +60,7 @@ class ForkSpec(Spec):
     def build_inner(self, forms):
         assert len(forms) == 1
         form, = forms
-        layer, forms = self.build_fork(form)
-        return layer, forms
+        return self.build_fork(form)
 
 
 class FlexSpec(Spec):

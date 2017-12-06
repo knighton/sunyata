@@ -1,12 +1,12 @@
-from ... import backend as Z
-from ... import init
+from .... import backend as Z
+from .... import init
 from ..base import Form, TransformLayer, TransformSpec
 
 
 class SeparableConvLayer(TransformLayer):
     def __init__(self, depthwise_kernel, pointwise_kernel, bias, stride, pad,
-                 dilation, ndim):
-        super().__init__(ndim)
+                 dilation, x_ndim=None):
+        super().__init__(x_ndim)
         self.depthwise_kernel = self.add_param(depthwise_kernel)
         self.pointwise_kernel = self.add_param(pointwise_kernel)
         if bias is None:
@@ -17,7 +17,7 @@ class SeparableConvLayer(TransformLayer):
         self.pad = pad
         self.dilation = dilation
 
-    def forward_one(self, x, is_training):
+    def transform(self, x, is_training):
         return Z.separable_conv(x, self.depthwise_kernel, self.pointwise_kernel,
                                 self.bias, self.stride, self.pad, self.dilation)
 
@@ -27,8 +27,8 @@ class SeparableConvSpec(TransformSpec):
                  dilation=1, has_bias=True,
                  depthwise_kernel_init='glorot_uniform',
                  pointwise_kernel_init='glorot_uniform', bias_init='zeros',
-                 ndim=None):
-        super().__init__(ndim)
+                 spatial_ndim=None):
+        super().__init__(spatial_ndim)
         self.channels = channels
         self.depth_mul = depth_mul
         self.face = face
@@ -40,8 +40,7 @@ class SeparableConvSpec(TransformSpec):
         self.pointwise_kernel_init = init.get(pointwise_kernel_init)
         self.bias_init = init.get(bias_init)
 
-    def build_one(self, form):
-        ndim = self.in_ndim(form.shape)
+    def build_transform(self, form):
         depthwise_in_channels = form.shape[0]
         depthwise_out_channels = self.depth_mul
         pointwise_in_channels = depthwise_in_channels * depthwise_out_channels
@@ -49,7 +48,7 @@ class SeparableConvSpec(TransformSpec):
             pointwise_out_channels = depthwise_in_channels
         else:
             pointwise_out_channels = self.channels
-        face = Z.to_shape(self.face, ndim - 2)
+        face = Z.to_shape(self.face, self.spatial_ndim())
         depthwise_kernel_shape = \
             (depthwise_out_channels, depthwise_in_channels) + face
         depthwise_kernel = self.depthwise_kernel_init(
@@ -65,7 +64,7 @@ class SeparableConvSpec(TransformSpec):
             bias = None
         layer = SeparableConvLayer(
             depthwise_kernel, pointwise_kernel, bias, self.stride, self.pad,
-            self.dilation, ndim)
+            self.dilation, self.x_ndim())
         out_shape = Z.separable_conv_out_shape(
             form.shape, pointwise_out_channels, face, self.stride, self.pad,
             self.dilation)

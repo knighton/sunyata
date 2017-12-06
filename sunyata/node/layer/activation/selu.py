@@ -8,11 +8,11 @@ class SELULayer(TransformLayer):
 
 
 class SELUSpec(TransformSpec):
-    def __init__(self, ndim=None):
-        super().__init__(ndim)
+    def __init__(self, spatial_ndim=None):
+        super().__init__(spatial_ndim)
 
     def build_transform(self, form):
-        return SELULayer(), form
+        return SELULayer(self.x_ndim()), form
 
 
 node_wrap(SELUSpec)
