@@ -44,16 +44,16 @@ class Chain(ModelOrNode):
         nodes = deepcopy(self._steps)
         return Chain(*nodes, _parents=parents)
 
-    def link_build_inner(self, forms):
+    def child_build_inner(self, forms):
         for step in self._steps:
-            forms = step.link_build_inner(forms)
+            forms = step.child_build_inner(forms)
         return forms
 
-    def link_params_inner(self, nodes_seen, params_seen, params):
+    def child_params_inner(self, nodes_seen, params_seen, params):
         for step in self._steps:
-            step.link_params_inner(nodes_seen, params_seen, params)
+            step.child_params_inner(nodes_seen, params_seen, params)
 
-    def link_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, is_training):
         for step in self._steps:
-            xx = step.link_forward_inner(xx, is_training)
+            xx = step.child_forward_inner(xx, is_training)
         return xx

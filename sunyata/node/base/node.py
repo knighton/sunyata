@@ -39,7 +39,7 @@ class Node(PseudoNode):
                 inputs.append(input_)
         return inputs
 
-    def forms(self):
+    def output_forms(self):
         return self._output_forms
 
     @classmethod

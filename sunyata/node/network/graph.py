@@ -15,7 +15,7 @@ class Graph(ModelOrNode):
     def __call__(self, *parents):
         raise NotImplementedError  # TODO
 
-    def link_build_inner(self, forms):
+    def child_build_inner(self, forms):
         for input_ in self._internal_inputs:
             input_.input_build()
         forms = []
@@ -24,11 +24,11 @@ class Graph(ModelOrNode):
             forms += output.output_forms()
         return forms
 
-    def link_params_inner(self, nodes_seen, params_seen, params):
+    def child_params_inner(self, nodes_seen, params_seen, params):
         for input_ in self._internal_inputs:
             input_.input_params(nodes_seen, params_seen, params)
 
-    def link_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, is_training):
         assert len(self._internal_inputs) == len(xx)
         for input_, x in zip(self._internal_inputs, xx):
             input_.input_forward(x, is_training)

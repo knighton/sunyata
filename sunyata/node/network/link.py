@@ -20,17 +20,17 @@ class Link(ModelOrNode):
         assert parents
         return Link(deepcopy(self._spec), parents)
 
-    def link_build_inner(self, forms):
+    def child_build_inner(self, forms):
         self._layer, forms = self._spec.build(forms)
         assert isinstance(self._layer, Layer)
         return forms
 
-    def link_params_inner(self, nodes_seen, params_seen, params):
+    def child_params_inner(self, nodes_seen, params_seen, params):
         for param in self._layer.params():
             if param in params_seen:
                 continue
             params_seen.add(param)
             params.append(param)
 
-    def link_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, is_training):
         return self._layer.forward(xx, is_training)

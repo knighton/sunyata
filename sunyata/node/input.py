@@ -19,13 +19,13 @@ class Input(Node):
 
     def input_build(self):
         for child in self.children():
-            child.link_build()
+            child.child_build()
 
     def input_params(self, nodes_seen, params_seen, params):
         for child in self.children():
-            child.link_params(nodes_seen, params_seen, params)
+            child.child_params(nodes_seen, params_seen, params)
 
     def input_forward(self, x, is_training):
         self.set_data([x])
         for child in self.children():
-            child.link_forward(is_training)
+            child.child_forward(is_training)
