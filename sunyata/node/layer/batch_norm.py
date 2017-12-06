@@ -1,6 +1,6 @@
 from ... import backend as Z
 from ... import init
-from .base import TransformLayer, TransformSpec
+from .base import node_wrap, TransformLayer, TransformSpec
 
 
 class BaseBatchNormLayer(TransformLayer):
@@ -55,6 +55,9 @@ class InstanceBatchNormSpec(BaseBatchNormSpec):
         return layer, form
 
 
+node_wrap(InstanceBatchNormSpec)
+
+
 class GlobalBatchNormLayer(BaseBatchNormLayer):
     def __init__(self, beta, gamma, momentum, mean, var, x_ndim):
         super().__init__(x_ndim)
@@ -92,3 +95,6 @@ class GlobalBatchNormSpec(BaseBatchNormSpec):
         layer = GlobalBatchNormLayer(
             beta, gamma, self.momentum, mean, var, self.x_ndim())
         return layer, form
+
+
+node_wrap(GlobalBatchNormSpec)

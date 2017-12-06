@@ -12,7 +12,7 @@ class LinkBuilder(PseudoNode):
     """
 
     def __init__(self, spec_class, default_kwargs=None):
-        from .spec import Spec
+        from . import Spec
         default_kwargs = default_kwargs or {}
         assert isinstance(default_kwargs, dict)
         assert issubclass(spec_class, Spec)
@@ -20,21 +20,24 @@ class LinkBuilder(PseudoNode):
         self.default_kwargs = default_kwargs or {}
 
     def __call__(self, *args, **kwargs):
-        from ..network import Link
-        kw = deepcopy(self.default_kwargs)
-        kw.update(deepcopy(kwargs))
-        spec = self.spec_class(*args, **kw)
+        from ... import Link
+        kwargs = deepcopy(self.default_kwargs)
+        kwargs.update(deepcopy(kwargs))
+        spec = self.spec_class(*args, **kwargs)
         return Link(spec)
 
+    def desugar(self):
+        return self.__call__()
 
-def _normalize_ndims(ndims):
-    if isinstance(ndims, (list, tuple)):
-        assert len(set(ndims)) == len(ndims)
+
+def _normalize_ndims(spatial_ndims):
+    if isinstance(spatial_ndims, (list, tuple)):
+        assert len(set(spatial_ndims)) == len(spatial_ndims)
     else:
-        ndims = [ndims]
-    for ndim in ndims:
-        assert ndim in {None, 0, 1, 2, 3}
-    return ndims
+        spatial_ndims = [spatial_ndims]
+    for spatial_ndim in spatial_ndims:
+        assert spatial_ndim in {None, 0, 1, 2, 3}
+    return spatial_ndims
 
 
 def _spec_class_to_link_builder_base_name(spec_class):
@@ -44,33 +47,33 @@ def _spec_class_to_link_builder_base_name(spec_class):
     return name
 
 
-def _link_builder_name(base_name, ndim):
-    if ndim is None:
+def _link_builder_name(base_name, spatial_ndim):
+    if spatial_ndim is None:
         name = base_name
-    elif isinstance(ndim, int):
-        name = '%s%dD' % (base_name, ndim)
+    elif isinstance(spatial_ndim, int):
+        name = '%s%dD' % (base_name, spatial_ndim)
     else:
         assert False
     return name
 
 
-def _link_builder(spec_class, ndim):
-    default_kwargs = {'ndim': ndim}
+def _link_builder(spec_class, spatial_ndim):
+    default_kwargs = {'spatial_ndim': spatial_ndim}
     return LinkBuilder(spec_class, default_kwargs)
 
 
-def _each_link_builder(spec_class, ndims):
-    ndims = _normalize_ndims(ndims)
+def _each_link_builder(spec_class, spatial_ndims):
+    spatial_ndims = _normalize_ndims(spatial_ndims)
     base_name = _spec_class_to_link_builder_base_name(spec_class)
-    for ndim in ndims:
-        name = _link_builder_name(base_name, ndim)
-        builder = _link_builder(spec_class, ndim)
+    for spatial_ndim in spatial_ndims:
+        name = _link_builder_name(base_name, spatial_ndim)
+        builder = _link_builder(spec_class, spatial_ndim)
         yield name, builder
 
 
-def node_wrap(spec_class, ndims=None):
+def node_wrap(spec_class, spatial_ndims=None):
     caller_frame = inspect.stack()[1]
     caller_module = inspect.getmodule(caller_frame[0])
-    for builder_name, builder in _each_link_builder(spec_class, ndims):
+    for builder_name, builder in _each_link_builder(spec_class, spatial_ndims):
         assert not hasattr(caller_module, builder_name)
         setattr(caller_module, builder_name, builder)

@@ -3,7 +3,7 @@ from .base import ModelOrNode
 
 class Graph(ModelOrNode):
     """
-    A link/model realized as a static computational graph.
+    A model/node realized as a static computational graph (with predecessors).
     """
 
     def __init__(self, inputs, outputs, _parents=None):

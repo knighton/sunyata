@@ -4,13 +4,14 @@ from .base import ModelOrNode
 
 class Chain(ModelOrNode):
     """
-    A link/model realized as a sequence of nodes.
+    A model/node realized as a sequence of nodes (with predecessors).
     """
 
     @classmethod
-    def _seq_init_head_steps(cls, nodes, has_parents):
+    def _chain_init_head_steps(cls, nodes, has_parents):
         assert nodes
-        assert isinstance(nodes, list)
+        assert isinstance(nodes, (list, tuple))
+        nodes = list(map(lambda node: node.desugar(), nodes))
         if has_parents:
             for node in nodes:
                 assert isinstance(node, ChildNode)
@@ -31,7 +32,7 @@ class Chain(ModelOrNode):
 
     def __init__(self, *nodes, _parents=None):
         parents = self.normalize_parents(_parents)
-        head, steps = self._seq_init_steps(nodes, bool(parents))
+        head, steps = self._chain_init_head_steps(nodes, bool(parents))
         for parent in parents:
             head.adopt_parent(parent)
         ModelOrNode.__init__(self, [head])

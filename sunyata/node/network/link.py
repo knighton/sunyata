@@ -5,6 +5,10 @@ from .base import ModelOrNode
 
 
 class Link(ModelOrNode):
+    """
+    A model/node realized as a single layer node (with predecessors).
+    """
+
     def __init__(self, spec, _parents=None):
         parents = self.normalize_parents(_parents)
         ModelOrNode.__init__(self, parents)

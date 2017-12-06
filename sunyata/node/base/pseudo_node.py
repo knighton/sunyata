@@ -50,5 +50,8 @@ _CHAIN_CACHE = NodeChainer()
 
 
 class PseudoNode(object):
+    def desugar(self):
+        raise NotImplementedError
+
     def __gt__(self, right):
         _CHAIN_CACHE.connect(self, right)

@@ -1,7 +1,7 @@
 import numpy as np
 
 from .... import backend as Z
-from ..base import Form, TransformLayer, TransformSpec
+from ..base import Form, node_wrap, TransformLayer, TransformSpec
 
 
 class FlattenLayer(TransformLayer):
@@ -20,3 +20,6 @@ class FlattenSpec(TransformSpec):
         out_shape = (int(np.prod(form.shape)),)
         form = Form(out_shape, form.dtype)
         return FlattenLayer(self.x_ndim()), form
+
+
+node_wrap(FlattenSpec)

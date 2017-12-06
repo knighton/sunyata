@@ -1,6 +1,6 @@
 from .... import backend as Z
 from .... import init
-from ..base import Form, node_wrap, TransformLayer, TransformSpec
+from ..base import Form, LinkBuilder, TransformLayer, TransformSpec
 
 
 class DenseLayer(TransformLayer):
@@ -42,4 +42,4 @@ class DenseSpec(TransformSpec):
         return layer, form
 
 
-node_wrap(DenseSpec)
+Dense = LinkBuilder(DenseSpec)

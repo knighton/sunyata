@@ -36,6 +36,9 @@ class ChildNode(Node):
         for parent in parents:
             self.adopt_parent(parent)
 
+    def parents(self):
+        return self._parents
+
     def child_is_built(self):
         return self._parents_ready_to_build is None
 

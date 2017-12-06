@@ -21,6 +21,9 @@ class Node(PseudoNode):
         self._output_data = None
         self._children = []
 
+    def desugar(self):
+        return self
+
     def model_inputs(self):
         return self._model_inputs
 
