@@ -1,21 +1,20 @@
 from copy import deepcopy
 
-from ..base.layer import Layer
-from ..base.spec import Spec
-from .base.link_or_model import LinkOrModel
+from ..layer.base import Layer, Spec
+from .base import ModelOrNode
 
 
-class Atom(LinkOrModel):
+class Link(ModelOrNode):
     def __init__(self, spec, _parents=None):
         parents = self.normalize_parents(_parents)
-        LinkOrModel.__init__(self, parents)
+        ModelOrNode.__init__(self, parents)
         assert isinstance(spec, Spec)
         self._spec = spec
         self._layer = None
 
     def __call__(self, *parents):
         assert not parents
-        return Atom(deepcopy(self._spec), parents)
+        return Link(deepcopy(self._spec), parents)
 
     def link_build_inner(self, forms):
         self._layer, forms = self._spec.build(forms)

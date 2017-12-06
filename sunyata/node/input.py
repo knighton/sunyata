@@ -1,6 +1,6 @@
 from .. import backend as Z
-from .base.form import Form
-from .base.node import Node
+from .base import Node
+from .layer.base import Form
 
 
 class Input(Node):

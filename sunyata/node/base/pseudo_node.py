@@ -1,10 +1,8 @@
 from collections import defaultdict
 from copy import deepcopy
 
-from ..network.sequence import Sequence
 
-
-class Sequencer(object):
+class NodeChainer(object):
     def __init__(self):
         self._next_color = 1
         self._node2color = {}
@@ -33,10 +31,11 @@ class Sequencer(object):
     def _remove_color(self, node):
         del self._node2color[node]
 
-    def _make_sequence(self, color):
+    def _chain(self, color):
+        from ..network import Chain
         nodes = self._color2nodes[color]
         nodes = deepcopy(nodes)
-        return Sequence(*nodes)
+        return Chain(*nodes)
 
     def connect(self, left, right):
         if left is not self._prev_right:
@@ -44,12 +43,12 @@ class Sequencer(object):
         self._prev_right = right
         color = self._color_of(left)
         self._attach_to(right, color)
-        return self._make_sequence(color)
+        return self._chain(color)
 
 
-_SEQ = Sequencer()
+_CHAIN_CACHE = NodeChainer()
 
 
 class PseudoNode(object):
     def __gt__(self, right):
-        _SEQ.connect(self, right)
+        _CHAIN_CACHE.connect(self, right)

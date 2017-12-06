@@ -1,12 +1,12 @@
-from ....model.base.model import Model
-from ...base.link import Link
+from ....model.base import Model
+from ...base import ChildNode
 
 
-class LinkOrModel(Link, Model):
+class ModelOrNode(ChildNode, Model):
     """
-    A link that also can be treated as a model to refer to its entire network.
+    A child node that can be treated as a model to refer to its entire network.
 
-    Examples are Sequences and Graphs.
+    Examples are Chains and Graphs.
 
     That is, this node is all the outputs of the network, and is descended from
     all its inputs.  Nodes track all their original inputs.  If treated as a
@@ -16,7 +16,7 @@ class LinkOrModel(Link, Model):
     """
 
     def __init__(self, parents):
-        Link.__init__(self, parents)
+        ChildNode.__init__(self, parents)
         Model.__init__(self)
 
     def build_inner(self):

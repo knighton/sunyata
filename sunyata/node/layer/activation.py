@@ -1,6 +1,6 @@
 import numpy as np
 
-from .. import backend as Z
+from ... import backend as Z
 from .base import TransformLayer, TransformSpec
 
 

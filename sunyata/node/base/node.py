@@ -1,5 +1,5 @@
 from ... import backend as Z
-from .form import Form
+from ..layer.base import Form
 from .pseudo_node import PseudoNode
 
 
@@ -9,7 +9,7 @@ class Node(PseudoNode):
 
     There are two types:
     * Input (placeholder for model input)
-    * Link (everything else: receives inputs and broadcasts outputs)
+    * ChildNode (everything else: receives inputs and broadcasts outputs)
 
     Tracks its outputs.  Also caches references to the inputs nodes of all its
     ancestors, which are needed by models.

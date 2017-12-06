@@ -1,6 +1,6 @@
 import numpy as np
 
-from ... import backend as Z
+from .... import backend as Z
 
 
 class Layer(object):
@@ -37,7 +37,7 @@ class Layer(object):
         return self.forward_inner(xx, is_training)
 
 
-class Transform(Layer):
+class TransformLayer(Layer):
     def transform(self, x, is_training):
         raise NotImplementedError
 
@@ -48,7 +48,7 @@ class Transform(Layer):
         return [y]
 
 
-class Merge(Layer):
+class MergeLayer(Layer):
     def merge(self, xx, is_training):
         raise NotImplementedError
 
@@ -57,7 +57,7 @@ class Merge(Layer):
         return [y]
 
 
-class Fork(Layer):
+class ForkLayer(Layer):
     def fork(self, x, is_training):
         raise NotImplementedError
 
@@ -67,7 +67,7 @@ class Fork(Layer):
         return self.fork(x, is_training)
 
 
-class Flex(Layer):
+class FlexLayer(Layer):
     def flex(self, xx, is_training):
         raise NotImplementedError
 

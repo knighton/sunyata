@@ -1,11 +1,9 @@
 from copy import deepcopy
 
-from ..network.atom import Atom
-from .pseudo_node import PseudoNode
-from .spec import Spec
+from ...base.pseudo_node import PseudoNode
 
 
-class Sugar(PseudoNode):
+class LinkBuilder(PseudoNode):
     """
     Syntactic sugar for creating layer nodes.
 
@@ -13,6 +11,7 @@ class Sugar(PseudoNode):
     """
 
     def __init__(self, spec_class, default_kwargs=None):
+        from .spec import Spec
         default_kwargs = default_kwargs or {}
         assert isinstance(default_kwargs, dict)
         assert issubclass(spec_class, Spec)
@@ -20,7 +19,8 @@ class Sugar(PseudoNode):
         self.default_kwargs = default_kwargs or {}
 
     def __call__(self, *args, **kwargs):
+        from ..network import Link
         kw = deepcopy(self.default_kwargs)
         kw.update(deepcopy(kwargs))
         spec = self.spec_class(*args, **kw)
-        return Atom(spec)
+        return Link(spec)

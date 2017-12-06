@@ -1,9 +1,8 @@
-from ..base.link import Link
-from ..base.node import Node
-from .base.link_or_model import LinkOrModel
+from ..base import ChildNode, Node
+from .base import ModelOrNode
 
 
-class Sequence(LinkOrModel):
+class Chain(ModelOrNode):
     """
     A link/model realized as a sequence of nodes.
     """
@@ -14,7 +13,7 @@ class Sequence(LinkOrModel):
         assert isinstance(nodes, list)
         if has_parents:
             for node in nodes:
-                assert isinstance(node, Link)
+                assert isinstance(node, ChildNode)
                 assert not node.parents()
                 assert not node.children()
             head = nodes[0]
@@ -25,7 +24,7 @@ class Sequence(LinkOrModel):
             assert not head.children()
             steps = nodes[1:]
             for step in steps:
-                assert isinstance(step, Link)
+                assert isinstance(step, ChildNode)
                 assert not step.parents()
                 assert not step.children()
         return head, steps
@@ -35,7 +34,7 @@ class Sequence(LinkOrModel):
         head, steps = self._seq_init_steps(nodes, bool(parents))
         for parent in parents:
             head.adopt_parent(parent)
-        LinkOrModel.__init__(self, [head])
+        ModelOrNode.__init__(self, [head])
         self._steps = steps
 
     def link_build_inner(self, forms):

@@ -1,1 +1,1 @@
-from ...node.network.graph import Graph  # noqa
+from ...node.network.graph import *  # noqa

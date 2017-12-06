@@ -1,3 +1,3 @@
-from .atom import Atom  # noqa
+from .chain import Chain  # noqa
 from .graph import Graph  # noqa
-from .sequence import Sequence  # noqa
+from .link import Link  # noqa

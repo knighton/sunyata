@@ -1,16 +1,16 @@
-from .base.link_or_model import LinkOrModel
+from .base import ModelOrNode
 
 
-class Graph(LinkOrModel):
+class Graph(ModelOrNode):
     """
     A link/model realized as a static computational graph.
     """
 
     def __init__(self, inputs, outputs, _parents=None):
         parents = self.normalize_parents(_parents)
-        LinkOrModel.__init__(self, parents)
+        ModelOrNode.__init__(self, parents)
         self._internal_inputs = self.collect_model_inputs(self.as_nodes(inputs))
-        self._internal_outputs = self.as_links(outputs)
+        self._internal_outputs = self.as_children(outputs)
 
     def link_build_inner(self, forms):
         for input_ in self._internal_inputs:
