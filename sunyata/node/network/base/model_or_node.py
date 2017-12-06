@@ -22,9 +22,6 @@ class ModelOrNode(ChildNode, Model):
     def build_inner(self):
         for input_ in self.model_inputs():
             input_.input_build()
-
-    def params(self):
-        self.ensure_built()
         nodes_seen = set()
         params_seen = set()
         params = []

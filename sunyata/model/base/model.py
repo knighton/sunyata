@@ -1,3 +1,5 @@
+import numpy as np
+
 from ... import backend as Z
 
 
@@ -7,28 +9,21 @@ class Model(object):
     """
 
     def __init__(self):
-        self._model_is_built = False
+        self._params = None
 
     def is_built(self):
-        return self._model_is_built
+        return self._params is not None
 
     def build_inner(self):
-        """
-        ->
-        """
-        raise NotImplementedError
-
-    def build(self):
-        if self._model_is_built:
-            return
-        self.build_inner()
-        self._model_is_built = True
-
-    def params(self):
         """
         -> list of Variable
         """
         raise NotImplementedError
+
+    def build(self):
+        if self._params is not None:
+            return
+        self._params = self.build_inner()
 
     def forward(self, xx, is_training):
         """
@@ -38,7 +33,7 @@ class Model(object):
 
     def fit_on_batch(self, x, y, opt, losses, aux_metrics):
         grads_and_params, loss_values, aux_metric_values = Z.gradients(
-            self.params, self.forward, losses, aux_metrics, [x], [y])
+            self._params, self.forward, losses, aux_metrics, [x], [y])
         loss = Z.scalar(loss_values[0])
         acc = Z.scalar(aux_metric_values[0][0])
         assert not np.isnan(loss)
