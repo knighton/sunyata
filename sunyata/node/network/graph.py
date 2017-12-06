@@ -12,6 +12,9 @@ class Graph(ModelOrNode):
         self._internal_inputs = self.collect_model_inputs(self.as_nodes(inputs))
         self._internal_outputs = self.as_children(outputs)
 
+    def __call__(self, *parents):
+        raise NotImplementedError  # TODO
+
     def link_build_inner(self, forms):
         for input_ in self._internal_inputs:
             input_.input_build()

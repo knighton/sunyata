@@ -74,7 +74,9 @@ class Node(PseudoNode):
 
     @classmethod
     def as_list(cls, x):
-        if isinstance(x, list):
+        if x is None:
+            nodes = []
+        elif isinstance(x, list):
             nodes = x
         else:
             nodes = [x]

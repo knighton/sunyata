@@ -8,35 +8,41 @@ class Chain(ModelOrNode):
     """
 
     @classmethod
-    def _chain_init_head_steps(cls, nodes, has_parents):
+    def _desugar_nodes(cls, nodes):
         assert nodes
         assert isinstance(nodes, (list, tuple))
-        nodes = list(map(lambda node: node.desugar(), nodes))
-        if has_parents:
-            for node in nodes:
-                assert isinstance(node, ChildNode)
-                assert not node.parents()
-                assert not node.children()
-            head = nodes[0]
-            steps = nodes[1:]
-        else:
-            head = nodes[0]
-            assert isinstance(head, Node)
-            assert not head.children()
-            steps = nodes[1:]
-            for step in steps:
-                assert isinstance(step, ChildNode)
-                assert not step.parents()
-                assert not step.children()
-        return head, steps
+        return list(map(lambda node: node.desugar(), nodes))
 
     def __init__(self, *nodes, _parents=None):
-        parents = self.normalize_parents(_parents)
-        head, steps = self._chain_init_head_steps(nodes, bool(parents))
-        for parent in parents:
-            head.adopt_parent(parent)
-        ModelOrNode.__init__(self, [head])
+        parents_via_call = self.normalize_parents(_parents)
+        nodes = self._desugar_nodes(nodes)
+        sequence_head = nodes[0]
+        if parents_via_call:
+            # Connected to previous node(s) via __call__().
+            assert not sequence_head.parents()
+            eject_head = False
+            parents = parents_via_call
+        elif sequence_head.model_inputs():
+            # Connected to previous via the first node of its sequence.
+            assert 2 <= len(nodes)
+            eject_head = True
+            parents = [sequence_head]
+        else:
+            # Orphan sequences.
+            eject_head = False
+            parents = None
+        ModelOrNode.__init__(self, parents)
+        steps = nodes[int(eject_head):]
+        for step in steps:
+            assert isinstance(step, ChildNode)
+            assert not step.parents()
+            assert not step.children()
         self._steps = steps
+
+    def __call__(self, *parents):
+        assert parents
+        nodes = deepcopy(self._steps)
+        return Chain(*nodes, _parents=parents)
 
     def link_build_inner(self, forms):
         for step in self._steps:

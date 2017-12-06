@@ -27,6 +27,7 @@ class ChildNode(Node):
         self._parent_indices.append(index_of_child)
 
     def __init__(self, parents):
+        parents = self.as_list(parents)
         model_inputs = self.collect_model_inputs(parents)
         Node.__init__(self, model_inputs)
         self._parents = []

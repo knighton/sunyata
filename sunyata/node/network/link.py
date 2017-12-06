@@ -17,7 +17,7 @@ class Link(ModelOrNode):
         self._layer = None
 
     def __call__(self, *parents):
-        assert not parents
+        assert parents
         return Link(deepcopy(self._spec), parents)
 
     def link_build_inner(self, forms):
