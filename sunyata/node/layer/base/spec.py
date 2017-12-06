@@ -26,13 +26,13 @@ class Spec(object):
 
 
 class TransformSpec(Spec):
-    def build_change(self, form):
+    def build_transform(self, form):
         raise NotImplementedError
 
     def build_inner(self, forms):
         assert len(forms) == 1
         form, = forms
-        layer, form = self.build_change(form)
+        layer, form = self.build_transform(form)
         return layer, [form]
 
 
