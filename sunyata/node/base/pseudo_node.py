@@ -22,14 +22,6 @@ class Chainer(object):
         Note: the Chain will be immediately thrown away unless this is the last
         > comparison of the "node > node > node ..." sequence.
         """
-        # If the node on left is not the previous node on right, we've started a
-        # new Chain.  So, we can't connect to the old chain anymore.  Drop its
-        # color.
-        if left is not self._prev_right and self._prev_right is not None:
-            color = self._node2color[self._prev_right]
-            del self._node2color[self._prev_right]
-            del self._color2nodes[color]
-
         # Save the new previous right node.
         self._prev_right = right
 
