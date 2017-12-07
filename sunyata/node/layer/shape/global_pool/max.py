@@ -4,8 +4,8 @@ from .base import GlobalPoolLayer, GlobalPoolSpec
 
 
 class GlobalMaxPoolLayer(GlobalPoolLayer):
-    def transform(self, x, is_training):
-        return Z.global_max_pool(x, is_training)
+    def transform(self, x, train):
+        return Z.global_max_pool(x, train)
 
 
 class GlobalMaxPoolSpec(GlobalPoolSpec):

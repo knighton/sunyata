@@ -32,9 +32,9 @@ class ModelOrNode(ChildNode, Model):
             input_.input_params(nodes_seen, params_seen, params)
         return params
 
-    def forward(self, xx, is_training):
+    def forward(self, xx, train):
         inputs = self.model_inputs()
         assert len(xx) == len(inputs)
         for input_, x in zip(inputs, xx):
-            input_.input_forward(x, is_training)
+            input_.input_forward(x, train)
         return self.output_data()

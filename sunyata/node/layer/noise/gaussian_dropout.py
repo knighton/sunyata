@@ -8,8 +8,8 @@ class GaussianDropoutLayer(TransformLayer):
         self.rate = rate
         self.keep_axis = keep_axis
 
-    def transform(self, x, is_training):
-        return Z.gaussian_dropout(x, is_training, self.rate, self.keep_axis)
+    def transform(self, x, train):
+        return Z.gaussian_dropout(x, train, self.rate, self.keep_axis)
 
 
 class GaussianDropoutSpec(TransformSpec):

@@ -30,49 +30,49 @@ class Layer(object):
             x = Z.constant(x)
         return x
 
-    def forward_inner(self, xx, is_training):
+    def forward_inner(self, xx, train):
         raise NotImplementedError
 
-    def forward(self, xx, is_training):
+    def forward(self, xx, train):
         if self._x_ndim is not None:
             for x in xx:
                 assert Z.ndim(x) == self._x_ndim
-        return self.forward_inner(xx, is_training)
+        return self.forward_inner(xx, train)
 
 
 class TransformLayer(Layer):
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         raise NotImplementedError
 
-    def forward_inner(self, xx, is_training):
+    def forward_inner(self, xx, train):
         assert len(xx) == 1
         x, = xx
-        y = self.transform(x, is_training)
+        y = self.transform(x, train)
         return [y]
 
 
 class MergeLayer(Layer):
-    def merge(self, xx, is_training):
+    def merge(self, xx, train):
         raise NotImplementedError
 
-    def forward_inner(self, xx, is_training):
-        y = self.merge(xx, is_training)
+    def forward_inner(self, xx, train):
+        y = self.merge(xx, train)
         return [y]
 
 
 class ForkLayer(Layer):
-    def fork(self, x, is_training):
+    def fork(self, x, train):
         raise NotImplementedError
 
-    def forward_inner(self, xx, is_training):
+    def forward_inner(self, xx, train):
         assert len(xx) == 1
         x, = xx
-        return self.fork(x, is_training)
+        return self.fork(x, train)
 
 
 class FlexLayer(Layer):
-    def flex(self, xx, is_training):
+    def flex(self, xx, train):
         raise NotImplementedError
 
-    def forward_inner(self, xx, is_training):
-        return self.flex(xx, is_training)
+    def forward_inner(self, xx, train):
+        return self.flex(xx, train)

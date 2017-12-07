@@ -8,7 +8,7 @@ class FlattenLayer(TransformLayer):
     def __init__(self, x_ndim):
         super().__init__(x_ndim)
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.reshape(x, (Z.shape(x)[0], -1))
 
 

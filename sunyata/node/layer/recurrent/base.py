@@ -24,7 +24,7 @@ class RecurrentLayer(TransformLayer):
             initial_internal_state = None
         return [initial_state], [initial_internal_state]
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         batch_size, _, num_steps = Z.shape(x)
         states, internal_states = self.start_states(batch_size)
         steps = range(num_steps)

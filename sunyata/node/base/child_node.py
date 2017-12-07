@@ -76,23 +76,23 @@ class ChildNode(Node):
         for child in self.children():
             child.child_params(nodes_seen, params_seen, params)
 
-    def child_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, train):
         """
-        xx, is_training -> yy
+        xx, train -> yy
         """
         raise NotImplementedError
 
-    def child_forward(self, is_training):
+    def child_forward(self, train):
         self._parents_ready_to_forward += 1
         if self._parents_ready_to_forward < len(self._parents):
             return
         xx = []
         for parent in self.parents():
             xx += parent.output_data()
-        yy = self.child_forward_inner(xx, is_training)
+        yy = self.child_forward_inner(xx, train)
         self.set_output_data(yy)
         for child in self.children():
-            child.child_forward(is_training)
+            child.child_forward(train)
         self._parents_ready_to_forward = 0
 
     @classmethod

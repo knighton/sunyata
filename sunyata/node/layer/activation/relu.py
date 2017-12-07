@@ -10,7 +10,7 @@ class ReLULayer(TransformLayer):
         self.min = min
         self.max = max
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.relu(x, self.min, self.max)
 
 

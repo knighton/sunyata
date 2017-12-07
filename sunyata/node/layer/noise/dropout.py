@@ -8,8 +8,8 @@ class DropoutLayer(TransformLayer):
         self.rate = rate
         self.keep_axis = keep_axis
 
-    def transform(self, x, is_training):
-        return Z.dropout(x, is_training, self.rate, self.keep_axis)
+    def transform(self, x, train):
+        return Z.dropout(x, train, self.rate, self.keep_axis)
 
 
 class DropoutSpec(TransformSpec):

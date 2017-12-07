@@ -3,7 +3,7 @@ from .base import PoolLayer, PoolSpec
 
 
 class MaxPoolLayer(PoolLayer):
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.max_pool(x, self.face, self.stride, self.pad)
 
 

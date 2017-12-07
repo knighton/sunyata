@@ -7,7 +7,7 @@ class ConstantPadLayer(PadLayer):
         super().__init__(pad, x_ndim)
         self.value = value
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.constant_pad(x, self.pad, self.value)
 
 

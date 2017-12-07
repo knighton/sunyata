@@ -35,5 +35,5 @@ class Link(ModelOrNode):
             params_seen.add(param)
             params.append(param)
 
-    def child_forward_inner(self, xx, is_training):
-        return self._layer.forward(xx, is_training)
+    def child_forward_inner(self, xx, train):
+        return self._layer.forward(xx, train)

@@ -15,7 +15,7 @@ class ConvLayer(TransformLayer):
         self.pad = pad
         self.dilation = dilation
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.conv(x, self.kernel, self.bias, self.stride, self.pad,
                       self.dilation)
 

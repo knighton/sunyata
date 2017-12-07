@@ -34,7 +34,7 @@ class InstanceBatchNormLayer(BaseBatchNormLayer):
         self.beta = self.add_param(beta)
         self.gamma = self.add_param(gamma)
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.instance_batch_norm(x, self.beta, self.gamma)
 
 
@@ -67,9 +67,9 @@ class GlobalBatchNormLayer(BaseBatchNormLayer):
         self.mean = self.add_param(mean, trainable=False)
         self.var = self.add_param(var, trainable=False)
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.global_batch_norm(
-            x, is_training, self.beta, self.gamma, self.momentum, self.mean,
+            x, train, self.beta, self.gamma, self.momentum, self.mean,
             self.var)
 
 

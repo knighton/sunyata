@@ -3,8 +3,8 @@ from .base import UpsampleLayer, UpsampleSpec
 
 
 class LinearUpsampleLayer(UpsampleLayer):
-    def transform(self, x, is_training):
-        return Z.linear_upsample(x, is_training)
+    def transform(self, x, train):
+        return Z.linear_upsample(x, train)
 
 
 class LinearUpsampleSpec(UpsampleSpec):

@@ -7,7 +7,7 @@ class LeakyReLULayer(TransformLayer):
         super().__init__(x_ndim)
         self.alpha = alpha
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.leaky_relu(x, self.alpha)
 
 

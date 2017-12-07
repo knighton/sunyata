@@ -17,7 +17,7 @@ class SeparableConvLayer(TransformLayer):
         self.pad = pad
         self.dilation = dilation
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.separable_conv(x, self.depthwise_kernel, self.pointwise_kernel,
                                 self.bias, self.stride, self.pad, self.dilation)
 

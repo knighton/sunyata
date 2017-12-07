@@ -8,7 +8,7 @@ class EmbedLayer(TransformLayer):
         super().__init__(x_ndim)
         self.reference = self.add_param(reference)
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.embed(x, self.reference)
 
 

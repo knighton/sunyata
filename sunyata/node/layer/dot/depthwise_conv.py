@@ -16,7 +16,7 @@ class DepthwiseConvLayer(TransformLayer):
         self.pad = pad
         self.dilation = dilation
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.depthwise_conv(x, self.depthwise_kernel, self.bias,
                                 self.stride, self.pad, self.dilation)
 

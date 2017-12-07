@@ -8,8 +8,8 @@ class AlphaDropoutLayer(TransformLayer):
         self.rate = rate
         self.keep_axis = keep_axis
 
-    def transform(self, x, is_training):
-        return Z.alpha_dropout(x, is_training, self.rate, self.keep_axis)
+    def transform(self, x, train):
+        return Z.alpha_dropout(x, train, self.rate, self.keep_axis)
 
 
 class AlphaDropoutSpec(TransformSpec):

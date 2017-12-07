@@ -37,10 +37,10 @@ class Graph(ModelOrNode):
         for input_ in self._internal_inputs:
             input_.input_params(nodes_seen, params_seen, params)
 
-    def child_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, train):
         assert len(self._internal_inputs) == len(xx)
         for input_, x in zip(self._internal_inputs, xx):
-            input_.input_forward(x, is_training)
+            input_.input_forward(x, train)
         yy = []
         for output in self._internal_outputs:
             yy += output.output_data()

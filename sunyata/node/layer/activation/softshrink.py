@@ -7,7 +7,7 @@ class SoftShrinkLayer(TransformLayer):
         super().__init__(x_ndim)
         self.lam = lam
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.softshrink(x, self.lam)
 
 

@@ -3,8 +3,8 @@ from .base import UpsampleLayer, UpsampleSpec
 
 
 class NearestUpsampleLayer(UpsampleLayer):
-    def transform(self, x, is_training):
-        return Z.nearest_upsample(x, is_training)
+    def transform(self, x, train):
+        return Z.nearest_upsample(x, train)
 
 
 class NearestUpsampleSpec(UpsampleSpec):

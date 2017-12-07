@@ -12,7 +12,7 @@ class DenseLayer(TransformLayer):
         else:
             self.bias = self.add_param(bias)
 
-    def transform(self, x, is_training):
+    def transform(self, x, train):
         return Z.dense(x, self.kernel, self.bias)
 
 

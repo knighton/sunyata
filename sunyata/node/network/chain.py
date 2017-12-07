@@ -59,7 +59,7 @@ class Chain(ModelOrNode):
         for step in self._steps:
             step.child_params_inner(nodes_seen, params_seen, params)
 
-    def child_forward_inner(self, xx, is_training):
+    def child_forward_inner(self, xx, train):
         for step in self._steps:
-            xx = step.child_forward_inner(xx, is_training)
+            xx = step.child_forward_inner(xx, train)
         return xx

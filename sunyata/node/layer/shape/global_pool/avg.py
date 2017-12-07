@@ -4,8 +4,8 @@ from .base import GlobalPoolLayer, GlobalPoolSpec
 
 
 class GlobalAvgPoolLayer(GlobalPoolLayer):
-    def transform(self, x, is_training):
-        return Z.global_avg_pool(x, is_training)
+    def transform(self, x, train):
+        return Z.global_avg_pool(x, train)
 
 
 class GlobalAvgPoolSpec(GlobalPoolSpec):

@@ -8,8 +8,8 @@ class GaussianNoiseLayer(TransformLayer):
         self.std = std
         self.keep_axis = keep_axis
 
-    def transform(self, x, is_training):
-        return Z.gaussian_noise(x, is_training, self.std, self.keep_axis)
+    def transform(self, x, train):
+        return Z.gaussian_noise(x, train, self.std, self.keep_axis)
 
 
 class GaussianNoiseSpec(TransformSpec):
