@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from ... import backend as Z
 from ..layer.base import Form
 from .pseudo_node import PseudoNode
@@ -20,6 +22,13 @@ class Node(PseudoNode):
         self._output_forms = None
         self._output_data = None
         self._children = []
+
+    def __mul__(self, count):
+        from ..network import Chain
+        assert isinstance(count, int)
+        assert 1 <= count
+        steps = [deepcopy(self) for i in range(count)]
+        return Chain(*steps)
 
     def desugar(self):
         return self

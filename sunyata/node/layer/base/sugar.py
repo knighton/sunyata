@@ -19,6 +19,13 @@ class LinkBuilder(PseudoNode):
         self.spec_class = spec_class
         self.default_kwargs = default_kwargs or {}
 
+    def __mul__(self, count):
+        from ...network import Chain
+        assert isinstance(count, int)
+        assert 1 <= count
+        steps = [self] * count
+        return Chain(*steps)
+
     def __call__(self, *args, **kwargs):
         from ... import Link
         kwargs = deepcopy(self.default_kwargs)

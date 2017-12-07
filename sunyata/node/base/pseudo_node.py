@@ -53,6 +53,9 @@ class PseudoNode(object):
     def __gt__(self, right):
         return _CHAIN_CACHE.connect(self, right)
 
+    def __mul__(self, mul):
+        raise NotImplementedError
+
     def pseudo_node_to_pretty(self):
         """
         -> str
