@@ -16,6 +16,9 @@ class Link(ModelOrNode):
         self._spec = spec
         self._layer = None
 
+    def pseudo_node_to_pretty(self):
+        return self._spec.__class__.__name__[:-4]
+
     def __call__(self, *parents):
         assert parents
         return Link(deepcopy(self._spec), parents)

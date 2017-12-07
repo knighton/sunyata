@@ -19,6 +19,9 @@ class ModelOrNode(ChildNode, Model):
         ChildNode.__init__(self, parents)
         Model.__init__(self)
 
+    def to_pretty(self):
+        assert False  # XXX
+
     def build_inner(self):
         for input_ in self.model_inputs():
             input_.input_build()

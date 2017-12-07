@@ -17,6 +17,10 @@ class Input(Node):
         form = Form(shape, dtype)
         self.initialize_output_forms([form])
 
+    def pseudo_node_to_pretty(self):
+        form, = self._forms
+        return 'Input(%s %s)' % (form.batch_shape, form.dtype)
+
     def input_build(self):
         for child in self.children():
             child.child_build()

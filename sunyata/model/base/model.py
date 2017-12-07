@@ -11,6 +11,12 @@ class Model(object):
     def __init__(self):
         self._params = None
 
+    def to_pretty(self):
+        """
+        -> str
+        """
+        raise NotImplementedError
+
     def is_built(self):
         return self._params is not None
 

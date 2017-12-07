@@ -12,6 +12,15 @@ class Graph(ModelOrNode):
         self._internal_inputs = self.collect_model_inputs(self.as_nodes(inputs))
         self._internal_outputs = self.as_children(outputs)
 
+    def pseudo_node_to_pretty(self):
+        inputs = []
+        for input_ in self._internal_inputs:
+            inputs.append(input_.to_pretty())
+        outputs = []
+        for output in self._internal_outputs:
+            outputs.append(output.to_pretty())
+        return 'Graph(%s -> %s)' % (', '.join(inputs), ', '.join(outputs))
+
     def __call__(self, *parents):
         raise NotImplementedError  # TODO
 

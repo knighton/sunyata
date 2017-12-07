@@ -29,6 +29,9 @@ class LinkBuilder(PseudoNode):
     def desugar(self):
         return self.__call__()
 
+    def pseudo_node_to_pretty(self):
+        return 'Sugar(%s)' % self.spec_class.__name__[:-4]
+
 
 def _normalize_ndims(spatial_ndims):
     if isinstance(spatial_ndims, (list, tuple)):

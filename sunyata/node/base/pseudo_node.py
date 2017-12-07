@@ -2,51 +2,56 @@ from collections import defaultdict
 from copy import deepcopy
 
 
-class NodeChainer(object):
+class Chainer(object):
+    """
+    A cache that creates sequences of nodes connected via the > operator.
+
+    It works by assigning and propagating 'colors' of nodes.
+    """
+
     def __init__(self):
         self._next_color = 1
         self._node2color = {}
         self._color2nodes = defaultdict(list)
         self._prev_right = None
 
-    def _new_color(self):
-        color = self._next_color
-        self._next_color += 1
-        return color
+    def connect(self, left, right):
+        """
+        Evaluate one > comparison, returning a new Chain.
 
-    def _attach_to(self, node, color):
-        if node in self._node2color:
-            node = deepcopy(node)
-        self._node2color[node] = color
-        self._color2nodes[color].append(node)
+        Note: the Chain will be immediately thrown away unless this is the last
+        > comparison of the "node > node > node ..." sequence.
+        """
+        # If the node on left is not the previous node on right, we've started a
+        # new Chain.  So, we can't connect to the old chain anymore.  Drop its
+        # color.
+        if left is not self._prev_right and self._prev_right is not None:
+            color = self._node2color[self._prev_right]
+            del self._node2color[self._prev_right]
+            del self._color2nodes[color]
 
-    def _color_of(self, node):
-        color = self._node2color.get(node)
-        if color is not None:
-            return color
-        color = self._new_color()
-        self._attach_to(node, color)
-        return color
+        # Save the new previous right node.
+        self._prev_right = right
 
-    def _remove_color(self, node):
-        del self._node2color[node]
+        # Either retrieve or invent the color of the node on the left.
+        color = self._node2color.get(left)
+        if color is None:
+            color = self._next_color
+            self._next_color += 1
+            self._node2color[left] = color
+            self._color2nodes[color].append(left)
 
-    def _chain(self, color):
+        # Propagate the left node's color forward to the right node.
+        self._node2color[right] = color
+        self._color2nodes[color].append(right)
+
+        # Return a Chain of the nodes of that color.
         from ..network import Chain
         nodes = self._color2nodes[color]
-        nodes = deepcopy(nodes)
         return Chain(*nodes)
 
-    def connect(self, left, right):
-        if left is not self._prev_right:
-            self._remove_color(left)
-        self._prev_right = right
-        color = self._color_of(left)
-        self._attach_to(right, color)
-        return self._chain(color)
 
-
-_CHAIN_CACHE = NodeChainer()
+_CHAIN_CACHE = Chainer()
 
 
 class PseudoNode(object):
@@ -54,4 +59,10 @@ class PseudoNode(object):
         raise NotImplementedError
 
     def __gt__(self, right):
-        _CHAIN_CACHE.connect(self, right)
+        return _CHAIN_CACHE.connect(self, right)
+
+    def pseudo_node_to_pretty(self):
+        """
+        -> str
+        """
+        raise NotImplementedError

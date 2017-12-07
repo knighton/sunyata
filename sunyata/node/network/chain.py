@@ -39,6 +39,12 @@ class Chain(ModelOrNode):
             assert not step.children()
         self._steps = steps
 
+    def pseudo_node_to_pretty(self):
+        ss = []
+        for step in self._steps:
+            ss.append(step.pseudo_node_to_pretty())
+        return 'Chain(%s)' % ' > '.join(ss)
+
     def __call__(self, *parents):
         assert parents
         nodes = deepcopy(self._steps)
