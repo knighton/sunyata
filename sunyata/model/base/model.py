@@ -31,9 +31,9 @@ class Model(object):
             return
         self._params = self.build_inner()
 
-    def forward(self, xx, is_training):
+    def forward(self, xx, train):
         """
-        xx, is_training -> yy
+        xx, train -> yy
         """
         raise NotImplementedError
 

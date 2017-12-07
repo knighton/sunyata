@@ -32,9 +32,9 @@ class BaseBatchNormAPI(APIMixin):
     def instance_batch_norm3d(self, x, beta, gamma):
         return self.instance_batch_norm(x, beta, gamma)
 
-    def global_batch_norm(self, x, is_training, beta, gamma, momentum,
-                          global_mean, global_var):
-        if is_training:
+    def global_batch_norm(self, x, train, beta, gamma, momentum, global_mean,
+                          global_var):
+        if train:
             reduction_axes = self._batch_norm_reduction_axes(self.shape(beta))
             instance_mean, instance_var = self.moments(x, reduction_axes)
             x = self.do_batch_norm(x, beta, gamma, instance_mean, instance_var)
@@ -44,22 +44,22 @@ class BaseBatchNormAPI(APIMixin):
             x = self.do_batch_norm(x, beta, gamma, global_mean, global_var)
         return x
 
-    def global_batch_norm0d(self, x, is_training, beta, gamma, momentum,
-                            global_mean, global_var):
+    def global_batch_norm0d(self, x, train, beta, gamma, momentum, global_mean,
+                            global_var):
         return self.global_batch_norm(
-            x, is_training, beta, gamma, momentum, global_mean, global_var)
+            x, train, beta, gamma, momentum, global_mean, global_var)
 
-    def global_batch_norm1d(self, x, is_training, beta, gamma, momentum,
-                            global_mean, global_var):
+    def global_batch_norm1d(self, x, train, beta, gamma, momentum, global_mean,
+                            global_var):
         return self.global_batch_norm(
-            x, is_training, beta, gamma, momentum, global_mean, global_var)
+            x, train, beta, gamma, momentum, global_mean, global_var)
 
-    def global_batch_norm2d(self, x, is_training, beta, gamma, momentum,
-                            global_mean, global_var):
+    def global_batch_norm2d(self, x, train, beta, gamma, momentum, global_mean,
+                            global_var):
         return self.global_batch_norm(
-            x, is_training, beta, gamma, momentum, global_mean, global_var)
+            x, train, beta, gamma, momentum, global_mean, global_var)
 
-    def global_batch_norm3d(self, x, is_training, beta, gamma, momentum,
-                            global_mean, global_var):
+    def global_batch_norm3d(self, x, train, beta, gamma, momentum, global_mean,
+                            global_var):
         return self.global_batch_norm(
-            x, is_training, beta, gamma, momentum, global_mean, global_var)
+            x, train, beta, gamma, momentum, global_mean, global_var)

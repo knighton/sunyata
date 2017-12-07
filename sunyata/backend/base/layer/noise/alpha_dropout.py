@@ -8,8 +8,8 @@ class BaseAlphaDropoutAPI(APIMixin):
         scale = 1.0507009873554804934193349852946
         self._alpha_p = -alpha * scale
 
-    def _alpha_dropout(self, x, is_training, rate, keep_axis, ndim):
-        if not is_training:
+    def _alpha_dropout(self, x, train, rate, keep_axis, ndim):
+        if not train:
             return x
         x_shape = self.shape(x)
         if ndim is not None:
@@ -23,17 +23,17 @@ class BaseAlphaDropoutAPI(APIMixin):
         x = mask * x + (1 - mask) * self._alpha_p
         return a * x + b
 
-    def alpha_dropout(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, None)
+    def alpha_dropout(self, x, train, rate=0.5, keep_axis=None):
+        return self._alpha_dropout(x, train, rate, keep_axis, None)
 
-    def alpha_dropout0d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, 0)
+    def alpha_dropout0d(self, x, train, rate=0.5, keep_axis=None):
+        return self._alpha_dropout(x, train, rate, keep_axis, 0)
 
-    def alpha_dropout1d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, 1)
+    def alpha_dropout1d(self, x, train, rate=0.5, keep_axis=None):
+        return self._alpha_dropout(x, train, rate, keep_axis, 1)
 
-    def alpha_dropout2d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, 2)
+    def alpha_dropout2d(self, x, train, rate=0.5, keep_axis=None):
+        return self._alpha_dropout(x, train, rate, keep_axis, 2)
 
-    def alpha_dropout3d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._alpha_dropout(x, is_training, rate, keep_axis, 3)
+    def alpha_dropout3d(self, x, train, rate=0.5, keep_axis=None):
+        return self._alpha_dropout(x, train, rate, keep_axis, 3)

@@ -22,8 +22,8 @@ class BaseDropoutAPI(APIMixin):
             mask_shape = tuple(mask_shape)
         return mask_shape
 
-    def _dropout(self, x, is_training, rate, keep_axis, ndim):
-        if not is_training:
+    def _dropout(self, x, train, rate, keep_axis, ndim):
+        if not train:
             return x
         x_shape = self.shape(x)
         if ndim is not None:
@@ -34,17 +34,17 @@ class BaseDropoutAPI(APIMixin):
         mask = self.constant(mask)
         return x * mask / (1 - rate)
 
-    def dropout(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._dropout(x, is_training, rate, keep_axis, None)
+    def dropout(self, x, train, rate=0.5, keep_axis=None):
+        return self._dropout(x, train, rate, keep_axis, None)
 
-    def dropout0d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._dropout(x, is_training, rate, keep_axis, 0)
+    def dropout0d(self, x, train, rate=0.5, keep_axis=None):
+        return self._dropout(x, train, rate, keep_axis, 0)
 
-    def dropout1d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._dropout(x, is_training, rate, keep_axis, 1)
+    def dropout1d(self, x, train, rate=0.5, keep_axis=None):
+        return self._dropout(x, train, rate, keep_axis, 1)
 
-    def dropout2d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._dropout(x, is_training, rate, keep_axis, 2)
+    def dropout2d(self, x, train, rate=0.5, keep_axis=None):
+        return self._dropout(x, train, rate, keep_axis, 2)
 
-    def dropout3d(self, x, is_training, rate=0.5, keep_axis=None):
-        return self._dropout(x, is_training, rate, keep_axis, 3)
+    def dropout3d(self, x, train, rate=0.5, keep_axis=None):
+        return self._dropout(x, train, rate, keep_axis, 3)
