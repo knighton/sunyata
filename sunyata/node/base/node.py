@@ -24,11 +24,11 @@ class Node(PseudoNode):
         self._children = []
 
     def __mul__(self, count):
-        from ..network import Chain
+        from ..network import Sequence
         assert isinstance(count, int)
         assert 1 <= count
         steps = [deepcopy(self) for i in range(count)]
-        return Chain(*steps)
+        return Sequence(*steps)
 
     def desugar(self):
         return self

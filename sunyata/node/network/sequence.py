@@ -2,7 +2,7 @@ from ..base import ChildNode, Node
 from .base import ModelOrNode
 
 
-class Chain(ModelOrNode):
+class Sequence(ModelOrNode):
     """
     A model/node realized as a sequence of nodes (with predecessors).
     """
@@ -43,12 +43,12 @@ class Chain(ModelOrNode):
         ss = []
         for step in self._steps:
             ss.append(step.pseudo_node_to_pretty())
-        return 'Chain(%s)' % ' > '.join(ss)
+        return '[%s]' % ' > '.join(ss)
 
     def __call__(self, *parents):
         assert parents
         nodes = deepcopy(self._steps)
-        return Chain(*nodes, _parents=parents)
+        return Sequence(*nodes, _parents=parents)
 
     def child_build_inner(self, forms):
         for step in self._steps:

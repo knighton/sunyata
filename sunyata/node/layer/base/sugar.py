@@ -20,11 +20,11 @@ class LinkBuilder(PseudoNode):
         self.default_kwargs = default_kwargs or {}
 
     def __mul__(self, count):
-        from ...network import Chain
+        from ...network import Sequence
         assert isinstance(count, int)
         assert 1 <= count
         steps = [self] * count
-        return Chain(*steps)
+        return Sequence(*steps)
 
     def __call__(self, *args, **kwargs):
         from ... import Link

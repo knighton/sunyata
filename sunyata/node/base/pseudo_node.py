@@ -2,7 +2,7 @@ from collections import defaultdict
 from copy import deepcopy
 
 
-class Chainer(object):
+class NodeSequencer(object):
     """
     A cache that creates sequences of nodes connected via the > operator.
 
@@ -17,10 +17,10 @@ class Chainer(object):
 
     def connect(self, left, right):
         """
-        Evaluate one > comparison, returning a new Chain.
+        Evaluate one > comparison, returning a new Sequence.
 
-        Note: the Chain will be immediately thrown away unless this is the last
-        > comparison of the "node > node > node ..." sequence.
+        Note: the Sequence will be immediately thrown away unless this is the
+        last > comparison of the "node > node > node ..." sequence.
         """
         # Save the new previous right node.
         self._prev_right = right
@@ -37,13 +37,13 @@ class Chainer(object):
         self._node2color[right] = color
         self._color2nodes[color].append(right)
 
-        # Return a Chain of the nodes of that color.
-        from ..network import Chain
+        # Return a Sequence of the nodes of that color.
+        from ..network import Sequence
         nodes = self._color2nodes[color]
-        return Chain(*nodes)
+        return Sequence(*nodes)
 
 
-_CHAIN_CACHE = Chainer()
+_SEQ = NodeSequencer()
 
 
 class PseudoNode(object):
@@ -51,7 +51,7 @@ class PseudoNode(object):
         raise NotImplementedError
 
     def __gt__(self, right):
-        return _CHAIN_CACHE.connect(self, right)
+        return _SEQ.connect(self, right)
 
     def __mul__(self, mul):
         raise NotImplementedError

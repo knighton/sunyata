@@ -6,7 +6,7 @@ class ModelOrNode(ChildNode, Model):
     """
     A child node that can be treated as a model to refer to its entire network.
 
-    Examples are Chains and Graphs.
+    Examples are Sequences and Graphs.
 
     That is, this node is all the outputs of the network, and is descended from
     all its inputs.  Nodes track all their original inputs.  If treated as a
