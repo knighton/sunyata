@@ -50,7 +50,7 @@ class PyTorchDeviceDataTypeAPI(BaseDeviceDataTypeAPI, PyTorchDeviceAPI,
 
     def device_of(self, x):
         if x.is_cuda:
-            device_id = x.get_device()
+            device_id = x.get_device() + 1
         else:
             device_id = 0
         return self._devices[device_id]

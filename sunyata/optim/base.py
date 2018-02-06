@@ -20,4 +20,6 @@ class Optimizer(object):
             if context is None:
                 context = OptimizerContext(**self.make_context(variable))
                 self.vid2context[variable_id] = context
+            if gradient is None:
+                continue
             self.update_variable(variable, gradient, context)

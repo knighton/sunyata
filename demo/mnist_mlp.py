@@ -1,7 +1,6 @@
 from sunyata.dataset.mnist import load_mnist
 from sunyata.metric import *  # noqa
-from sunyata.model import Model
-from sunyata.node import *  # noqa
+from sunyata.net import *  # noqa
 from sunyata.optim import *  # noqa
 
 
@@ -17,25 +16,15 @@ image_shape = x.shape
 y = data[0][1][0]
 num_classes = len(y)
 
-spec = SequenceSpec([
-    InputSpec(image_shape, dtype),
-    FlattenSpec(),
-    DenseSpec(first_hidden_dim),
-    GlobalBatchNormSpec(),
-    ReLUSpec(),
-    DropoutSpec(),
-    DenseSpec(second_hidden_dim),
-    GlobalBatchNormSpec(),
-    ReLUSpec(),
-    DropoutSpec(),
-    DenseSpec(num_classes),
-    SoftmaxSpec(),
-])
-
 opt = NAG()
 
 losses = [CategoricalCrossEntropy()]
 aux_metrics = [[CategoricalAccuracy()]]
 
-model = Model(spec)
+stage_1 = Dense(first_hidden_dim) > GlobalBatchNorm > ReLU > Dropout
+stage_2 = Dense(second_hidden_dim) > GlobalBatchNorm > ReLU > Dropout
+
+model = Input(image_shape, dtype) > Flatten > stage_1 > stage_2 > \
+    Dense(num_classes) > Softmax
+
 model.fit(data, opt, losses, aux_metrics, num_epochs, batch_size)

@@ -14,7 +14,7 @@ class NAG(Optimizer):
         return {
             'lr': self.lr,
             'momentum': self.momentum,
-            'velocity': Z.zeros_like(variable),
+            'velocity': Z.zeros_like(variable, device=Z.device_of(variable)),
         }
 
     def update_variable(self, var, grad, ctx):

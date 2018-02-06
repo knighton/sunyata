@@ -17,7 +17,11 @@ class Device(object):
         return not self.id
 
     def is_gpu(self):
-        return bool(self.id)
+        return 0 < self.id
+
+    def gpu_id(self):
+        assert 0 < self.id
+        return self.id - 1
 
 
 class BaseDeviceAPI(APIMixin):

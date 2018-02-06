@@ -23,7 +23,10 @@ class PyTorchVariableAPI(BaseVariableAPI):
             score_grads.append(self.numpy_to_device(arr))
         torch.autograd.backward(score_vars, score_grads)
         scores = list(map(lambda x: x.data, score_vars))
-        grads_and_params = list(map(lambda x: (x.grad.data, x), params))
+        grads_and_params = []
+        for param in params:
+            grad = None if param.grad is None else param.grad.data
+            grads_and_params.append((grad, param))
         aux_scores = self._aux_scores(aux_judges, yy_true, yy_pred)
         return grads_and_params, scores, aux_scores
 
