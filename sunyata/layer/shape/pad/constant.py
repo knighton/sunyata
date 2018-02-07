@@ -1,4 +1,5 @@
 from .... import backend as Z
+from ...base import node_wrap
 from .base import PadLayer, PadSpec
 
 
@@ -18,3 +19,6 @@ class ConstantPadSpec(PadSpec):
 
     def make_layer(self, form):
         return ConstantPadLayer(self.pad, self.value, self.x_ndim())
+
+
+node_wrap(ConstantPadSpec)

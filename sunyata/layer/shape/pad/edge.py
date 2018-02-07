@@ -1,4 +1,5 @@
 from .... import backend as Z
+from ...base import node_wrap
 from .base import PadLayer, PadSpec
 
 
@@ -16,3 +17,6 @@ class EdgePadSpec(PadSpec):
 
     def make_layer(self, form):
         return EdgePadLayer(self.pad, self.x_ndim())
+
+
+node_wrap(EdgePadSpec)

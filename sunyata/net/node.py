@@ -23,7 +23,7 @@ class Node(PseudoNode):
         self._children = []
 
     def __mul__(self, count):
-        from ..network import Sequence
+        from .sequence import Sequence
         assert isinstance(count, int)
         assert 1 <= count
         steps = [deepcopy(self) for i in range(count)]
