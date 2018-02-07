@@ -2,50 +2,35 @@ import numpy as np
 
 from sunyata.dataset.imdb import load_imdb
 from sunyata.metric import *  # noqa
-from sunyata.model import Model
-from sunyata.node import *  # noqa
+from sunyata.net import *  # noqa
 from sunyata.optim import *  # noqa
 
 
 def make_conv(seq_len, in_dtype, vocab_size):
     def layer(channels):
-        return SequenceSpec([
-            ConvSpec(channels),
-            GlobalBatchNormSpec(),
-            ReLUSpec(),
-            MaxPoolSpec(),
-        ])
+        return Conv(channels) > GlobalBatchNorm > ReLU > MaxPool
 
     seq = [
-        InputSpec((seq_len,), in_dtype),
-        EmbedSpec(vocab_size, 8),
+        Input((seq_len,), in_dtype),
+        Embed(vocab_size, 8)
     ]
 
     for i in range(8):
         seq.append(layer(8))
 
     seq += [
-        FlattenSpec(),
-        DenseSpec(1),
-        SigmoidSpec(),
+        Flatten,
+        Dense(1),
+        Sigmoid,
     ]
 
-    return Model(SequenceSpec(seq))
+    return Sequence(*seq)
 
 
 def make_rnn(seq_len, in_dtype, vocab_size):
-    seq = [
-        InputSpec((seq_len,), in_dtype),
-        EmbedSpec(vocab_size, 16),
-        SimpleRUSpec(16),
-        ReLUSpec(),
-        SimpleRUSpec(64, last=True),
-        ReLUSpec(),
-        DenseSpec(1),
-        SigmoidSpec(),
-    ]
-
-    return Model(SequenceSpec(seq))
+    return Input((seq_len,), in_dtype) > Embed(vocab_size, 16) > \
+        ElmanRU(16) > ReLU > ElmanRU(64, last=True) > ReLU > \
+        Dense(1) > Sigmoid
 
 
 num_epochs = 50
@@ -59,6 +44,7 @@ x_train, y_train = data[0]
 seq_len = x_train.shape[1]
 vocab_size = int(np.max(x_train)) + 1
 
+#model = make_conv(seq_len, x_train.dtype, vocab_size)
 model = make_rnn(seq_len, x_train.dtype, vocab_size)
 
 opt = NAG()

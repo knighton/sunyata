@@ -1,5 +1,6 @@
 from ... import backend as Z
 from ... import init
+from ..base import LinkBuilder
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -53,3 +54,6 @@ class CFNSpec(RecurrentSpec):
         bias = self.bias_init(bias_shape, dtype)
         return CFNLayer(self.go_forward, self.ret_last, input_kernel,
                         recurrent_kernel, bias)
+
+
+CFN = LinkBuilder(CFNSpec)

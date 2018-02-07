@@ -1,5 +1,6 @@
 from ... import backend as Z
 from ... import init
+from ..base import LinkBuilder
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -45,3 +46,6 @@ class LSTMSpec(RecurrentSpec):
         bias = self.bias_init(bias_shape, dtype)
         return LSTMLayer(self.go_forward, self.ret_last, input_kernel,
                          recurrent_kernel, bias)
+
+
+LSTM = LinkBuilder(LSTMSpec)

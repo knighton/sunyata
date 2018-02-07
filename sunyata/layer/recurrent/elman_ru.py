@@ -1,5 +1,6 @@
 from ... import backend as Z
 from ... import init
+from ..base import LinkBuilder
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -37,3 +38,6 @@ class ElmanRUSpec(RecurrentSpec):
         bias = self.bias_init.get(bias_shape, dtype)
         return ElmanRULayer(self.go_forward, self.ret_last, input_kernel,
                             recurrent_kernel, bias)
+
+
+ElmanRU = LinkBuilder(ElmanRUSpec)

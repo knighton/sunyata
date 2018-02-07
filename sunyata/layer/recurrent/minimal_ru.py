@@ -1,5 +1,6 @@
 from ... import backend as Z
 from ... import init
+from ..base import LinkBuilder
 from .base import RecurrentLayer, RecurrentSpec
 
 
@@ -54,3 +55,6 @@ class MinimalRUSpec(RecurrentSpec):
         return MinimalRULayer(
             self.go_forward, self.ret_last, gate_input_kernel,
             gate_recurrent_kernel, gate_bias, latent_kernel, latent_bias)
+
+
+MinimalRU = LinkBuilder(MinimalRUSpec)
